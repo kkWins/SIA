@@ -55,9 +55,14 @@ $department = $_SESSION['department'];
             padding: 10px;
             transition: 0.3s;
         }
-        .tabs h4, .tabs p {
+        .tabs h4{
+            color: #ffffff; /* White text for headings and paragraphs */
+            font-size: 20px;
+        }
+        .tabs p {
             color: #ffffff; /* White text for headings and paragraphs */
             font-size: 13px;
+            margin-bottom: 15px;
         }
 
         /* New styles */
@@ -232,54 +237,72 @@ $department = $_SESSION['department'];
             border-bottom: 1px solid #2C2C2C;
             padding-bottom: 15px;
         }
-    </style>
+        </style>
+
 </head>
 <body>
     <div id="sidebar">
-        <h4>Welcome, <?= htmlspecialchars($_SESSION['username']) ?></h4>
-        <p>Department: <strong><?= htmlspecialchars($_SESSION['department']) ?></strong></p>
-        <p>Role: <strong><?= htmlspecialchars($_SESSION['role']) ?></strong></p>
+        <div class="tabs">
+            <h4>Welcome, <?= htmlspecialchars($_SESSION['username']) ?></h4>
+            <p>Department: <strong><?= htmlspecialchars($_SESSION['department']) ?></strong></p>
+            <p>Role: <strong><?= htmlspecialchars($_SESSION['role']) ?></strong></p>
 
-                <!-- Role-based sidebar links -->
-        <!-- Inside the sidebar section -->
-        <?php if ($department == 'Finance'): ?>
-            <?php if ($role == 'Manager'): ?>
-                <a href="#" class="sidebar-link" id="purchase-order-link">Purchase Order</a>
-                <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
-                <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
-                <a href="logout.php" class="sidebar-link">Logout</a>  
-            <?php elseif ($role == 'Staff'): ?>
-                <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
-                <a href="logout.php" class="sidebar-link">Logout</a>    
-            <?php endif; ?>
-        <?php elseif ($department == 'Inventory'): ?>
-            <?php if ($role == 'Manager'): ?>
-                <a href="#" class="sidebar-link" id="withdrawal-deposit-link">Withdrawal & Deposit</a>
-                <a href="#" class="sidebar-link" id="purchase-request-link">Purchase Request</a>
-                <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a> 
-                <a href="logout.php" class="sidebar-link">Logout</a>   
-            <?php elseif ($role == 'Staff'): ?>
-                <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>  
-                <a href="logout.php" class="sidebar-link">Logout</a>  
-            <?php endif; ?>
-        <?php elseif ($department == 'Labor'): ?>
-            <?php if ($role == 'Manager'): ?>
-                <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
-                <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
-                <a href="logout.php" class="sidebar-link">Logout</a>  
-            <?php elseif ($role == 'Staff'): ?>
-                <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
-                <a href="logout.php" class="sidebar-link">Logout</a>  
-            <?php endif; ?>
-        <?php endif; ?>
+                    <!-- Role-based sidebar links -->
+            <!-- Inside the sidebar section -->
+            <?php if ($department == 'Finance'): ?>
+                <?php if ($role == 'Manager'): ?>
+                    <a href="#" class="sidebar-link" id="purchase-order-link">Purchase Order</a>
+                    <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
+                    <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
+                    <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
 
-        <a href="logout.php" class="sidebar-link text-danger">Logout</a>
+                <?php elseif ($role == 'Staff'): ?>
+                    <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
+                    <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
+    
+                <?php endif; ?>
+            <?php elseif ($department == 'Inventory'): ?>
+                <?php if ($role == 'Manager'): ?>
+                    <a href="#" class="sidebar-link" id="withdrawal-deposit-link">Withdrawal & Deposit</a>
+                    <a href="#" class="sidebar-link" id="purchase-request-link">Purchase Request</a>
+                    <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
+                    <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a> 
+    
+                <?php elseif ($role == 'Staff'): ?>
+                    <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
+                    <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>  
+
+                <?php endif; ?>
+            <?php elseif ($department == 'Labor'): ?>
+                <?php if ($role == 'Manager'): ?>
+                    <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
+                    <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
+                    <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
+
+                <?php elseif ($role == 'Staff'): ?>
+                    <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
+                    <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
+
+                <?php endif; ?>
+            <?php endif; ?>
+        </div>
+
+        <div class="user-dropdown">
+            <div class="user-profile" id="userProfileButton">
+                <img src="default-avatar.png" class="avatar" alt="User avatar">
+                <div class="user-info">
+                    <div class="username"><?= htmlspecialchars($_SESSION['username']) ?></div>
+                    <div class="email"><?= htmlspecialchars($_SESSION['emp_email']) ?></div>
+                </div>
+                <span class="dropdown-arrow">▾</span>
+            </div>
+            
+            <div class="dropdown-menu" id="userDropdownMenu">
+                <a href="#" class="dropdown-item">Account</a>
+                <div class="dropdown-divider"></div>
+                <a href="logout.php" class="dropdown-item text-danger">Log out</a>
+            </div>
+        </div>
     </div>
 
     <div id="content">
@@ -324,6 +347,51 @@ $department = $_SESSION['department'];
             $('#requisition-history-link').click(function (e) {
                 e.preventDefault();
                 loadContent('requisition_history');
+            });
+
+            // Add this to your existing JavaScript
+            $('#userProfileButton').click(function(e) {
+                e.stopPropagation();
+                $('#userDropdownMenu').toggleClass('show');
+            });
+
+            // Close dropdown when clicking outside
+            $(document).click(function(e) {
+                if (!$(e.target).closest('.user-dropdown').length) {
+                    $('#userDropdownMenu').removeClass('show');
+                }
+            });
+
+            // Add overlay div to body
+            $('body').append('<div class="sidebar-overlay"></div>');
+
+            // Toggle sidebar
+            $('#sidebarToggle').click(function(e) {
+                e.preventDefault();
+                $('#sidebar').toggleClass('active');
+                $('.sidebar-overlay').toggleClass('active');
+            });
+
+            // Close sidebar when clicking overlay
+            $('.sidebar-overlay').click(function() {
+                $('#sidebar').removeClass('active');
+                $('.sidebar-overlay').removeClass('active');
+            });
+
+            // Close sidebar when clicking a link (for mobile)
+            $('.sidebar-link').click(function() {
+                if (window.innerWidth <= 768) {
+                    $('#sidebar').removeClass('active');
+                    $('.sidebar-overlay').removeClass('active');
+                }
+            });
+
+            // Handle window resize
+            $(window).resize(function() {
+                if (window.innerWidth > 768) {
+                    $('#sidebar').removeClass('active');
+                    $('.sidebar-overlay').removeClass('active');
+                }
             });
         });
     </script>

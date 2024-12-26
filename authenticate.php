@@ -28,7 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         CONCAT(E.EMP_FNAME, ' ', E.EMP_LNAME) AS EMP_NAME,
                                         E.EMP_PASSWORD,
                                         E.EMP_POSITION,
-                                        D.DEPT_NAME
+                                        D.DEPT_NAME,
+                                        E.EMP_EMAIL
                                     FROM EMPLOYEE E
                                     JOIN DEPARTMENT D
                                     ON E.DEPT_ID = D.DEPT_ID
@@ -47,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['username'] = $user['EMP_NAME'];
         $_SESSION['role'] = $user['EMP_POSITION'];
         $_SESSION['department'] = $user['DEPT_NAME'];
+        $_SESSION['emp_email'] = $user['EMP_EMAIL'];
 
         $response = ['status' => 'success', 'message' => 'Login successful'];
     } else {
