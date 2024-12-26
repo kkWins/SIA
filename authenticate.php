@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         CONCAT(E.EMP_FNAME, ' ', E.EMP_LNAME) AS EMP_NAME,
                                         E.EMP_PASSWORD,
                                         E.EMP_POSITION,
+                                        E.EMP_FNAME,
                                         D.DEPT_NAME,
                                         E.EMP_EMAIL
                                     FROM EMPLOYEE E
@@ -45,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Set session variables
         $_SESSION['loggedIn'] = true;
         $_SESSION['ID'] = $user['EMP_ID'];
-        $_SESSION['username'] = $user['EMP_NAME'];
+        $_SESSION['username'] = $user['EMP_FNAME'];
         $_SESSION['role'] = $user['EMP_POSITION'];
         $_SESSION['department'] = $user['DEPT_NAME'];
         $_SESSION['emp_email'] = $user['EMP_EMAIL'];

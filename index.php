@@ -45,7 +45,6 @@ $department = $_SESSION['department'];
         .sidebar-link {
             display: block;
             margin: 10px 0;
-            padding: 10px;
             text-decoration: none;
             color: #ffffff; /* White text */
             border-radius: 4px;
@@ -53,14 +52,16 @@ $department = $_SESSION['department'];
         }
         .sidebar-link:hover {
             background-color: #495057; /* Darker background on hover */
+            padding: 10px;
+            transition: 0.3s;
         }
-        h4, p {
+        .tabs h4, .tabs p {
             color: #ffffff; /* White text for headings and paragraphs */
+            font-size: 13px;
         }
 
         /* New styles */
         #sidebar h4, #sidebar p {
-            padding: 15px 20px;
             margin: 0;
         }
 
@@ -231,9 +232,9 @@ $department = $_SESSION['department'];
 <body>
     <div id="sidebar">
         <div class="tabs">
-            <h5>Welcome, <?= htmlspecialchars($_SESSION['username']) ?></h4>
+            <h5>Welcome, <?= htmlspecialchars($_SESSION['username']) ?></h5>
             <p>Department: <strong><?= htmlspecialchars($_SESSION['department']) ?></strong></p>
-            <p>Role: <strong><?= htmlspecialchars($_SESSION['role']) ?></strong></p>
+            <p>Role: <strong><?= htmlspecialchars($_SESSION['role']) ?></strong></p><br>
 
             <!-- Role-based sidebar links -->
             <?php if ($department == 'Finance'): ?>
