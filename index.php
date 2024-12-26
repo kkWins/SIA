@@ -67,7 +67,7 @@ $department = $_SESSION['department'];
 
         #sidebar > div:first-child {
             padding: 20px;
-            border-bottom: 1px solid #2C2C2C;
+            margin-top: 10px;
         }
 
         .text-danger {
@@ -227,6 +227,11 @@ $department = $_SESSION['department'];
                 display: block;
             }
         }
+
+        .tabs {
+            border-bottom: 1px solid #2C2C2C;
+            padding-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -273,8 +278,6 @@ $department = $_SESSION['department'];
             
             <div class="dropdown-menu" id="userDropdownMenu">
                 <a href="#" class="dropdown-item">Account</a>
-                <a href="#" class="dropdown-item">Billing</a>
-                <a href="#" class="dropdown-item">Notifications</a>
                 <div class="dropdown-divider"></div>
                 <a href="logout.php" class="dropdown-item text-danger">Log out</a>
             </div>
