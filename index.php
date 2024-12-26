@@ -247,29 +247,35 @@ $department = $_SESSION['department'];
                 <a href="#" class="sidebar-link" id="purchase-order-link">Purchase Order</a>
                 <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
                 <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>  <!-- New link -->
+                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
+                <a href="logout.php" class="sidebar-link">Logout</a>  
             <?php elseif ($role == 'Staff'): ?>
                 <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>  <!-- New link -->
+                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
+                <a href="logout.php" class="sidebar-link">Logout</a>    
             <?php endif; ?>
         <?php elseif ($department == 'Inventory'): ?>
             <?php if ($role == 'Manager'): ?>
                 <a href="#" class="sidebar-link" id="withdrawal-deposit-link">Withdrawal & Deposit</a>
                 <a href="#" class="sidebar-link" id="purchase-request-link">Purchase Request</a>
                 <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>  <!-- New link -->
+                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a> 
+                <a href="logout.php" class="sidebar-link">Logout</a>   
             <?php elseif ($role == 'Staff'): ?>
                 <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>  <!-- New link -->
+                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>  
+                <a href="logout.php" class="sidebar-link">Logout</a>  
             <?php endif; ?>
         <?php elseif ($department == 'Labor'): ?>
             <?php if ($role == 'Manager'): ?>
                 <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
                 <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>  <!-- New link -->
+                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
+                <a href="logout.php" class="sidebar-link">Logout</a>  
             <?php elseif ($role == 'Staff'): ?>
                 <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>  <!-- New link -->
+                <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
+                <a href="logout.php" class="sidebar-link">Logout</a>  
             <?php endif; ?>
         <?php endif; ?>
 
