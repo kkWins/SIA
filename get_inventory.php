@@ -5,7 +5,7 @@ session_start();
 $servername = "localhost";
 $username = "root";
 $password = ""; // If you have a password, include it here
-$database = "moonlight_db";
+$database = "moonlight_dbs";
 
 // Create connection
 $connection = new mysqli($servername, $username, $password, $database, 3306);

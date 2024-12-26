@@ -24,65 +24,266 @@ $department = $_SESSION['department'];
             display: flex;
             height: 100vh;
             overflow: hidden;
+            background-color: #343a40; /* Dark background */
         }
         #sidebar {
             width: 250px;
-            background-color: #f8f9fa;
+            background-color: #212529; /* Darker sidebar */
             padding: 15px;
-            border-right: 1px solid #ddd;
+            border-right: 1px solid #495057; /* Lighter border */
+            color: #ffffff; /* White text */
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Full height */
         }
         #content {
             flex-grow: 1;
             padding: 20px;
             overflow-y: auto;
+            color: #ffffff; /* White text for content */
         }
         .sidebar-link {
             display: block;
             margin: 10px 0;
             padding: 10px;
             text-decoration: none;
-            color: #000;
+            color: #ffffff; /* White text */
             border-radius: 4px;
             transition: background-color 0.3s;
         }
         .sidebar-link:hover {
-            background-color: #e9ecef;
+            background-color: #495057; /* Darker background on hover */
+        }
+        h4, p {
+            color: #ffffff; /* White text for headings and paragraphs */
+        }
+
+        /* New styles */
+        #sidebar h4, #sidebar p {
+            padding: 15px 20px;
+            margin: 0;
+        }
+
+        #sidebar > div:first-child {
+            padding: 20px;
+            border-bottom: 1px solid #2C2C2C;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+        }
+
+        /* Style for active/selected menu item */
+        .sidebar-link.active {
+            background-color: #2C2C2C;
+        }
+
+        /* Add bottom border to user info section */
+        #user-info {
+            border-bottom: 1px solid #2C2C2C;
+            margin-bottom: 10px;
+        }
+
+        /* User Profile Dropdown Styles */
+        .user-dropdown {
+            position: relative;
+            padding: 12px;
+            cursor: pointer;
+            margin-top: auto; /* This pushes it to the bottom */
+            border-top: 1px solid #2C2C2C;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #444;
+        }
+
+        .user-info {
+            flex-grow: 1;
+        }
+
+        .username {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .email {
+            font-size: 0.85em;
+            color: #888;
+        }
+
+        .dropdown-arrow {
+            color: #888;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: auto;
+            left: 0;
+            right: 0;
+            background-color: #1C1C1C;
+            border: 1px solid #2C2C2C;
+            border-radius: 4px;
+            margin: 4px 12px;
+            z-index: 1000;
+            bottom: 100%;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 8px 16px;
+            color: #fff;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #2C2C2C;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background-color: #2C2C2C;
+            margin: 4px 0;
+        }
+
+        /* Remove the old logout link styles since it's now in the dropdown */
+        .sidebar-link.text-danger {
+            display: none;
+        }
+
+        /* Responsive styles */
+        .navbar-toggler {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            padding: 10px;
+            cursor: pointer;
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+        }
+
+        /* Media query for mobile devices */
+        @media (max-width: 768px) {
+            body {
+                position: relative;
+            }
+
+            .navbar-toggler {
+                display: block;
+            }
+
+            #sidebar {
+                position: fixed;
+                left: -250px; /* Hide sidebar by default on mobile */
+                top: 0;
+                bottom: 0;
+                transition: left 0.3s ease;
+                z-index: 999;
+            }
+
+            #sidebar.active {
+                left: 0; /* Show sidebar when active */
+            }
+
+            #content {
+                margin-left: 0;
+                width: 100%;
+                padding-top: 60px; /* Make room for the toggle button */
+            }
+
+            /* Add overlay when sidebar is active */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 998;
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
         }
     </style>
 </head>
 <body>
     <div id="sidebar">
-        <h4>Welcome, <?= htmlspecialchars($_SESSION['username']) ?></h4>
-        <p>Department: <strong><?= htmlspecialchars($_SESSION['department']) ?></strong></p>
-        <p>Role: <strong><?= htmlspecialchars($_SESSION['role']) ?></strong></p>
+        <div class="tabs">
+            <h5>Welcome, <?= htmlspecialchars($_SESSION['username']) ?></h4>
+            <p>Department: <strong><?= htmlspecialchars($_SESSION['department']) ?></strong></p>
+            <p>Role: <strong><?= htmlspecialchars($_SESSION['role']) ?></strong></p>
 
-        <!-- Role-based sidebar links -->
-        <?php if ($department == 'Finance'): ?>
-            <?php if ($role == 'Manager'): ?>
-                <a href="#" class="sidebar-link" id="purchase-order-link">Purchase Order</a>
-                <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
-            <?php elseif ($role == 'Staff'): ?>
-                <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
+            <!-- Role-based sidebar links -->
+            <?php if ($department == 'Finance'): ?>
+                <?php if ($role == 'Manager'): ?>
+                    <a href="#" class="sidebar-link" id="purchase-order-link">Purchase Order</a>
+                    <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
+                <?php elseif ($role == 'Staff'): ?>
+                    <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
+                <?php endif; ?>
+            <?php elseif ($department == 'Inventory'): ?>
+                <?php if ($role == 'Manager'): ?>
+                    <a href="#" class="sidebar-link" id="withdrawal-deposit-link">Withdrawal & Deposit</a>
+                    <a href="#" class="sidebar-link" id="purchase-request-link">Purchase Request</a>
+                <?php elseif ($role == 'Staff'): ?>
+                    <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
+                <?php endif; ?>
+            <?php elseif ($department == 'Labor'): ?>
+                <?php if ($role == 'Manager'): ?>
+                    <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
+                <?php elseif ($role == 'Staff'): ?>
+                    <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
+                <?php endif; ?>
             <?php endif; ?>
-        <?php elseif ($department == 'Inventory'): ?>
-            <?php if ($role == 'Manager'): ?>
-                <a href="#" class="sidebar-link" id="withdrawal-deposit-link">Withdrawal & Deposit</a>
-                <a href="#" class="sidebar-link" id="purchase-request-link">Purchase Request</a>
-            <?php elseif ($role == 'Staff'): ?>
-                <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-            <?php endif; ?>
-        <?php elseif ($department == 'Labor'): ?>
-            <?php if ($role == 'Manager'): ?>
-                <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
-            <?php elseif ($role == 'Staff'): ?>
-                <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-            <?php endif; ?>
-        <?php endif; ?>
+        </div>
 
         <a href="logout.php" class="sidebar-link text-danger">Logout</a>
+        <div class="user-dropdown">
+            <div class="user-profile" id="userProfileButton">
+                <img src="default-avatar.png" class="avatar" alt="User avatar">
+                <div class="user-info">
+                    <div class="username"><?= htmlspecialchars($_SESSION['username']) ?></div>
+                    <div class="email"><?= htmlspecialchars($_SESSION['emp_email']) ?></div>
+                </div>
+                <span class="dropdown-arrow">▾</span>
+            </div>
+            
+            <div class="dropdown-menu" id="userDropdownMenu">
+                <a href="#" class="dropdown-item">Account</a>
+                <a href="#" class="dropdown-item">Billing</a>
+                <a href="#" class="dropdown-item">Notifications</a>
+                <div class="dropdown-divider"></div>
+                <a href="logout.php" class="dropdown-item text-danger">Log out</a>
+            </div>
+        </div>
     </div>
 
     <div id="content">
+        <button class="navbar-toggler" id="sidebarToggle">
+            <span class="navbar-toggler-icon">☰</span>
+        </button>
         <h3>Welcome to your dashboard!</h3>
         <p>Select an option from the sidebar to proceed.</p>
     </div>
@@ -120,6 +321,51 @@ $department = $_SESSION['department'];
             $('#requisition-form-link').click(function (e) {
                 e.preventDefault();
                 loadContent('requisition_form');
+            });
+
+            // Add this to your existing JavaScript
+            $('#userProfileButton').click(function(e) {
+                e.stopPropagation();
+                $('#userDropdownMenu').toggleClass('show');
+            });
+
+            // Close dropdown when clicking outside
+            $(document).click(function(e) {
+                if (!$(e.target).closest('.user-dropdown').length) {
+                    $('#userDropdownMenu').removeClass('show');
+                }
+            });
+
+            // Add overlay div to body
+            $('body').append('<div class="sidebar-overlay"></div>');
+
+            // Toggle sidebar
+            $('#sidebarToggle').click(function(e) {
+                e.preventDefault();
+                $('#sidebar').toggleClass('active');
+                $('.sidebar-overlay').toggleClass('active');
+            });
+
+            // Close sidebar when clicking overlay
+            $('.sidebar-overlay').click(function() {
+                $('#sidebar').removeClass('active');
+                $('.sidebar-overlay').removeClass('active');
+            });
+
+            // Close sidebar when clicking a link (for mobile)
+            $('.sidebar-link').click(function() {
+                if (window.innerWidth <= 768) {
+                    $('#sidebar').removeClass('active');
+                    $('.sidebar-overlay').removeClass('active');
+                }
+            });
+
+            // Handle window resize
+            $(window).resize(function() {
+                if (window.innerWidth > 768) {
+                    $('#sidebar').removeClass('active');
+                    $('.sidebar-overlay').removeClass('active');
+                }
             });
         });
     </script>

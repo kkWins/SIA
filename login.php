@@ -46,18 +46,18 @@ if (isset($_SESSION['loggedIn']) && $_SESSION['loggedIn'] === true) {
                     type: 'POST',
                     data: { username: username, password: password },
                     success: function(response) {
-    console.log(response);  // Log the raw response to check its format
-    try {
-        let data = JSON.parse(response);
-        if (data.status === 'success') {
-            window.location.href = 'index.php';
-        } else {
-            $("#error-message").text(data.message).removeClass('d-none');
-        }
-    } catch (e) {
-        console.error("Failed to parse JSON:", e);
-    }
-},
+                        console.log(response);  // Log the raw response to check its format
+                        try {
+                            let data = JSON.parse(response);
+                            if (data.status === 'success') {
+                                window.location.href = 'index.php';
+                            } else {
+                                $("#error-message").text(data.message).removeClass('d-none');
+                            }
+                        } catch (e) {
+                            console.error("Failed to parse JSON:", e);
+                        }
+                    },
                     error: function() {
                         alert('Error occurred during login. Please try again later.');
                     }
