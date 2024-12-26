@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['items'], $_POST['quan
     $servername = "localhost";
     $db_username = "root";  // Use your database username
     $db_password = "";      // Use your database password
-    $database = "moonlight_dbs"; // Use your database name
+    $database = "moonlight_db"; // Use your database name
 
     // Create database connection
     $connection = new mysqli($servername, $db_username, $db_password, $database);

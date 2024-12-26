@@ -5,7 +5,7 @@ session_start();
 $servername = "localhost";
 $db_username = "root";
 $db_password = ""; // Use your database password if set
-$database = "moonlight_dbs";
+$database = "moonlight_db";
 
 $response = ['status' => 'error', 'message' => 'Invalid username or password'];
 
