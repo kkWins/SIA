@@ -312,8 +312,32 @@ $department = $_SESSION['department'];
 
     <script>
         $(document).ready(function () {
+            // Get URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const content = urlParams.get('content');
+            const reqId = urlParams.get('req_id');
+
+            // If there are URL parameters, load the appropriate content
+            if (content) {
+                loadContent(content);
+            }
+
             function loadContent(content) {
-                $.get('load_content.php', { content: content }, function (response) {
+                // Modify the loadContent function to handle req_id parameter
+                const reqId = urlParams.get('req_id');
+                const params = { content: content };
+                
+                // Add req_id to params if it exists
+                if (reqId && content === 'requisition_approval') {
+                    params.req_id = reqId;
+                    // Update URL with both parameters
+                    history.pushState({}, '', `?content=${content}&req_id=${reqId}`);
+                } else {
+                    // Update URL with just the content parameter
+                    history.pushState({}, '', `?content=${content}`);
+                }
+
+                $.get('load_content.php', params, function (response) {
                     $('#content').html(response);
                 });
             }
@@ -326,6 +350,8 @@ $department = $_SESSION['department'];
 
             $('#requisition-approval-link').click(function (e) {
                 e.preventDefault();
+                // Remove req_id from URL when clicking the main requisition approval link
+                urlParams.delete('req_id');
                 loadContent('requisition_approval');
             });
 

@@ -40,7 +40,7 @@ if ($result1->num_rows > 0) {
         il.IT_DESCRIPTION AS description
     FROM ITEM_LIST il
     JOIN INVENTORY i ON il.INV_ID = i.INV_ID
-    WHERE il.RF_ID = " . $row['PRF_ID'];
+    WHERE il.PRF_ID = " . $row['PRF_ID'];
 
     $result2 = $connection->query($sql);
 
