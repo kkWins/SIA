@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['loggedIn']) || !$_SESSION['loggedIn']) {
-    echo "<h3>You are not authorized to view this content.</h3>";
+    header('Location: login.php');
     exit;
 }
 
