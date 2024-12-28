@@ -66,29 +66,25 @@ if (isset($_GET['req_id'])) {
         $response = ['items' => ''];
     }
 } else {
-    // Query for list view
+    // Query for list view - modified to use GROUP BY
     $sql = "SELECT 
-    CONCAT(e.EMP_FNAME, ' ', e.EMP_MNAME, ' ', e.EMP_LNAME) AS Employee_Name,
-    e.DEPT_ID AS Department_ID,
-    prf.PRF_ID AS Requisition_ID,
-    prf.PRF_DATE AS Submitted_Date,
-    prf.PRF_STATUS AS Requisition_Status,
-    prf.PRF_TYPE AS Requisition_Type,
-    il.IT_ID AS Item_ID,
-    il.IT_DESCRIPTION AS Item_Description,
-    il.IT_QUANTITY AS Item_Quantity,
-    il.IT_DATE AS Item_Request_Date
-FROM 
-    item_list il
-JOIN 
-    purchase_or_requisition_form prf ON il.PRF_ID = prf.PRF_ID
-JOIN 
-    employee e ON prf.EMP_ID = e.EMP_ID
-JOIN 
-    department d ON e.DEPT_ID = d.DEPT_ID
-WHERE 
-    prf.PRF_STATUS = 'pending' 
-    AND e.DEPT_ID = 3;";
+        CONCAT(e.EMP_FNAME, ' ', e.EMP_MNAME, ' ', e.EMP_LNAME) AS Employee_Name,
+        e.DEPT_ID AS Department_ID,
+        prf.PRF_ID AS Requisition_ID,
+        prf.PRF_DATE AS Submitted_Date,
+        prf.PRF_STATUS AS Requisition_Status,
+        prf.PRF_TYPE AS Requisition_Type
+    FROM 
+        purchase_or_requisition_form prf
+    JOIN 
+        employee e ON prf.EMP_ID = e.EMP_ID
+    JOIN 
+        department d ON e.DEPT_ID = d.DEPT_ID
+    WHERE 
+        prf.PRF_STATUS = 'pending' 
+        AND e.DEPT_ID = 3
+    GROUP BY 
+        prf.PRF_ID;";
 
     $result = $connection->query($sql);
     $response = [];
