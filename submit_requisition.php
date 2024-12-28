@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['items'], $_POST['quan
             $quantity = $_POST['quantities'][$index];
             $reason = $_POST['reasons'][$index];
 
-            $stmt = $connection->prepare("INSERT INTO item_list (IT_QUANTITY, IT_DATE, IT_DESCRIPTION, INV_ID, RF_ID) VALUES (?, ?, ?, ?, ?)");
+            $stmt = $connection->prepare("INSERT INTO item_list (IT_QUANTITY, IT_DATE, IT_DESCRIPTION, INV_ID, PRF_ID) VALUES (?, ?, ?, ?, ?)");
             $it_date = date("Y-m-d");
             $stmt->bind_param("issii", $quantity, $it_date, $reason, $itemId, $prf_id);
             $stmt->execute();
