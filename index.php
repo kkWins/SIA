@@ -264,6 +264,7 @@ $department = $_SESSION['department'];
             <?php elseif ($department == 'Inventory'): ?>
                 <?php if ($role == 'Manager'): ?>
                     <a href="#" class="sidebar-link" id="withdrawal-deposit-link">Withdrawal & Deposit</a>
+                    <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
                     <a href="#" class="sidebar-link" id="purchase-request-link">Purchase Request</a>
                     <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
                     <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a> 
