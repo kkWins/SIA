@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         E.EMP_PASSWORD,
                                         E.EMP_POSITION,
                                         D.DEPT_NAME,
+                                        D.DEPT_ID,
                                         E.EMP_EMAIL
                                     FROM EMPLOYEE E
                                     JOIN DEPARTMENT D
@@ -48,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['username'] = $user['EMP_NAME'];
         $_SESSION['role'] = $user['EMP_POSITION'];
         $_SESSION['department'] = $user['DEPT_NAME'];
+        $_SESSION['department_id'] = $user['DEPT_ID'];
         $_SESSION['emp_email'] = $user['EMP_EMAIL'];
 
         $response = ['status' => 'success', 'message' => 'Login successful'];

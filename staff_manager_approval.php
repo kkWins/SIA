@@ -34,7 +34,7 @@ if (isset($_GET['req_id'])) {
     JOIN
         inventory i ON il.INV_ID = i.INV_ID
     WHERE 
-        prf.PRF_ID = ? AND e.DEPT_ID = 3;";
+        prf.PRF_ID = ? AND e.DEPT_ID = $dept_id;";
 
     $stmt = $connection->prepare($sql);
     $stmt->bind_param("s", $_GET['req_id']);
@@ -72,8 +72,7 @@ if (isset($_GET['req_id'])) {
         e.DEPT_ID AS Department_ID,
         prf.PRF_ID AS Requisition_ID,
         prf.PRF_DATE AS Submitted_Date,
-        prf.PRF_STATUS AS Requisition_Status,
-        prf.PRF_TYPE AS Requisition_Type
+        prf.PRF_STATUS AS Requisition_Status
     FROM 
         purchase_or_requisition_form prf
     JOIN 
@@ -82,7 +81,7 @@ if (isset($_GET['req_id'])) {
         department d ON e.DEPT_ID = d.DEPT_ID
     WHERE 
         prf.PRF_STATUS = 'pending' 
-        AND e.DEPT_ID = 3
+        AND e.DEPT_ID = $dept_id
     GROUP BY 
         prf.PRF_ID;";
 

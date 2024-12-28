@@ -9,6 +9,7 @@ if (!isset($_SESSION['loggedIn']) || !$_SESSION['loggedIn']) {
 
 // Get the content from the URL parameter
 $content = $_GET['content'] ?? '';
+$dept_id = $_SESSION['department_id'];
 
 // Get user role and department from the session
 $role = $_SESSION['role'];
@@ -125,8 +126,13 @@ if ($content === 'purchase_order') {
     }
 } elseif ($content === 'purchase_request') {
     if ($conca === 'Inventory Manager') {
-        echo "<h2>Purchase Request</h2>
-              <p>Manage purchase requests here.</p>";
+        echo "<h2>Purchase Request and Purchase Order</h2>
+              <p>Manage PR and PO here.</p>
+              
+              
+              
+              
+              ";
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
