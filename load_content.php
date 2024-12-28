@@ -125,14 +125,225 @@ if ($content === 'purchase_order') {
     }
 } elseif ($content === 'purchase_request') {
     if ($conca === 'Inventory Manager') {
-        echo "<h2>Purchase Request</h2>
-              <p>Manage purchase requests here.</p>";
+                echo "
+                <h2>Purchase Request</h2>
+                <p>Please fill out the requisition form below.</p>
+                <h3>Table</h3>
+                <table class='table'>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id='requisition-table-body'>
+                        <tr>
+                            <td>
+                                <select id='item' name='item' class='form-select'>
+                                    <option value=''>Loading items...</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type='number' id='quantity' name='quantity' class='form-control' min='1'>
+                            </td>
+                            <td>
+                                <textarea id='reason' name='reason' class='form-control'></textarea>
+                            </td>
+                            <td>
+                                <button type='button' class='btn btn-primary' id='add-row'>Add Item</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Added Items</h3>
+                <table class='table'>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Quantity</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id='added-items'>
+                        <!-- Dynamically added rows will appear here -->
+                    </tbody>
+                </table>
+
+                <button type='button' id='submit-form' class='btn btn-success'>Submit Requisition</button>
+
+                <!-- Modal for displaying submitted requisition -->
+                <div class='modal' id='itemsModal' tabindex='-1' role='dialog' aria-labelledby='itemsModalLabel' aria-hidden='true'>
+                    <div class='modal-dialog' role='document'>
+                        <div class='modal-content'>
+                            <div class='modal-header'>
+                                <h5 class='modal-title' id='itemsModalLabel'>Submitted Requisition</h5>
+                                <button type='button' class='close' id='close-modal' aria-label='Close'>
+                                    <span aria-hidden='true'>&times;</span>
+                                </button>
+                            </div>
+                            <div class='modal-body'>
+                                <h4>The following items were selected:</h4>
+                                <ul id='itemsList'>
+                                    <!-- Items will be added here dynamically -->
+                                </ul>
+                            </div>
+                            <div class='modal-footer'>
+                                <button type='button' class='btn btn-secondary' id='close-modal-footer'>Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                $(document).ready(function() {
+                    // Populate dropdown with inventory items
+                    $.ajax({
+                        url: 'get_inventory.php',
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function(items) {
+                            const \$dropdown = $('#item');
+                            \$dropdown.empty(); // Clear existing options
+                            \$dropdown.append('<option value=\"\">Select Item</option>'); // Default option
+
+                            if (items.length > 0) {
+                                items.forEach(function(item) {
+                                    \$dropdown.append('<option value=\"' + item.id + '\" data-name=\"' + item.name + '\">' + item.name + '</option>');
+                                });
+                            } else {
+                                alert('No items found in inventory.');
+                            }
+                        },
+                        error: function() {
+                            alert('Error fetching inventory items. Please try again.');
+                            $('#item').append('<option value=\"\">Error loading items</option>');
+                        }
+                    });
+
+                    // Add row to table dynamically
+                    $('#add-row').click(function() {
+                        var itemID = $('#item').val();
+                        var itemName = $('#item option:selected').data('name');
+                        var quantity = $('#quantity').val();
+                        var reason = $('#reason').val();
+
+                        if (itemID && itemName && quantity && reason) {
+                            var newRow = '<tr>';
+                            newRow += '<td data-id=\"' + itemID + '\">' + itemName + '</td>'; // Display name, store ID
+                            newRow += '<td>' + quantity + '</td>';
+                            newRow += '<td>' + reason + '</td>';
+                            newRow += '<td><button class=\"btn btn-danger btn-sm delete-row\">Delete</button></td>';
+                            newRow += '</tr>';
+
+                            // Append the new row to the added items table
+                            $('#added-items').append(newRow);
+
+                            // Remove the item from the dropdown
+                            $('#item option[value=\"' + itemID + '\"]').remove();
+
+                            // Clear the form fields after adding
+                            $('#item').val('');
+                            $('#quantity').val('');
+                            $('#reason').val('');
+                        } else {
+                            alert('Please fill out all fields before adding an item.');
+                        }
+                    });
+
+                    // Delete a row from the added items table
+                    $(document).on('click', '.delete-row', function() {
+                        var \$row = $(this).closest('tr');
+                        var itemID = \$row.find('td:first').data('id');
+                        var itemName = \$row.find('td:first').text();
+
+                        // Add the removed item back to the dropdown
+                        $('#item').append('<option value=\"' + itemID + '\" data-name=\"' + itemName + '\">' + itemName + '</option>');
+
+                        // Remove the row from the table
+                        \$row.remove();
+                    });
+
+                    // Submit the requisition form
+                    $('#submit-form').click(function() {
+                        var items = [];
+                        var quantities = [];
+                        var reasons = [];
+
+                        $('#added-items tr').each(function() {
+                            var itemID = $(this).find('td:first').data('id'); // Item ID
+                            var quantity = $(this).find('td').eq(1).text(); // Quantity
+                            var reason = $(this).find('td').eq(2).text(); // Reason
+
+                            items.push(itemID);
+                            quantities.push(quantity);
+                            reasons.push(reason);
+                        });
+                        console.log(\"prs\");
+                        if (items.length > 0) {
+                            $.ajax({
+                                url: 'submit_requisition.php',
+                                type: 'POST',
+                                data: {
+                                    reason: \"PR\",
+                                    items: items,
+                                    quantities: quantities,
+                                    reasons: reasons
+                                },
+                                success: function(response) {
+                                    console.log(response);
+                                    if (response == 1) {
+                                        $('#itemsList').empty();
+                                        for (var i = 0; i < items.length; i++) {
+                                            var itemDetail = 'ID: ' + items[i] + ', Qty: ' + quantities[i] + ', Reason: ' + reasons[i];
+                                            $('#itemsList').append('<li>' + itemDetail + '</li>');
+                                        }
+                                        // Show the modal using Bootstrap 5 API
+                                        var myModal = new bootstrap.Modal(document.getElementById('itemsModal'));
+                                        myModal.show();
+                                    } else {
+                                        alert('Error occurred during submission. Please try again.');
+                                    }
+                                },
+                                error: function() {
+                                    alert('Error occurred during submission. Please try again.');
+                                }
+                            });
+                        } else {
+                            alert('No items have been added to the requisition.');
+                        }
+                    });
+
+                    $('#close-modal').click(function() {
+                        $('#itemsModal').modal('hide');
+                    });
+
+                    $('#close-modal-footer').click(function() {
+                        $('#itemsModal').modal('hide');
+                    });
+
+                    $('#itemsModal').on('hidden.bs.modal', function () {
+                        // Clear added items and reset dropdown
+                        $('#added-items').empty();
+                        $('#item').val('');
+                        $('#quantity').val('');
+                        $('#reason').val('');
+
+                        // Refresh the page after the modal is closed
+                        location.reload();
+                    });
+                });
+                </script>
+            ";
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
 } elseif ($content === 'requisition_history') {
     echo "<h2>Requisition History</h2>";
-
+    
 } elseif ($content === 'requisition_form') {
     // Before executing echo, perform the check for previous requisition
     include('check_prev_req.php'); // Assuming the check is done in the included file
@@ -143,8 +354,9 @@ if ($content === 'purchase_order') {
     if ($response['prf_status'] == 'Pending') {
         // If there's a pending request, display it
         echo "<h2>Pending Requisition</h2>
-              <h4>Status: " . $response['prf_status'] . "</h4>";
-
+              <h4>Status: " . $response['prf_status'] . "</h4>
+              ";
+                
         // Display the items in a Bootstrap table, now wrapped in a card
         echo "
         <h3>Pending Items</h3>
@@ -170,8 +382,42 @@ if ($content === 'purchase_order') {
 
         echo "</tbody></table>
         </div>";  // Close card div
-        echo "<button>edit </button>";
-        echo "<button>delete </button>";
+        echo '<button class="deleteBtn" data-prf-id="' . $response['prf_id'] . '">Delete</button>';
+        echo"
+            <script>
+            $(document).ready(function(){
+            
+                $(\".deleteBtn\").on('click',function(){
+                var prfId = $(this).data(\"prf-id\");
+                $.post(\"delete_pending_requisition.php\", { prf_id: prfId }, function(response) {
+                    console.log(response);
+                    if (response == 1) {
+                        alert(\"Record successfully deleted!\");
+                        location.reload();
+                    } else if(response == 2) {
+                        alert(\"Your Request has already been approved\");
+                        location.reload();
+                    }else if(response == 3) {
+                        alert(\"Your Request has already been rejected\");
+                        location.reload();
+                    }else{
+                        alert(\"Your requisition is not found\")
+                        location.reload();
+                    }
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    
+                    alert(\"Failed to delete. Please try again.\");
+                });
+                
+                
+                });
+            
+            });
+            
+            
+            </script>
+        ";
+
     } else {
         // No pending requisition, show the requisition form
         echo "
@@ -331,12 +577,13 @@ if ($content === 'purchase_order') {
                     quantities.push(quantity);
                     reasons.push(reason);
                 });
-
+               
                 if (items.length > 0) {
                     $.ajax({
                         url: 'submit_requisition.php',
                         type: 'POST',
                         data: {
+                            reason: \"RF\",
                             items: items,
                             quantities: quantities,
                             reasons: reasons
@@ -371,17 +618,35 @@ if ($content === 'purchase_order') {
 
             $('#close-modal-footer').click(function() {
                 $('#itemsModal').modal('hide');
+
+                $.ajax({
+                    url: 'check_role.php', // PHP file that checks the session role
+                    method: 'GET',
+                    success: function(response) {
+                        if (response === 'Staff') {
+                            location.reload(); // Reload the page if the role is 'staff'
+                        }
+                    }
+                });
             });
 
             $('#itemsModal').on('hidden.bs.modal', function () {
-                // Clear added items and reset dropdown
+                // Return added items to the dropdown
+                $('#added-items tr').each(function() {
+                    var itemID = $(this).find('td:first').data('id'); // Item ID
+                    var itemName = $(this).find('td:first').text(); // Item Name
+                    
+                    // Add the item back to the dropdown
+                    $('#item').append('<option value=\"' + itemID + '\" data-name=\"' + itemName + '\">' + itemName + '</option>');
+                });
+
+                // Clear added items table
                 $('#added-items').empty();
+
+                // Reset input fields
                 $('#item').val('');
                 $('#quantity').val('');
                 $('#reason').val('');
-
-                // Refresh the page after the modal is closed
-                location.reload();
             });
         });
         </script>

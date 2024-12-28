@@ -36,6 +36,9 @@ $department = $_SESSION['department'];
             flex-direction: column;
             height: 100vh; /* Full height */
         }
+        #itemsModal{
+            color: #1C1C1C;
+        }
         #content {
             flex-grow: 1;
             padding: 20px;
@@ -411,6 +414,7 @@ $department = $_SESSION['department'];
                     $('.sidebar-overlay').removeClass('active');
                 }
             });
+
 
             // Handle window resize
             $(window).resize(function() {

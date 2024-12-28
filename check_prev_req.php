@@ -56,6 +56,7 @@ if ($result1->num_rows > 0) {
         
         // Store the response data
         $response = [
+            'prf_id' => $row['PRF_ID'],
             'prf_status' => $row['PRF_STATUS'], // Include the PRF status from the first query
             'items' => $items // Include the list of items
         ];
