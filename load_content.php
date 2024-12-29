@@ -180,8 +180,8 @@ if ($content === 'purchase_order') {
                         </table>
                         
                         <div class='mt-3'>
-                            <button class='btn btn-danger' id='rejectBtn' data-id='{$_GET['req_id']}'>Reject</button>
-                            <button class='btn btn-success' id='approveBtn' data-id='{$_GET['req_id']}'>Approve</button>
+                            <button class='btn btn-danger' id='rejectBtn' data-id='{$_GET['req_id']}'>Cancel</button>
+                            <button class='btn btn-success' id='approveBtn' data-id='{$_GET['req_id']}'>Send</button>
                         </div>
                     </div>";
             }else{
