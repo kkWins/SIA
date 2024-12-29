@@ -24,7 +24,7 @@ $department = $_SESSION['department'];
             display: flex;
             height: 100vh;
             overflow: hidden;
-            background-color: #343a40; /* Dark background */
+            background-color: #fefefe; /* Dark background */
         }
         #sidebar {
             width: 250px;
@@ -40,7 +40,7 @@ $department = $_SESSION['department'];
             flex-grow: 1;
             padding: 20px;
             overflow-y: auto;
-            color: #ffffff; /* White text for content */
+            color: #000000; /* White text for content */
         }
         .sidebar-link {
             display: block;
@@ -265,6 +265,7 @@ $department = $_SESSION['department'];
                 <?php if ($role == 'Manager'): ?>
                     <a href="#" class="sidebar-link" id="withdrawal-deposit-link">Withdrawal & Deposit</a>
                     <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
+                    <a href="#" class="sidebar-link" id="approved-requisitions-link">Approved Requisitions</a>
                     <a href="#" class="sidebar-link" id="purchase-request-link">Purchase Request</a>
                     <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
                     <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a> 
@@ -324,17 +325,19 @@ $department = $_SESSION['department'];
             }
 
             function loadContent(content) {
-                // Modify the loadContent function to handle req_id parameter
-                const reqId = urlParams.get('req_id');
+                // Only include req_id in params if it exists AND we're on specific pages
                 const params = { content: content };
                 
-                // Add req_id to params if it exists
-                if (reqId && content === 'requisition_approval') {
-                    params.req_id = reqId;
-                    // Update URL with both parameters
-                    history.pushState({}, '', `?content=${content}&req_id=${reqId}`);
+                if (content === 'requisition_approval' || content === 'approved_requisitions') {
+                    const reqId = urlParams.get('req_id');
+                    // Only add req_id if it's not null
+                    if (reqId) {
+                        params.req_id = reqId;
+                        history.pushState({}, '', `?content=${content}&req_id=${reqId}`);
+                    } else {
+                        history.pushState({}, '', `?content=${content}`);
+                    }
                 } else {
-                    // Update URL with just the content parameter
                     history.pushState({}, '', `?content=${content}`);
                 }
 
@@ -356,6 +359,11 @@ $department = $_SESSION['department'];
                 loadContent('requisition_approval');
             });
 
+            $('#approved-requisitions-link').click(function (e) {
+                e.preventDefault();
+                urlParams.delete('req_id');
+                loadContent('approved_requisitions');
+            });
             $('#withdrawal-deposit-link').click(function (e) {
                 e.preventDefault();
                 loadContent('withdrawal_deposit');

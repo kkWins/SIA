@@ -136,6 +136,100 @@ if ($content === 'purchase_order') {
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
+} elseif ($content === 'approved_requisitions') {
+    if ($conca === 'Inventory Manager') {
+        echo "<h2>List of Approved Requisitions</h2>";
+        // Check if we're viewing details of a specific requisition
+        if (isset($_GET['req_id'])) {
+            include('manager_inv_approved_req.php');
+            // Display detailed view
+            if($response['items']){
+                echo "
+                    <div class='card rounded-4 p-4'>
+                        <h3>Requisition ID {$_GET['req_id']}</h3>
+                        <div class='row mb-3'>
+                            <div class='col-md-6'>
+                                <p><strong>Name:</strong> {$response['employee_name']}</p>
+                                <p><strong>Contact no:</strong> {$response['contact_no']}</p>
+                            </div>
+                            <div class='col-md-6'>
+                                <p><strong>Date of Request:</strong> {$response['date']}</p>
+                                <p><strong>Department:</strong> {$response['department']}</p>
+                            </div>
+                        </div>
+                        
+                        <table class='table'>
+                            <thead>
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Description</th>
+                                    <th>Quantity/Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>";
+                            
+                    foreach ($response['items'] as $item) {
+                        echo "<tr>
+                                <td>" . htmlspecialchars($item['item_name']) . "</td>
+                                <td>" . htmlspecialchars($item['description']) . "</td>
+                                <td>" . htmlspecialchars($item['quantity'] . "/" . $item['stock']) . "</td>
+                            </tr>";
+                    }
+                            
+                    echo "</tbody>
+                        </table>
+                        
+                        <div class='mt-3'>
+                            <button class='btn btn-danger' id='rejectBtn' data-id='{$_GET['req_id']}'>Reject</button>
+                            <button class='btn btn-success' id='approveBtn' data-id='{$_GET['req_id']}'>Approve</button>
+                        </div>
+                    </div>";
+            }else{
+                echo 'Requisition not found';
+            }
+            
+        } else {
+            // Show list view
+            include('manager_inv_approved_req.php');
+            
+            if (!isset($response['status'])) {
+                echo "
+                <div class='card rounded-4 p-4'>
+                    <table class='table' id='requisitions-table'>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Requester Name</th>
+                                <th>Submitted Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+                
+                foreach ($response as $req) {
+                    echo "<tr>
+                            <td>" . htmlspecialchars($req['requisition_id']) . "</td>
+                            <td>" . htmlspecialchars($req['employee_name']) . "</td>
+                            <td>" . htmlspecialchars($req['submitted_date']) . "</td>
+                            <td>
+                                <a href='?content=approved_requisitions&req_id=" . $req['requisition_id'] . "' 
+                                class='btn btn-sm btn-primary'>
+                                    <i class='fas fa-eye'></i> View
+                                </a>
+                            </td>
+                        </tr>";
+                }
+                
+                echo "</tbody>
+                    </table>
+                </div>";
+            } else {
+                echo "<h3>No pending requisitions found.</h3>";
+            }
+        }
+    } else {
+        echo "<h3>You do not have access to this content.</h3>";
+    }
 } elseif ($content === 'requisition_history') {
     echo "<h2>Requisition History</h2>";
 
