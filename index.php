@@ -318,6 +318,7 @@ $department = $_SESSION['department'];
             const urlParams = new URLSearchParams(window.location.search);
             const content = urlParams.get('content');
             const reqId = urlParams.get('req_id');
+            const prId = urlParams.get('pr_id');
 
             // If there are URL parameters, load the appropriate content
             if (content) {
@@ -328,13 +329,16 @@ $department = $_SESSION['department'];
                 // Only include req_id in params if it exists AND we're on specific pages
                 const params = { content: content };
                 
-                if (content === 'requisition_approval' || content === 'approved_requisitions') {
-                    const reqId = urlParams.get('req_id');
+                if (content === 'requisition_approval' || content === 'approved_requisitions' || content === 'purchase_request') {
+
                     // Only add req_id if it's not null
                     if (reqId) {
                         params.req_id = reqId;
                         history.pushState({}, '', `?content=${content}&req_id=${reqId}`);
-                    } else {
+                    }else if(reqId){
+                        params.pr_id = prId;
+                        history.pushState({}, '', `?content=${content}&pr_id=${prId}`);
+                    }else {
                         history.pushState({}, '', `?content=${content}`);
                     }
                 } else {

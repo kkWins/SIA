@@ -96,21 +96,21 @@ if ($content === 'purchase_order') {
                     </thead>
                     <tbody>";
             
-            foreach ($response as $req) {
-                echo "<tr>
-                        <td>" . htmlspecialchars($req['requisition_id']) . "</td>
-                        <td>" . htmlspecialchars($req['employee_name']) . "</td>
-                        <td>" . htmlspecialchars($req['submitted_date']) . "</td>
-                        <td>
-                            <a href='?content=requisition_approval&req_id=" . $req['requisition_id'] . "' 
-                               class='btn btn-sm btn-primary'>
-                                <i class='fas fa-eye'></i> View
-                            </a>
-                        </td>
-                    </tr>";
-            }
+                    foreach ($response as $req) {
+                        echo "<tr>
+                                <td>" . htmlspecialchars($req['requisition_id']) . "</td>
+                                <td>" . htmlspecialchars($req['employee_name']) . "</td>
+                                <td>" . htmlspecialchars($req['submitted_date']) . "</td>
+                                <td>
+                                    <a href='?content=requisition_approval&req_id=" . $req['requisition_id'] . "' 
+                                    class='btn btn-sm btn-primary'>
+                                        <i class='fas fa-eye'></i> View
+                                    </a>
+                                </td>
+                            </tr>";
+                        }
             
-            echo "</tbody>
+                    echo "</tbody>
                 </table>
             </div>";
         } else {
@@ -125,14 +125,276 @@ if ($content === 'purchase_order') {
         echo "<h3>You do not have access to this content.</h3>";
     }
 } elseif ($content === 'purchase_request') {
+    include('manager_inv_pr.php');
     if ($conca === 'Inventory Manager') {
         echo "<h2>Purchase Request and Purchase Order</h2>
-              <p>Manage PR and PO here.</p>
-              
-              
-              
-              
-              ";
+
+                    <button type='button' class='btn btn-primary mb-3' data-bs-toggle='modal' data-bs-target='#purchaseRequestModal'>
+                        Create Purchase Request
+                    </button>
+
+                    
+
+                    
+                    <!-- Purchase Request Modal -->
+                    <div class='modal fade' id='purchaseRequestModal' tabindex='-1' aria-labelledby='purchaseRequestModalLabel' aria-hidden='true'>
+                        <div class='modal-dialog modal-lg'>
+                            <div class='modal-content'>
+                                    <div class='modal-header'>
+                                        <h5 class='modal-title' id='purchaseRequestModalLabel'>Create Purchase Request</h5>
+                                        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                                    </div>
+                                    <div class='modal-body'>
+                                        <form id='purchaseRequestForm'>
+                                            <div class='mb-3'>
+                                                <label for='vendor' class='form-label'>Select Vendor</label>
+                                                <select class='form-select vendor-select' id='vendor' required>
+                                                    <option value=''>Select Vendor</option>
+                                                </select>
+                                            </div>
+                                            
+                                            <table class='table' id='prItems'>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Item</th>
+                                                        <th>Quantity</th>
+                                                        <th>Unit Price</th>
+                                                        <th>Total Price</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>
+                                                            <select class='form-select item-select'>
+                                                                <option value=''>Select Item</option>
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <input type='number' class='form-control quantity' min='1'>
+                                                        </td>
+                                                        <td>
+                                                            <input type='number' class='form-control price' min='0' step='0.01'>
+                                                        </td>
+                                                        <td class='total'>0.00</td>
+                                                        <td>
+                                                            <button type='button' class='btn btn-danger btn-sm delete-row'>Delete</button>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                                <tfoot>
+                                                    <tr>
+                                                        <td colspan='3' class='text-end'><strong>Grand Total:</strong></td>
+                                                        <td id='grandTotal'>0.00</td>
+                                                        <td></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan='4'>
+                                                            <button type='button' class='btn btn-success btn-sm' id='addNewRow'>
+                                                                <i class='fas fa-plus'></i> Add Another Item
+                                                            </button>
+                                                        </td>
+                                                        <td></td>
+                                                    </tr>
+                                                    
+                                                </tfoot>
+                                            </table>
+                                        </form>
+                                    </div>
+                                    <div class='modal-footer'>
+                                        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                        <button type='button' class='btn btn-primary' id='submitPR'>Submit Purchase Request</button>
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+              <script>
+              $(document).ready(function() {
+                  // Load vendors
+                  $.ajax({
+                      url: 'get_vendors.php',
+                      type: 'GET',
+                      success: function(response) {
+                          try {
+                              const data = JSON.parse(response);
+                              data.forEach(function(vendor) {
+                                  $('#vendor').append(\"<option value='\" + vendor.id + \"'>\" + vendor.name + \"</option>\");
+                              });
+                          } catch(e) {
+                              console.error('Error parsing JSON:', e);
+                          }
+                      },
+                      error: function(xhr, status, error) {
+                          console.error('Ajax Error:', error);
+                      }
+                  });
+
+                  // Load inventory items
+                  $.ajax({
+                      url: 'get_inventory.php',
+                      type: 'GET',
+                      success: function(data) {
+                          const items = JSON.parse(data);
+                          const options = items.map(function(item) {
+                              return '<option value=\"' + item.id + '\">' + item.name + '</option>';
+                          }).join('');
+                          $('.item-select').append(options);
+                      }
+                  });
+
+                  // Calculate total price
+                  function calculateTotal(row) {
+                      const quantity = parseFloat(row.find('.quantity').val()) || 0;
+                      const price = parseFloat(row.find('.price').val()) || 0;
+                      const total = quantity * price;
+                      row.find('.total').text(total.toFixed(2));
+                      calculateGrandTotal();
+                  }
+
+                  // Calculate grand total
+                  function calculateGrandTotal() {
+                      let grandTotal = 0;
+                      $('#prItems tbody tr').each(function() {
+                          grandTotal += parseFloat($(this).find('.total').text()) || 0;
+                      });
+                      $('#grandTotal').text(grandTotal.toFixed(2));
+                  }
+
+                  // Add new row
+                  $(document).on('click', '.add-row', function() {
+                      const row = $(this).closest('tr');
+                      if (row.find('.item-select').val() && 
+                          row.find('.quantity').val() && 
+                          row.find('.price').val()) {
+                          
+                          const newRow = row.clone();
+                          newRow.find('.add-row')
+                               .removeClass('btn-primary add-row')
+                               .addClass('btn-danger delete-row')
+                               .text('Delete');
+                          row.find('input, select').val('');
+                          row.find('.total').text('0.00');
+                          $('#prItems tbody').append(newRow);
+                      }
+                  });
+
+                  // Delete row
+                  $(document).on('click', '.delete-row', function() {
+                      $(this).closest('tr').remove();
+                      calculateGrandTotal();
+                  });
+
+                  // Calculate totals on input change
+                  $(document).on('input', '.quantity, .price', function() {
+                      calculateTotal($(this).closest('tr'));
+                  });
+
+                  // Submit purchase request
+                  $('#submitPR').click(function() {
+                      const vendor = $('#vendor').val();
+                      const items = [];
+                      
+                      $('#prItems tbody tr').each(function() {
+                          const item = $(this).find('.item-select').val();
+                          if (item) {
+                              items.push({
+                                  item_id: item,
+                                  quantity: $(this).find('.quantity').val(),
+                                  price: $(this).find('.price').val(),
+                                  total: $(this).find('.total').text()
+                              });
+                          }
+                      });
+
+                      if (vendor && items.length > 0) {
+                          $.ajax({
+                              url: 'submit_purchase_request.php',
+                              type: 'POST',
+                              contentType: 'application/json', // Set content type to JSON
+                              data: JSON.stringify({ // Send data as JSON string
+                                    vendor_id: vendor,
+                                    items: items,
+                                }),
+                              success: function(response) {
+                                  // Parse the response as JSON
+                                  const jsonResponse = JSON.parse(response);
+                                  if (jsonResponse.success) {
+                                      alert('Purchase request submitted successfully!');
+                                      $('#purchaseRequestModal').modal('hide');
+                                      location.reload();
+                                  } else {
+                                      alert('Error submitting purchase request.');
+                                  }
+                              }
+                          });
+                      } else {
+                          alert('Please fill in all required fields.');
+                      }
+                  });
+
+                  // Add new empty row
+                  $('#addNewRow').click(function() {
+                      var existingOptions = $('.item-select').first().html();
+                      var newRow = 
+                          '<tr>' +
+                              '<td>' +
+                                  '<select class=\'form-select item-select\'>' +
+                                      '<option value=\'\'>Select Item</option>' +
+                                      existingOptions +
+                                  '</select>' +
+                              '</td>' +
+                              '<td>' +
+                                  '<input type=\'number\' class=\'form-control quantity\' min=\'1\'>' +
+                              '</td>' +
+                              '<td>' +
+                                  '<input type=\'number\' class=\'form-control price\' min=\'0\' step=\'0.01\'>' +
+                              '</td>' +
+                              '<td class=\'total\'>0.00</td>' +
+                              '<td>' +
+                                  '<button type=\'button\' class=\'btn btn-danger btn-sm delete-row\'>Delete</button>' +
+                              '</td>' +
+                          '</tr>';
+                      $('#prItems tbody').append(newRow);
+                  });
+              });
+              </script>";
+
+              if(isset($pos)){
+                echo "
+                    <div class='card rounded-4 p-4'>
+                        <table class='table' id='requisitions-table'>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Submitted Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>";
+                    
+                            foreach ($pos as $po) {
+                                echo "<tr>
+                                        <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                        <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
+                                        <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
+                                        <td>
+                                            <a href='?content=purchase_request&req_id=" . $po['PO_ID'] . "' 
+                                            class='btn btn-sm btn-primary'>
+                                                <i class='fas fa-eye'></i> View
+                                            </a>
+                                        </td>
+                                    </tr>";
+                                }
+                    
+                            echo "</tbody>
+                        </table>
+                    </div>";
+              }else{
+                echo "No Purchase order yet.";
+              }
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
