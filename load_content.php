@@ -361,40 +361,47 @@ if ($content === 'purchase_order') {
               });
               </script>";
 
-              if(isset($pos)){
-                echo "
-                    <div class='card rounded-4 p-4'>
-                        <table class='table' id='requisitions-table'>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Submitted Date</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>";
-                    
-                            foreach ($pos as $po) {
-                                echo "<tr>
-                                        <td>" . htmlspecialchars($po['PO_ID']) . "</td>
-                                        <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
-                                        <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
-                                        <td>
-                                            <a href='?content=purchase_request&req_id=" . $po['PO_ID'] . "' 
-                                            class='btn btn-sm btn-primary'>
-                                                <i class='fas fa-eye'></i> View
-                                            </a>
-                                        </td>
-                                    </tr>";
-                                }
-                    
-                            echo "</tbody>
-                        </table>
-                    </div>";
+
+              if(isset($_GET['pr_id'])){
+                
               }else{
-                echo "No Purchase order yet.";
+                if(isset($pos)){
+                    echo "
+                        <div class='card rounded-4 p-4'>
+                            <table class='table' id='requisitions-table'>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Submitted Date</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>";
+                        
+                                foreach ($pos as $po) {
+                                    echo "<tr>
+                                            <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                            <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
+                                            <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
+                                            <td>
+                                                <a href='?content=purchase_request&req_id=" . $po['PO_ID'] . "' 
+                                                class='btn btn-sm btn-primary'>
+                                                    <i class='fas fa-eye'></i> View
+                                                </a>
+                                            </td>
+                                        </tr>";
+                                    }
+                        
+                                echo "</tbody>
+                            </table>
+                        </div>";
+                  }else{
+                    echo "No Purchase order yet.";
+                  }
               }
+
+              
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
