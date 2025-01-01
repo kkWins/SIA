@@ -136,7 +136,7 @@ if ($content === 'purchase_order') {
                   if($response['po_details']) {
                       echo "
                       <div class='card rounded-4 p-4'>
-                          <h3>Purchase Order ID {$_GET['pr_id']}</h3>
+                          <h3>Purchase Request # {$_GET['pr_id']}</h3>
                           <div class='row mb-3'>
                               <div class='col-md-6'>
                                   <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
@@ -427,6 +427,7 @@ if ($content === 'purchase_order') {
                                     <thead>
                                         <tr>
                                             <th>ID</th>
+                                            <th>Supplier</th>
                                             <th>Submitted Date</th>
                                             <th>Status</th>
                                             <th>Action</th>
@@ -446,6 +447,7 @@ if ($content === 'purchase_order') {
                                     foreach ($current_items as $po) {
                                         echo "<tr>
                                                 <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                                <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
                                                 <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
                                                 <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
                                                 <td>

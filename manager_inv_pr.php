@@ -54,7 +54,14 @@ if(isset($_GET['pr_id'])){
         'items' => $items
     ];
 } else {
-    $sql = "SELECT * FROM purchase_order";
+    $sql = "SELECT po.PO_ID, 
+    po.PO_ORDER_DATE, 
+    po.PO_STATUS, 
+    po.SP_ID, 
+    sp.SP_NAME 
+    FROM purchase_order po 
+    JOIN supplier sp ON sp.SP_ID = po.SP_ID";
+    
     $result = $db->query($sql);
     $pos = [];
     while($row = $result->fetch_assoc()){
