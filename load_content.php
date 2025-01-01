@@ -34,7 +34,7 @@ if ($content === 'purchase_order') {
         include('staff_manager_approval.php');
 
         // Display detailed view
-        if (isset($response['items']) && $response['items']) {
+        if (isset($response['items'])) {
             echo "
             <div class='card rounded-4 p-4'>
                 <h3>Requisition ID: " . htmlspecialchars($_GET['req_id']) . "</h3>
