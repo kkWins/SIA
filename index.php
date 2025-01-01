@@ -55,7 +55,6 @@ $department = $_SESSION['department'];
         }
         .sidebar-link:hover {
             background-color: #495057; /* Darker background on hover */
-            padding: 10px;
             transition: 0.3s;
         }
         .tabs h4{
