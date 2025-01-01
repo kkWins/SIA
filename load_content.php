@@ -339,6 +339,11 @@ if ($content === 'purchase_order') {
                                     }
                                 });
 
+                                $('.delete-po').click(function(){
+                                alert(1);
+                                
+                                });
+
                                 // Calculate totals on input change
                                 $(document).on('input', '.quantity, .price', function() {
                                     calculateTotal($(this).closest('tr'));
@@ -455,6 +460,11 @@ if ($content === 'purchase_order') {
                                                         data-content='purchase_request' 
                                                         data-id='" . $po['PO_ID'] . "'>
                                                         <i class='fas fa-eye'></i> View
+                                                    </a>
+                                                    <a href='#' class='btn btn-sm btn-danger delete-po' 
+                                                        data-content='purchase_request' 
+                                                        data-id='" . $po['PO_ID'] . "'>
+                                                        <i class='fas fa-eye'></i> Delete
                                                     </a>
                                                 </td>
                                             </tr>";
