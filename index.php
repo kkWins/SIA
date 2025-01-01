@@ -319,13 +319,14 @@ $department = $_SESSION['department'];
             const content = urlParams.get('content');
             const reqId = urlParams.get('req_id');
             const prId = urlParams.get('pr_id');
+            const page = urlParams.get('page');
 
             // If there are URL parameters, load the appropriate content
             if (content) {
-                loadContent(content);
+                loadContent(content, null, page);
             }
 
-            function loadContent(content, id = null) {
+            function loadContent(content, id = null, page = null) {
                 const params = { content: content };
                 let url = `?content=${content}`;
                 
@@ -340,12 +341,28 @@ $department = $_SESSION['department'];
                     }
                 }
 
+                // Add page parameter if provided
+                if (page) {
+                    params.page = page;
+                    url += `&page=${page}`;
+                }
+
                 // Update URL and load content
                 history.pushState({}, '', url);
                 $.get('load_content.php', params, function (response) {
                     $('#content').html(response);
                 });
             }
+
+            // Handle pagination clicks
+            $(document).on('click', '.pagination .page-link', function(e) {
+                e.preventDefault();
+                const href = $(this).attr('href');
+                const urlParams = new URLSearchParams(href.split('?')[1]);
+                const content = urlParams.get('content');
+                const page = urlParams.get('page');
+                loadContent(content, null, page);
+            });
 
             // Sidebar link actions to load the respective content
             // Now each main tab click will load content without any additional parameters

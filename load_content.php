@@ -433,8 +433,17 @@ if ($content === 'purchase_order') {
                                         </tr>
                                     </thead>
                                     <tbody>";
-                            
-                                    foreach ($pos as $po) {
+
+                                    $items_per_page = 10;
+                                    $current_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+                                    $total_items = count($pos);
+                                    $total_pages = ceil($total_items / $items_per_page);
+                                    $offset = ($current_page - 1) * $items_per_page;
+
+                                    // Slice the array to get only the items for the current page
+                                    $current_items = array_slice($pos, $offset, $items_per_page);
+
+                                    foreach ($current_items as $po) {
                                         echo "<tr>
                                                 <td>" . htmlspecialchars($po['PO_ID']) . "</td>
                                                 <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
@@ -447,10 +456,37 @@ if ($content === 'purchase_order') {
                                                     </a>
                                                 </td>
                                             </tr>";
-                                        }
-                            
+                                    }
+
                                     echo "</tbody>
                                 </table>
+
+                                <!-- Pagination -->
+                                <nav aria-label=\"Page navigation\" class=\"mt-4\">
+                                    <ul class=\"pagination justify-content-center\">
+                                        <!-- Previous button -->
+                                        <li class=\"page-item " . ($current_page <= 1 ? 'disabled' : '') . "\">
+                                            <a class=\"page-link\" href=\"?content=purchase_request&page=" . ($current_page - 1) . "\"" . 
+                                            ($current_page <= 1 ? ' tabindex=\"-1\" aria-d  isabled=\"true\"' : '') . "><</a>
+                                        </li>
+                                        
+                                        <!-- Page numbers -->";
+                                        
+                                        for($i = 1; $i <= $total_pages; $i++) {
+                                            echo "<li class=\"page-item " . ($current_page == $i ? 'active' : '') . "\">
+                                                <a class=\"page-link\" href=\"?content=purchase_request&page=" . $i . "\">
+                                                    " . $i . "
+                                                </a>
+                                            </li>";
+                                        }
+                                        
+                                        echo "<!-- Next button -->
+                                        <li class=\"page-item " . ($current_page >= $total_pages ? 'disabled' : '') . "\">
+                                            <a class=\"page-link\" href=\"?content=purchase_request&page=" . ($current_page + 1) . "\"" .
+                                            ($current_page >= $total_pages ? ' tabindex=\"-1\" aria-disabled=\"true\"' : '') . ">></a>
+                                        </li>
+                                    </ul>
+                                </nav>
                             </div>";
                       }else{
                         echo "
