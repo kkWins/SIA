@@ -17,12 +17,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['items'], $_POST['quan
         $emp_id = $_SESSION['ID'];
         $emp_position = $_SESSION['role'];
         $prf_date = date("Y-m-d");
+
+        $purpose = $_POST['reason'];
+
+
+
         if ($emp_position === "Staff"){
             $prf_status = 'Pending';
         }else if($emp_position === "Manager"){
             $prf_status = 'Approved';
         }
-        $prf_type = 'Requisition';
+
 
         $stmt = $connection->prepare("INSERT INTO purchase_or_requisition_form (PRF_DATE, PRF_STATUS,EMP_ID) VALUES (?, ?,?)");
         $stmt->bind_param("ssi", $prf_date, $prf_status,$emp_id);

@@ -28,60 +28,77 @@ if ($content === 'purchase_order') {
     }
 } elseif ($content === 'requisition_approval') {
     echo "<h2>Requisition Approval</h2>";
-    
-    // Check if we're viewing details of a specific requisition
+
+    // Check if viewing details of a specific requisition
     if (isset($_GET['req_id'])) {
         include('staff_manager_approval.php');
+
         // Display detailed view
-        if($response['items']){
+        if (isset($response['items']) && $response['items']) {
             echo "
-                <div class='card rounded-4 p-4'>
-                    <h3>Requisition ID {$_GET['req_id']}</h3>
-                    <div class='row mb-3'>
-                        <div class='col-md-6'>
-                            <p><strong>Name:</strong> {$response['employee_name']}</p>
-                            <p><strong>Contact no:</strong> {$response['contact_no']}</p>
-                        </div>
-                        <div class='col-md-6'>
-                            <p><strong>Date of Request:</strong> {$response['date']}</p>
-                            <p><strong>Department:</strong> {$response['department']}</p>
-                        </div>
+            <div class='card rounded-4 p-4'>
+                <h3>Requisition ID: " . htmlspecialchars($_GET['req_id']) . "</h3>
+                <div class='row mb-3'>
+                    <div class='col-md-6'>
+                        <p><strong>Name:</strong> " . htmlspecialchars($response['employee_name']) . "</p>
+                        <p><strong>Contact no:</strong> " . htmlspecialchars($response['contact_no']) . "</p>
                     </div>
-                    
-                    <table class='table'>
-                        <thead>
-                            <tr>
-                                <th>Item Name</th>
-                                <th>Description</th>
-                                <th>Quantity</th>
-                            </tr>
-                        </thead>
-                        <tbody>";
-                        
-                foreach ($response['items'] as $item) {
-                    echo "<tr>
-                            <td>" . htmlspecialchars($item['item_name']) . "</td>
-                            <td>" . htmlspecialchars($item['description']) . "</td>
-                            <td>" . htmlspecialchars($item['quantity']) . "</td>
-                        </tr>";
-                }
-                        
-                echo "</tbody>
-                    </table>
-                    
-                    <div class='mt-3'>
-                        <button class='btn btn-danger' id='rejectBtn' data-id='{$_GET['req_id']}'>Reject</button>
-                        <button class='btn btn-success' id='approveBtn' data-id='{$_GET['req_id']}'>Approve</button>
+                    <div class='col-md-6'>
+                        <p><strong>Date of Request:</strong> " . htmlspecialchars($response['date']) . "</p>
+                        <p><strong>Department:</strong> " . htmlspecialchars($response['department']) . "</p>
                     </div>
-                </div>";
-        }else{
-            echo 'Requisition not found';
+                </div>
+                
+                <table class='table'>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Description</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody>";
+                    
+            foreach ($response['items'] as $item) {
+                echo "<tr>
+                        <td>" . htmlspecialchars($item['item_name']) . "</td>
+                        <td>" . htmlspecialchars($item['description']) . "</td>
+                        <td>" . htmlspecialchars($item['quantity']) . "</td>
+                    </tr>";
+            }
+                    
+            echo "</tbody>
+                </table>
+                
+                <div class='mt-3'>
+                    <button class='btn btn-danger reject-btn' data-id='" . htmlspecialchars($_GET['req_id']) . "'>Reject</button>
+                    <button class='btn btn-success approve-btn' data-id='" . htmlspecialchars($_GET['req_id']) . "'>Approve</button>
+                </div>
+            </div>";
+
+            echo "
+            <script>
+            $(document).ready(function() {
+                // Approve button click event
+                $('.approve-btn').on('click', function() {
+                    alert('Requisition approved successfully!');
+                    window.location.href = '?content=requisition_approval'; // Redirect without req_id
+                });
+
+                // Reject button click event
+                $('.reject-btn').on('click', function() {
+                    alert('Requisition rejected successfully!');
+                    window.location.href = '?content=requisition_approval'; // Redirect without req_id
+                });
+            });
+            </script>";
+        } else {
+            echo "<h3>Requisition not found.</h3>";
         }
-        
     } else {
         // Show list view
         include('staff_manager_approval.php');
-        
+
         if (!isset($response['status'])) {
             echo "
             <div class='card rounded-4 p-4'>
@@ -118,6 +135,7 @@ if ($content === 'purchase_order') {
             echo "<h3>No pending requisitions found.</h3>";
         }
     }
+
 } elseif ($content === 'withdrawal_deposit') {
     if ($conca === 'Inventory Manager') {
         echo "<h2>Withdrawal & Deposit</h2>
@@ -635,7 +653,20 @@ if ($content === 'purchase_order') {
         echo "<h3>You do not have access to this content.</h3>";
     }
 } elseif ($content === 'requisition_history') {
+    // Inside the requisition_withdrawal section in load_content.php
     echo "<h2>Requisition History</h2>";
+
+    // Button to load requisition history
+    echo "<button id=\"goToWithdrawal\" class=\"btn btn-primary\">Go to Requisition History</button>";
+
+
+
+} elseif ($content === 'requisition_withdrawal') {
+    echo "<h2>Requisition Withdrawal</h2>";
+
+    echo"<button id=\"requisition-form-link\" class=\"btn btn-primary\">Go to Requisition Withdrawal</button>
+";
+
 
 } elseif ($content === 'requisition_form') {
     // Before executing echo, perform the check for previous requisition
@@ -647,8 +678,9 @@ if ($content === 'purchase_order') {
     if ($response['prf_status'] == 'Pending') {
         // If there's a pending request, display it
         echo "<h2>Pending Requisition</h2>
-              <h4>Status: " . $response['prf_status'] . "</h4>";
-
+              <h4>Status: " . $response['prf_status'] . "</h4>
+              ";
+                
         // Display the items in a Bootstrap table, now wrapped in a card
         echo "
         <h3>Pending Items</h3>
@@ -674,8 +706,42 @@ if ($content === 'purchase_order') {
 
         echo "</tbody></table>
         </div>";  // Close card div
-        echo "<button>edit </button>";
-        echo "<button>delete </button>";
+        echo '<button class="deleteBtn" data-prf-id="' . $response['prf_id'] . '">Delete</button>';
+        echo"
+            <script>
+            $(document).ready(function(){
+            
+                $(\".deleteBtn\").on('click',function(){
+                var prfId = $(this).data(\"prf-id\");
+                $.post(\"delete_pending_requisition.php\", { prf_id: prfId }, function(response) {
+                    console.log(response);
+                    if (response == 1) {
+                        alert(\"Record successfully deleted!\");
+                        location.reload();
+                    } else if(response == 2) {
+                        alert(\"Your Request has already been approved\");
+                        location.reload();
+                    }else if(response == 3) {
+                        alert(\"Your Request has already been rejected\");
+                        location.reload();
+                    }else{
+                        alert(\"Your requisition is not found\")
+                        location.reload();
+                    }
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    
+                    alert(\"Failed to delete. Please try again.\");
+                });
+                
+                
+                });
+            
+            });
+            
+            
+            </script>
+        ";
+
     } else {
         // No pending requisition, show the requisition form
         echo "
@@ -835,12 +901,13 @@ if ($content === 'purchase_order') {
                     quantities.push(quantity);
                     reasons.push(reason);
                 });
-
+               
                 if (items.length > 0) {
                     $.ajax({
                         url: 'submit_requisition.php',
                         type: 'POST',
                         data: {
+                            reason: \"RF\",
                             items: items,
                             quantities: quantities,
                             reasons: reasons
@@ -875,17 +942,35 @@ if ($content === 'purchase_order') {
 
             $('#close-modal-footer').click(function() {
                 $('#itemsModal').modal('hide');
+
+                $.ajax({
+                    url: 'check_role.php', // PHP file that checks the session role
+                    method: 'GET',
+                    success: function(response) {
+                        if (response === 'Staff') {
+                            location.reload(); // Reload the page if the role is 'staff'
+                        }
+                    }
+                });
             });
 
             $('#itemsModal').on('hidden.bs.modal', function () {
-                // Clear added items and reset dropdown
+                // Return added items to the dropdown
+                $('#added-items tr').each(function() {
+                    var itemID = $(this).find('td:first').data('id'); // Item ID
+                    var itemName = $(this).find('td:first').text(); // Item Name
+                    
+                    // Add the item back to the dropdown
+                    $('#item').append('<option value=\"' + itemID + '\" data-name=\"' + itemName + '\">' + itemName + '</option>');
+                });
+
+                // Clear added items table
                 $('#added-items').empty();
+
+                // Reset input fields
                 $('#item').val('');
                 $('#quantity').val('');
                 $('#reason').val('');
-
-                // Refresh the page after the modal is closed
-                location.reload();
             });
         });
         </script>
