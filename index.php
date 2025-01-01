@@ -291,7 +291,7 @@ $department = $_SESSION['department'];
 
         <div class="user-dropdown">
             <div class="user-profile" id="userProfileButton">
-                <img src="default-avatar.png" class="avatar" alt="User avatar">
+                <img src="icons/user.png" class="avatar" alt="User avatar">
                 <div class="user-info">
                     <div class="username"><?= htmlspecialchars($_SESSION['username']) ?></div>
                     <div class="email"><?= htmlspecialchars($_SESSION['emp_email']) ?></div>
@@ -300,7 +300,7 @@ $department = $_SESSION['department'];
             </div>
             
             <div class="dropdown-menu" id="userDropdownMenu">
-                <a href="#" class="dropdown-item">Account</a>
+                <a href="#" class="dropdown-item" id="account-settings-link">Account</a>
                 <div class="dropdown-divider"></div>
                 <a href="logout.php" class="dropdown-item text-danger">Log out</a>
             </div>
@@ -401,6 +401,11 @@ $department = $_SESSION['department'];
                 loadContent('requisition_history');
             });
 
+            $('#account-settings-link').click(function(e) {
+                e.preventDefault();
+                loadContent('account_settings');
+            });
+
             // For handling detail view clicks (e.g., from a table row)
             $(document).on('click', '.view-requisition', function(e) {
                 e.preventDefault();
@@ -453,6 +458,8 @@ $department = $_SESSION['department'];
                     $('.sidebar-overlay').removeClass('active');
                 }
             });
+
+            
         });
     </script>
 </body>
