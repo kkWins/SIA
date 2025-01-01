@@ -17,15 +17,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['items'], $_POST['quan
         $emp_id = $_SESSION['ID'];
         $emp_position = $_SESSION['role'];
         $prf_date = date("Y-m-d");
+
+        $purpose = $_POST['reason'];
+
+
+
         if ($emp_position === "Staff"){
             $prf_status = 'Pending';
         }else if($emp_position === "Manager"){
             $prf_status = 'Approved';
         }
-        $prf_type = 'Requisition';
 
-        $stmt = $connection->prepare("INSERT INTO purchase_or_requisition_form (PRF_DATE, PRF_STATUS, PRF_TYPE ,EMP_ID) VALUES (?, ?, ?,?)");
-        $stmt->bind_param("sssi", $prf_date, $prf_status, $prf_type ,$emp_id);
+
+        $stmt = $connection->prepare("INSERT INTO purchase_or_requisition_form (PRF_DATE, PRF_STATUS,EMP_ID) VALUES (?, ?,?)");
+        $stmt->bind_param("ssi", $prf_date, $prf_status,$emp_id);
         $stmt->execute();
         $prf_id = $stmt->insert_id;
         $stmt->close();
@@ -34,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['items'], $_POST['quan
             $quantity = $_POST['quantities'][$index];
             $reason = $_POST['reasons'][$index];
 
-            $stmt = $connection->prepare("INSERT INTO item_list (IT_QUANTITY, IT_DATE, IT_DESCRIPTION, INV_ID, RF_ID) VALUES (?, ?, ?, ?, ?)");
+            $stmt = $connection->prepare("INSERT INTO item_list (IT_QUANTITY, IT_DATE, IT_DESCRIPTION, INV_ID, PRF_ID) VALUES (?, ?, ?, ?, ?)");
             $it_date = date("Y-m-d");
             $stmt->bind_param("issii", $quantity, $it_date, $reason, $itemId, $prf_id);
             $stmt->execute();

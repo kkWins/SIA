@@ -40,7 +40,7 @@ if ($result1->num_rows > 0) {
         il.IT_DESCRIPTION AS description
     FROM ITEM_LIST il
     JOIN INVENTORY i ON il.INV_ID = i.INV_ID
-    WHERE il.RF_ID = " . $row['PRF_ID'];
+    WHERE il.PRF_ID = " . $row['PRF_ID'];
 
     $result2 = $connection->query($sql);
 
@@ -56,6 +56,7 @@ if ($result1->num_rows > 0) {
         
         // Store the response data
         $response = [
+            'prf_id' => $row['PRF_ID'],
             'prf_status' => $row['PRF_STATUS'], // Include the PRF status from the first query
             'items' => $items // Include the list of items
         ];
