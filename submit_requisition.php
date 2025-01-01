@@ -24,8 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['items'], $_POST['quan
         }
         $prf_type = 'Requisition';
 
-        $stmt = $connection->prepare("INSERT INTO purchase_or_requisition_form (PRF_DATE, PRF_STATUS, PRF_TYPE ,EMP_ID) VALUES (?, ?, ?,?)");
-        $stmt->bind_param("sssi", $prf_date, $prf_status, $prf_type ,$emp_id);
+        $stmt = $connection->prepare("INSERT INTO purchase_or_requisition_form (PRF_DATE, PRF_STATUS,EMP_ID) VALUES (?, ?,?)");
+        $stmt->bind_param("ssi", $prf_date, $prf_status,$emp_id);
         $stmt->execute();
         $prf_id = $stmt->insert_id;
         $stmt->close();
