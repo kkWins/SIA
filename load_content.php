@@ -339,9 +339,33 @@ if ($content === 'purchase_order') {
                                     }
                                 });
 
-                                $('.delete-po').click(function(){
-                                alert(1);
-                                
+                                $(document).on('click', '.delete-po', function(e) {
+                                    e.preventDefault();
+                                    const poId = $(this).data('id');
+                                    
+                                    if (confirm('Are you sure you want to delete this purchase order?')) {
+                                        $.ajax({
+                                            url: 'inventory/delete_po.php',
+                                            type: 'POST',
+                                            data: { po_id: poId },
+                                            dataType: 'json',
+                                            success: function(response) {
+                                                if (response.success) {
+                                                    alert('Purchase order deleted successfully!');
+                                                    // Get current URL parameters
+                                                    const urlParams = new URLSearchParams(window.location.search);
+                                                    // Reload the current page with the same parameters
+                                                    window.location.href = window.location.pathname + '?' + urlParams.toString();
+                                                } else {
+                                                    alert('Error deleting purchase order: ' + (response.message || 'Unknown error'));
+                                                }
+                                            },
+                                            error: function(xhr, status, error) {
+                                                console.error('Ajax Error:', error);
+                                                alert('Error processing request. Please try again.');
+                                            }
+                                        });
+                                    }
                                 });
 
                                 // Calculate totals on input change
