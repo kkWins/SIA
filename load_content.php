@@ -281,297 +281,102 @@ if ($content === 'purchase_order') {
                             $(document).ready(function() {
                                 // Load vendors
                                 $.ajax({
-                                    url: 'get_vendors.php',
-                                    type: 'GET',
+                                    url: \'get_vendors.php\',
+                                    type: \'GET\',
                                     success: function(response) {
                                         try {
                                             const data = JSON.parse(response);
                                             data.forEach(function(vendor) {
-                                                $('#vendor').append(\"<option value='\" + vendor.id + \"'>\" + vendor.name + \"</option>\");
+                                                $(\'#vendor\').append(\"<option value=\'\" + vendor.id + \"\'>\"+vendor.name+\"</option>\");
                                             });
                                         } catch(e) {
-                                            console.error('Error parsing JSON:', e);
+                                            console.error(\'Error parsing JSON:\', e);
                                         }
                                     },
                                     error: function(xhr, status, error) {
-                                        console.error('Ajax Error:', error);
+                                        console.error(\'Ajax Error:\', error);
                                     }
                                 });
 
                                 // Load inventory items
                                 $.ajax({
-                                    url: 'get_inventory.php',
-                                    type: 'GET',
+                                    url: \'get_inventory.php\',
+                                    type: \'GET\',
                                     success: function(data) {
                                         const items = JSON.parse(data);
                                         const options = items.map(function(item) {
-                                            return '<option value=\"' + item.id + '\">' + item.name + '</option>';
-                                        }).join('');
-                                        $('.item-select').append(options);
+                                            return \'<option value=\"\' + item.id + \'\">\' + item.name + \'</option>\';
+                                        }).join(\'\');
+                                        $(\'.item-select\').append(options);
                                     }
                                 });
 
                                 // Calculate total price
                                 function calculateTotal(row) {
-                                    const quantity = parseFloat(row.find('.quantity').val()) || 0;
-                                    const price = parseFloat(row.find('.price').val()) || 0;
+                                    const quantity = parseFloat(row.find(\'.quantity\').val()) || 0;
+                                    const price = parseFloat(row.find(\'.price\').val()) || 0;
                                     const total = quantity * price;
-                                    row.find('.total').text(total.toFixed(2));
+                                    row.find(\'.total\').text(total.toFixed(2));
                                     calculateGrandTotal();
                                 }
 
                                 // Calculate grand total
                                 function calculateGrandTotal() {
                                     let grandTotal = 0;
-                                    $('#prItems tbody tr').each(function() {
-                                        grandTotal += parseFloat($(this).find('.total').text()) || 0;
+                                    $(\'#prItems tbody tr\').each(function() {
+                                        grandTotal += parseFloat($(this).find(\'.total\').text()) || 0;
                                     });
-                                    $('#grandTotal').text(grandTotal.toFixed(2));
+                                    $(\'#grandTotal\').text(grandTotal.toFixed(2));
                                 }
 
-                                // Add new row
-                                $(document).on('click', '.add-row', function() {
-                                    const row = $(this).closest('tr');
-                                    if (row.find('.item-select').val() && 
-                                        row.find('.quantity').val() && 
-                                        row.find('.price').val()) {
-                                        
-                                        const newRow = row.clone();
-                                        newRow.find('.add-row')
-                                            .removeClass('btn-primary add-row')
-                                            .addClass('btn-danger delete-row')
-                                            .text('Delete');
-                                        row.find('input, select').val('');
-                                        row.find('.total').text('0.00');
-                                        $('#prItems tbody').append(newRow);
-                                    }
-                                });
-
                                 // Delete row
-                                $(document).on('click', '.delete-row', function() {
-                                    $(this).closest('tr').remove();
+                                $(document).on(\'click\', \'.delete-row\', function() {
+                                    $(this).closest(\'tr\').remove();
                                     calculateGrandTotal();
                                 });
 
                                 // Calculate totals on input change
-                                $(document).on('input', '.quantity, .price', function() {
-                                    calculateTotal($(this).closest('tr'));
-                                });
-
-                                // Submit purchase request
-                                $('#submitPR').click(function() {
-                                    const isUpdate = $(this).hasClass('update-po');
-                                    const poId = $(this).data('po-id');
-                                    const vendor = $('#vendor').val();
-                                    const items = [];
-                                    
-                                    $('#prItems tbody tr').each(function() {
-                                        const item = $(this).find('.item-select').val();
-                                        if (item) {
-                                            items.push({
-                                                item_id: item,
-                                                quantity: $(this).find('.quantity').val(),
-                                                price: $(this).find('.price').val(),
-                                                total: $(this).find('.total').text()
-                                            });
-                                        }
-                                    });
-
-                                    if (vendor && items.length > 0) {
-                                        const submitData = {
-                                            vendor_id: vendor,
-                                            items: items
-                                        };
-                                        
-                                        // Add po_id if this is an update
-                                        if (isUpdate) {
-                                            submitData.po_id = poId;
-                                        }
-
-                                        $.ajax({
-                                            url: isUpdate ? 'inventory/update_po.php' : 'submit_purchase_request.php',
-                                            type: 'POST',
-                                            contentType: 'application/json',
-                                            data: JSON.stringify(submitData),
-                                            success: function(response) {
-                                                try {
-                                                    const jsonResponse = JSON.parse(response);
-                                                    if (jsonResponse.success) {
-                                                        alert(isUpdate ? 'Purchase order updated successfully!' : 'Purchase request submitted successfully!');
-                                                        $('#purchaseRequestModal').modal('hide');
-                                                        location.reload();
-                                                    } else {
-                                                        alert(isUpdate ? 'Error updating purchase order.' : 'Error submitting purchase request.');
-                                                    }
-                                                } catch (e) {
-                                                    console.error('Error parsing response:', response);
-                                                    alert('Error processing server response');
-                                                }
-                                            },
-                                            error: function(xhr, status, error) {
-                                                console.error('Ajax Error:', error);
-                                                console.log('Response:', xhr.responseText);
-                                                alert('Error processing request. Please try again.');
-                                            }
-                                        });
-                                    } else {
-                                        alert('Please fill in all required fields.');
-                                    }
+                                $(document).on(\'input\', \'.quantity, .price\', function() {
+                                    calculateTotal($(this).closest(\'tr\'));
                                 });
 
                                 // Add new empty row
-                                $('#addNewRow').click(function() {
-                                    var existingOptions = $('.item-select').first().html();
+                                $(\'#addNewRow\').click(function() {
+                                    var existingOptions = $(\'.item-select\').first().html();
                                     var newRow = 
-                                        '<tr>' +
-                                            '<td>' +
-                                                '<select class=\'form-select item-select\'>' +
+                                        \'<tr>\' +
+                                            \'<td>\' +
+                                                \'<select class=\"form-select item-select\">\' +
                                                     existingOptions +
-                                                '</select>' +
-                                            '</td>' +
-                                            '<td>' +
-                                                '<input type=\'number\' class=\'form-control quantity\' min=\'1\'>' +
-                                            '</td>' +
-                                            '<td>' +
-                                                '<input type=\'number\' class=\'form-control price\' min=\'0\' step=\'0.01\'>' +
-                                            '</td>' +
-                                            '<td class=\'total\'>0.00</td>' +
-                                            '<td>' +
-                                                '<button type=\'button\' class=\'btn btn-danger btn-sm delete-row\'>Delete</button>' +
-                                            '</td>' +
-                                        '</tr>';
-                                    $('#prItems tbody').append(newRow);
+                                                \'</select>\' +
+                                            \'</td>\' +
+                                            \'<td>\' +
+                                                \'<input type=\"number\" class=\"form-control quantity\" min=\"1\">\' +
+                                            \'</td>\' +
+                                            \'<td>\' +
+                                                \'<input type=\"number\" class=\"form-control price\" min=\"0\" step=\"0.01\">\' +
+                                            \'</td>\' +
+                                            \'<td class=\"total\">0.00</td>\' +
+                                            \'<td>\' +
+                                                \'<button type=\"button\" class=\"btn btn-danger btn-sm delete-row\">Delete</button>\' +
+                                            \'</td>\' +
+                                        \'</tr>\';
+                                    $(\'#prItems tbody\').append(newRow);
                                 });
 
-                                // Handle Edit button click
-                                $(document).on('click', '.edit-po', function() {
-                                    const poId = $(this).data('id');
-                                    // Fetch PO details and populate modal
-                                    $.ajax({
-                                        url: 'inventory/get_po_details.php',
-                                        type: 'GET',
-                                        data: { po_id: poId },
-                                        success: function(response) {
-                                            console.log('Response:', response); // For debugging
-                                            if (response.success) {
-                                                // Populate the purchase request modal with existing data
-                                                $('#purchaseRequestModal').modal('show');
-                                                
-                                                // Set vendor
-                                                $('#vendor').val(response.po_details.SP_ID);
-                                                
-                                                // Clear existing rows except the first one
-                                                $('#prItems tbody tr:not(:first)').remove();
-                                                
-                                                // Reset the first row
-                                                const firstRow = $('#prItems tbody tr:first');
-                                                firstRow.find('input').val('');
-                                                firstRow.find('.total').text('0.00');
-                                                
-                                                // Add rows for each item
-                                                response.items.forEach(function(item, index) {
-                                                    if (index === 0) {
-                                                        // Update first row
-                                                        firstRow.find('.item-select').val(item.INV_ID);
-                                                        firstRow.find('.quantity').val(item.POL_QUANTITY);
-                                                        firstRow.find('.price').val(item.POL_PRICE);
-                                                        firstRow.find('.total').text((item.POL_QUANTITY * item.POL_PRICE).toFixed(2));
-                                                    } else {
-                                                        // Add new rows for additional items
-                                                        var newRow = createItemRow(item);
-                                                        $('#prItems tbody').append(newRow);
-                                                    }
-                                                });
-                                                
-                                                // Update the submit button
-                                                $('#submitPR')
-                                                    .text('Update Purchase Request')
-                                                    .data('po-id', poId)
-                                                    .removeClass('submit-new')
-                                                    .addClass('update-po');
-                                                    
-                                                calculateGrandTotal();
-                                            } else {
-                                                alert('Error loading purchase order details: ' + response.message);
-                                            }
-                                        },
-                                        error: function(xhr, status, error) {
-                                            console.error('Ajax Error:', error);
-                                            console.log('Response:', xhr.responseText); // For debugging
-                                            alert('Error loading purchase order details. Please try again.');
-                                        }
-                                    });
-                                });
-
-                                // Handle Delete button click
-                                $(document).on('click', '.delete-po', function() {
-                                    const poId = $(this).data('id');
-                                    if (confirm('Are you sure you want to delete this purchase order?')) {
-                                        $.ajax({
-                                            url: 'inventory/delete_po.php',
-                                            type: 'POST',
-                                            data: { po_id: poId },
-                                            success: function(response) {
-                                                const result = JSON.parse(response);
-                                                if (result.success) {
-                                                    alert('Purchase order deleted successfully!');
-                                                    location.reload();
-                                                } else {
-                                                    alert('Error deleting purchase order: ' + result.message);
-                                                }
-                                            }
-                                        });
-                                    }
-                                });
-
-                                // Helper function to create item row with existing data
-                                function createItemRow(item) {
-                                    var existingOptions = $('.item-select').first().html();
-                                    var row = $('<tr>');
-                                    row.html(
-                                        '<td>' +
-                                            '<select class=\"form-select item-select\">' +
-                                                existingOptions +
-                                            '</select>' +
-                                        '</td>' +
-                                        '<td>' +
-                                            '<input type=\"number\" class=\"form-control quantity\" min=\"1\">' +
-                                        '</td>' +
-                                        '<td>' +
-                                            '<input type=\"number\" class=\"form-control price\" min=\"0\" step=\"0.01\">' +
-                                        '</td>' +
-                                        '<td class=\"total\">0.00</td>' +
-                                        '<td>' +
-                                            '<button type=\"button\" class=\"btn btn-danger btn-sm delete-row\">Delete</button>' +
-                                        '</td>'
-                                    );
-                                    
-                                    // Set values if item exists
-                                    if (item) {
-                                        row.find('.item-select').val(item.INV_ID);
-                                        row.find('.quantity').val(item.POL_QUANTITY);
-                                        row.find('.price').val(item.POL_PRICE);
-                                        row.find('.total').text((item.POL_QUANTITY * item.POL_PRICE).toFixed(2));
-                                    }
-                                    
-                                    return row;
-                                }
-
-                                // Update the submit handler to handle both new and update cases
-                                $('#submitPR').click(function() {
-                                    const isUpdate = $(this).hasClass('update-po');
-                                    const poId = $(this).data('po-id');
-                                    const vendor = $('#vendor').val();
+                                // Submit new purchase request
+                                $(\'#submitPR\').click(function() {
+                                    const vendor = $(\'#vendor\').val();
                                     const items = [];
                                     
-                                    $('#prItems tbody tr').each(function() {
-                                        const item = $(this).find('.item-select').val();
+                                    $(\'#prItems tbody tr\').each(function() {
+                                        const item = $(this).find(\'.item-select\').val();
                                         if (item) {
                                             items.push({
                                                 item_id: item,
-                                                quantity: $(this).find('.quantity').val(),
-                                                price: $(this).find('.price').val(),
-                                                total: $(this).find('.total').text()
+                                                quantity: $(this).find(\'.quantity\').val(),
+                                                price: $(this).find(\'.price\').val(),
+                                                total: $(this).find(\'.total\').text()
                                             });
                                         }
                                     });
@@ -581,40 +386,35 @@ if ($content === 'purchase_order') {
                                             vendor_id: vendor,
                                             items: items
                                         };
-                                        
-                                        // Add po_id if this is an update
-                                        if (isUpdate) {
-                                            submitData.po_id = poId;
-                                        }
 
                                         $.ajax({
-                                            url: isUpdate ? 'inventory/update_po.php' : 'submit_purchase_request.php',
-                                            type: 'POST',
-                                            contentType: 'application/json',
+                                            url: \'submit_purchase_request.php\',
+                                            type: \'POST\',
+                                            contentType: \'application/json\',
                                             data: JSON.stringify(submitData),
                                             success: function(response) {
                                                 try {
                                                     const jsonResponse = JSON.parse(response);
                                                     if (jsonResponse.success) {
-                                                        alert(isUpdate ? 'Purchase order updated successfully!' : 'Purchase request submitted successfully!');
-                                                        $('#purchaseRequestModal').modal('hide');
+                                                        alert(\'Purchase request submitted successfully!\');
+                                                        $(\'#purchaseRequestModal\').modal(\'hide\');
                                                         location.reload();
                                                     } else {
-                                                        alert(isUpdate ? 'Error updating purchase order.' : 'Error submitting purchase request.');
+                                                        alert(\'Error submitting purchase request.\');
                                                     }
                                                 } catch (e) {
-                                                    console.error('Error parsing response:', response);
-                                                    alert('Error processing server response');
+                                                    console.error(\'Error parsing response:\', response);
+                                                    alert(\'Error processing server response\');
                                                 }
                                             },
                                             error: function(xhr, status, error) {
-                                                console.error('Ajax Error:', error);
-                                                console.log('Response:', xhr.responseText);
-                                                alert('Error processing request. Please try again.');
+                                                console.error(\'Ajax Error:\', error);
+                                                console.log(\'Response:\', xhr.responseText);
+                                                alert(\'Error processing request. Please try again.\');
                                             }
                                         });
                                     } else {
-                                        alert('Please fill in all required fields.');
+                                        alert(\'Please fill in all required fields.\');
                                     }
                                 });
                             });
@@ -643,14 +443,6 @@ if ($content === 'purchase_order') {
                                                         data-id='" . $po['PO_ID'] . "'>
                                                         <i class='fas fa-eye'></i> View
                                                     </a>
-                                                    <button class='btn btn-sm btn-warning edit-po' 
-                                                        data-id='" . $po['PO_ID'] . "'>
-                                                        <i class='fas fa-edit'></i> Edit
-                                                    </button>
-                                                    <button class='btn btn-sm btn-danger delete-po' 
-                                                        data-id='" . $po['PO_ID'] . "'>
-                                                        <i class='fas fa-trash'></i> Delete
-                                                    </button>
                                                 </td>
                                             </tr>";
                                         }
