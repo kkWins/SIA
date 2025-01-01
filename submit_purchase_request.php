@@ -7,20 +7,19 @@ $data = json_decode(file_get_contents('php://input'), true);
 
 try {
     // Start transaction
-    $db->begin_transaction(); // Use MySQLi method
+    $db->begin_transaction();
 
-    // Get data
+    // Get data and convert vendor_id to integer
     $emp_id = $_SESSION['ID'];
-    $vendor_id = $data['vendor_id'];
+    $vendor_id = intval($data['vendor_id']); // Convert to integer
     $items = $data['items'];
 
-
     // Insert into PO table
-    $stmt = $db->prepare("INSERT INTO purchase_order (PO_ORDER_DATE, PO_STATUS, EMP_ID) 
-                         VALUES (NOW(), 'PENDING', ?)");
-    $stmt->bind_param("i", $emp_id); // Bind parameters for MySQLi
+    $stmt = $db->prepare("INSERT INTO purchase_order (PO_ORDER_DATE, PO_STATUS, EMP_ID, SP_ID) 
+                         VALUES (NOW(), 'PENDING', ?, ?)");
+    $stmt->bind_param("ii", $emp_id, $vendor_id); // Both parameters are integers
     $stmt->execute();
-    $po_id = $db->insert_id; // Use MySQLi method to get last insert ID
+    $po_id = $db->insert_id;
 
     // Insert items into PO_LIST table
     $stmt = $db->prepare("INSERT INTO po_list (PO_ID, INV_ID, POL_QUANTITY, POL_PRICE) 

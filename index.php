@@ -325,32 +325,30 @@ $department = $_SESSION['department'];
                 loadContent(content);
             }
 
-            function loadContent(content) {
-                // Only include req_id in params if it exists AND we're on specific pages
+            function loadContent(content, id = null) {
                 const params = { content: content };
+                let url = `?content=${content}`;
                 
-                if (content === 'requisition_approval' || content === 'approved_requisitions' || content === 'purchase_request') {
-
-                    // Only add req_id if it's not null
-                    if (reqId) {
-                        params.req_id = reqId;
-                        history.pushState({}, '', `?content=${content}&req_id=${reqId}`);
-                    }else if(reqId){
-                        params.pr_id = prId;
-                        history.pushState({}, '', `?content=${content}&pr_id=${prId}`);
-                    }else {
-                        history.pushState({}, '', `?content=${content}`);
+                // Only add ID parameters if they're provided
+                if (id) {
+                    if (content === 'purchase_request') {
+                        params.pr_id = id;
+                        url += `&pr_id=${id}`;
+                    } else if (content === 'requisition_approval' || content === 'approved_requisitions') {
+                        params.req_id = id;
+                        url += `&req_id=${id}`;
                     }
-                } else {
-                    history.pushState({}, '', `?content=${content}`);
                 }
 
+                // Update URL and load content
+                history.pushState({}, '', url);
                 $.get('load_content.php', params, function (response) {
                     $('#content').html(response);
                 });
             }
 
             // Sidebar link actions to load the respective content
+            // Now each main tab click will load content without any additional parameters
             $('#purchase-order-link').click(function (e) {
                 e.preventDefault();
                 loadContent('purchase_order');
@@ -358,16 +356,14 @@ $department = $_SESSION['department'];
 
             $('#requisition-approval-link').click(function (e) {
                 e.preventDefault();
-                // Remove req_id from URL when clicking the main requisition approval link
-                urlParams.delete('req_id');
                 loadContent('requisition_approval');
             });
 
             $('#approved-requisitions-link').click(function (e) {
                 e.preventDefault();
-                urlParams.delete('req_id');
                 loadContent('approved_requisitions');
             });
+
             $('#withdrawal-deposit-link').click(function (e) {
                 e.preventDefault();
                 loadContent('withdrawal_deposit');
@@ -378,14 +374,22 @@ $department = $_SESSION['department'];
                 loadContent('purchase_request');
             });
 
-            // Requisition form link
             $('#requisition-form-link').click(function (e) {
                 e.preventDefault();
                 loadContent('requisition_form');
             });
+
             $('#requisition-history-link').click(function (e) {
                 e.preventDefault();
                 loadContent('requisition_history');
+            });
+
+            // For handling detail view clicks (e.g., from a table row)
+            $(document).on('click', '.view-requisition', function(e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+                const contentType = $(this).data('content');
+                loadContent(contentType, id);
             });
 
             // Add this to your existing JavaScript

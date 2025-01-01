@@ -127,279 +127,545 @@ if ($content === 'purchase_order') {
 } elseif ($content === 'purchase_request') {
     include('manager_inv_pr.php');
     if ($conca === 'Inventory Manager') {
-        echo "<h2>Purchase Request and Purchase Order</h2>
+        echo "<h2>Purchase Request</h2>
 
-                    <button type='button' class='btn btn-primary mb-3' data-bs-toggle='modal' data-bs-target='#purchaseRequestModal'>
-                        Create Purchase Request
-                    </button>
-
-                    
-
-                    
-                    <!-- Purchase Request Modal -->
-                    <div class='modal fade' id='purchaseRequestModal' tabindex='-1' aria-labelledby='purchaseRequestModalLabel' aria-hidden='true'>
-                        <div class='modal-dialog modal-lg'>
-                            <div class='modal-content'>
-                                    <div class='modal-header'>
-                                        <h5 class='modal-title' id='purchaseRequestModalLabel'>Create Purchase Request</h5>
-                                        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-                                    </div>
-                                    <div class='modal-body'>
-                                        <form id='purchaseRequestForm'>
-                                            <div class='mb-3'>
-                                                <label for='vendor' class='form-label'>Select Vendor</label>
-                                                <select class='form-select vendor-select' id='vendor' required>
-                                                    <option value=''>Select Vendor</option>
-                                                </select>
-                                            </div>
-                                            
-                                            <table class='table' id='prItems'>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Item</th>
-                                                        <th>Quantity</th>
-                                                        <th>Unit Price</th>
-                                                        <th>Total Price</th>
-                                                        <th>Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr>
-                                                        <td>
-                                                            <select class='form-select item-select'>
-                                                                <option value=''>Select Item</option>
-                                                            </select>
-                                                        </td>
-                                                        <td>
-                                                            <input type='number' class='form-control quantity' min='1'>
-                                                        </td>
-                                                        <td>
-                                                            <input type='number' class='form-control price' min='0' step='0.01'>
-                                                        </td>
-                                                        <td class='total'>0.00</td>
-                                                        <td>
-                                                            <button type='button' class='btn btn-danger btn-sm delete-row'>Delete</button>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                                <tfoot>
-                                                    <tr>
-                                                        <td colspan='3' class='text-end'><strong>Grand Total:</strong></td>
-                                                        <td id='grandTotal'>0.00</td>
-                                                        <td></td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td colspan='4'>
-                                                            <button type='button' class='btn btn-success btn-sm' id='addNewRow'>
-                                                                <i class='fas fa-plus'></i> Add Another Item
-                                                            </button>
-                                                        </td>
-                                                        <td></td>
-                                                    </tr>
-                                                    
-                                                </tfoot>
-                                            </table>
-                                        </form>
-                                    </div>
-                                    <div class='modal-footer'>
-                                        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
-                                        <button type='button' class='btn btn-primary' id='submitPR'>Submit Purchase Request</button>
-                                    </div>
-                            </div>
-                        </div>
-                    </div>
+                    ";
 
 
-              <script>
-              $(document).ready(function() {
-                  // Load vendors
-                  $.ajax({
-                      url: 'get_vendors.php',
-                      type: 'GET',
-                      success: function(response) {
-                          try {
-                              const data = JSON.parse(response);
-                              data.forEach(function(vendor) {
-                                  $('#vendor').append(\"<option value='\" + vendor.id + \"'>\" + vendor.name + \"</option>\");
-                              });
-                          } catch(e) {
-                              console.error('Error parsing JSON:', e);
+                if(isset($_GET['pr_id'])) {
+                  if($response['po_details']) {
+                      echo "
+                      <div class='card rounded-4 p-4'>
+                          <h3>Purchase Order ID {$_GET['pr_id']}</h3>
+                          <div class='row mb-3'>
+                              <div class='col-md-6'>
+                                  <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
+                                  <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                              </div>
+                              <div class='col-md-6'>
+                                  <p><strong>Date of Order:</strong> {$response['po_details']['PO_ORDER_DATE']}</p>
+                                  <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
+                              </div>
+                          </div>";
+
+                          if($response['po_details']['PO_STATUS'] === 'rejected') {
+                              echo "<div class='alert alert-danger'>
+                                      <strong>Rejection Reason:</strong> " . htmlspecialchars($response['po_details']['ap_desc']) . "
+                                    </div>";
                           }
-                      },
-                      error: function(xhr, status, error) {
-                          console.error('Ajax Error:', error);
-                      }
-                  });
 
-                  // Load inventory items
-                  $.ajax({
-                      url: 'get_inventory.php',
-                      type: 'GET',
-                      success: function(data) {
-                          const items = JSON.parse(data);
-                          const options = items.map(function(item) {
-                              return '<option value=\"' + item.id + '\">' + item.name + '</option>';
-                          }).join('');
-                          $('.item-select').append(options);
-                      }
-                  });
+                          echo "<table class='table'>
+                              <thead>
+                                  <tr>
+                                      <th>Item Name</th>
+                                      <th>Brand</th>
+                                      <th>Quantity</th>
+                                      <th>Unit Price</th>
+                                      <th>Total Price</th>
+                                  </tr>
+                              </thead>
+                              <tbody>";
+                              
+                              $grandTotal = 0;
+                            foreach ($response['items'] as $item) {
+                                  $totalPrice = $item['POL_QUANTITY'] * $item['POL_PRICE'];
+                                  $grandTotal += $totalPrice;
+                                  echo "<tr>
+                                          <td>" . htmlspecialchars($item['INV_MODEL_NAME']) . "</td>
+                                          <td>" . htmlspecialchars($item['INV_BRAND']) . "</td>
+                                          <td>" . htmlspecialchars($item['POL_QUANTITY']) . "</td>
+                                          <td>₱" . number_format($item['POL_PRICE'], 2) . "</td>
+                                          <td>₱" . number_format($totalPrice, 2) . "</td>
+                                      </tr>";
+                            }
+                              
+                              echo "</tbody>
+                                  <tfoot>
+                                      <tr>
+                                          <td colspan='4' class='text-end'><strong>Grand Total:</strong></td>
+                                          <td><strong>₱" . number_format($grandTotal, 2) . "</strong></td>
+                                      </tr>
+                                  </tfoot>
+                                  </table>";
+                              
+                              echo "</div>";
+                          } else {
+                              echo 'Purchase Order not found';
+                    }
+                }else{
+                    if(!empty($pos)){
+                        echo "
 
-                  // Calculate total price
-                  function calculateTotal(row) {
-                      const quantity = parseFloat(row.find('.quantity').val()) || 0;
-                      const price = parseFloat(row.find('.price').val()) || 0;
-                      const total = quantity * price;
-                      row.find('.total').text(total.toFixed(2));
-                      calculateGrandTotal();
-                  }
-
-                  // Calculate grand total
-                  function calculateGrandTotal() {
-                      let grandTotal = 0;
-                      $('#prItems tbody tr').each(function() {
-                          grandTotal += parseFloat($(this).find('.total').text()) || 0;
-                      });
-                      $('#grandTotal').text(grandTotal.toFixed(2));
-                  }
-
-                  // Add new row
-                  $(document).on('click', '.add-row', function() {
-                      const row = $(this).closest('tr');
-                      if (row.find('.item-select').val() && 
-                          row.find('.quantity').val() && 
-                          row.find('.price').val()) {
-                          
-                          const newRow = row.clone();
-                          newRow.find('.add-row')
-                               .removeClass('btn-primary add-row')
-                               .addClass('btn-danger delete-row')
-                               .text('Delete');
-                          row.find('input, select').val('');
-                          row.find('.total').text('0.00');
-                          $('#prItems tbody').append(newRow);
-                      }
-                  });
-
-                  // Delete row
-                  $(document).on('click', '.delete-row', function() {
-                      $(this).closest('tr').remove();
-                      calculateGrandTotal();
-                  });
-
-                  // Calculate totals on input change
-                  $(document).on('input', '.quantity, .price', function() {
-                      calculateTotal($(this).closest('tr'));
-                  });
-
-                  // Submit purchase request
-                  $('#submitPR').click(function() {
-                      const vendor = $('#vendor').val();
-                      const items = [];
-                      
-                      $('#prItems tbody tr').each(function() {
-                          const item = $(this).find('.item-select').val();
-                          if (item) {
-                              items.push({
-                                  item_id: item,
-                                  quantity: $(this).find('.quantity').val(),
-                                  price: $(this).find('.price').val(),
-                                  total: $(this).find('.total').text()
-                              });
-                          }
-                      });
-
-                      if (vendor && items.length > 0) {
-                          $.ajax({
-                              url: 'submit_purchase_request.php',
-                              type: 'POST',
-                              contentType: 'application/json', // Set content type to JSON
-                              data: JSON.stringify({ // Send data as JSON string
-                                    vendor_id: vendor,
-                                    items: items,
-                                }),
-                              success: function(response) {
-                                  // Parse the response as JSON
-                                  const jsonResponse = JSON.parse(response);
-                                  if (jsonResponse.success) {
-                                      alert('Purchase request submitted successfully!');
-                                      $('#purchaseRequestModal').modal('hide');
-                                      location.reload();
-                                  } else {
-                                      alert('Error submitting purchase request.');
-                                  }
-                              }
-                          });
-                      } else {
-                          alert('Please fill in all required fields.');
-                      }
-                  });
-
-                  // Add new empty row
-                  $('#addNewRow').click(function() {
-                      var existingOptions = $('.item-select').first().html();
-                      var newRow = 
-                          '<tr>' +
-                              '<td>' +
-                                  '<select class=\'form-select item-select\'>' +
-                                      '<option value=\'\'>Select Item</option>' +
-                                      existingOptions +
-                                  '</select>' +
-                              '</td>' +
-                              '<td>' +
-                                  '<input type=\'number\' class=\'form-control quantity\' min=\'1\'>' +
-                              '</td>' +
-                              '<td>' +
-                                  '<input type=\'number\' class=\'form-control price\' min=\'0\' step=\'0.01\'>' +
-                              '</td>' +
-                              '<td class=\'total\'>0.00</td>' +
-                              '<td>' +
-                                  '<button type=\'button\' class=\'btn btn-danger btn-sm delete-row\'>Delete</button>' +
-                              '</td>' +
-                          '</tr>';
-                      $('#prItems tbody').append(newRow);
-                  });
-              });
-              </script>";
-
-
-              if(isset($_GET['pr_id'])){
+                            <button type='button' class='btn btn-primary mb-3' data-bs-toggle='modal' data-bs-target='#purchaseRequestModal'>
+                                Create Purchase Request
+                            </button>
                 
-              }else{
-                if(isset($pos)){
-                    echo "
-                        <div class='card rounded-4 p-4'>
-                            <table class='table' id='requisitions-table'>
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Submitted Date</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>";
-                        
-                                foreach ($pos as $po) {
-                                    echo "<tr>
-                                            <td>" . htmlspecialchars($po['PO_ID']) . "</td>
-                                            <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
-                                            <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
-                                            <td>
-                                                <a href='?content=purchase_request&req_id=" . $po['PO_ID'] . "' 
-                                                class='btn btn-sm btn-primary'>
-                                                    <i class='fas fa-eye'></i> View
-                                                </a>
-                                            </td>
-                                        </tr>";
+                            
+
+                            
+                            <!-- Purchase Request Modal -->
+                            <div class='modal fade' id='purchaseRequestModal' tabindex='-1' aria-labelledby='purchaseRequestModalLabel' aria-hidden='true'>
+                                <div class='modal-dialog modal-lg'>
+                                    <div class='modal-content'>
+                                            <div class='modal-header'>
+                                                <h5 class='modal-title' id='purchaseRequestModalLabel'>Create Purchase Request</h5>
+                                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                                            </div>
+                                            <div class='modal-body'>
+                                                <form id='purchaseRequestForm'>
+                                                    <div class='mb-3'>
+                                                        <label for='vendor' class='form-label'>Select Vendor</label>
+                                                        <select class='form-select vendor-select' id='vendor' required>
+                                                            <option value=''>Select Vendor</option>
+                                                        </select>
+                                                    </div>
+                                                    
+                                                    <table class='table' id='prItems'>
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Item</th>
+                                                                <th>Quantity</th>
+                                                                <th>Unit Price</th>
+                                                                <th>Total Price</th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>
+                                                                    <select class='form-select item-select'>
+                                                                        <option value=''>Select Item</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type='number' class='form-control quantity' min='1'>
+                                                                </td>
+                                                                <td>
+                                                                    <input type='number' class='form-control price' min='0' step='0.01'>
+                                                                </td>
+                                                                <td class='total'>0.00</td>
+                                                                <td>
+                                                                    <button type='button' class='btn btn-danger btn-sm delete-row'>Delete</button>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr>
+                                                                <td colspan='3' class='text-end'><strong>Grand Total:</strong></td>
+                                                                <td id='grandTotal'>0.00</td>
+                                                                <td></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td colspan='4'>
+                                                                    <button type='button' class='btn btn-success btn-sm' id='addNewRow'>
+                                                                        <i class='fas fa-plus'></i> Add Another Item
+                                                                    </button>
+                                                                </td>
+                                                                <td></td>
+                                                            </tr>
+                                                            
+                                                        </tfoot>
+                                                    </table>
+                                                </form>
+                                            </div>
+                                            <div class='modal-footer'>
+                                                <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                                <button type='button' class='btn btn-primary' id='submitPR'>Submit Purchase Request</button>
+                                            </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <script>
+                            $(document).ready(function() {
+                                // Load vendors
+                                $.ajax({
+                                    url: 'get_vendors.php',
+                                    type: 'GET',
+                                    success: function(response) {
+                                        try {
+                                            const data = JSON.parse(response);
+                                            data.forEach(function(vendor) {
+                                                $('#vendor').append(\"<option value='\" + vendor.id + \"'>\" + vendor.name + \"</option>\");
+                                            });
+                                        } catch(e) {
+                                            console.error('Error parsing JSON:', e);
+                                        }
+                                    },
+                                    error: function(xhr, status, error) {
+                                        console.error('Ajax Error:', error);
                                     }
-                        
-                                echo "</tbody>
-                            </table>
-                        </div>";
-                  }else{
-                    echo "No Purchase order yet.";
+                                });
+
+                                // Load inventory items
+                                $.ajax({
+                                    url: 'get_inventory.php',
+                                    type: 'GET',
+                                    success: function(data) {
+                                        const items = JSON.parse(data);
+                                        const options = items.map(function(item) {
+                                            return '<option value=\"' + item.id + '\">' + item.name + '</option>';
+                                        }).join('');
+                                        $('.item-select').append(options);
+                                    }
+                                });
+
+                                // Calculate total price
+                                function calculateTotal(row) {
+                                    const quantity = parseFloat(row.find('.quantity').val()) || 0;
+                                    const price = parseFloat(row.find('.price').val()) || 0;
+                                    const total = quantity * price;
+                                    row.find('.total').text(total.toFixed(2));
+                                    calculateGrandTotal();
+                                }
+
+                                // Calculate grand total
+                                function calculateGrandTotal() {
+                                    let grandTotal = 0;
+                                    $('#prItems tbody tr').each(function() {
+                                        grandTotal += parseFloat($(this).find('.total').text()) || 0;
+                                    });
+                                    $('#grandTotal').text(grandTotal.toFixed(2));
+                                }
+
+                                // Add new row
+                                $(document).on('click', '.add-row', function() {
+                                    const row = $(this).closest('tr');
+                                    if (row.find('.item-select').val() && 
+                                        row.find('.quantity').val() && 
+                                        row.find('.price').val()) {
+                                        
+                                        const newRow = row.clone();
+                                        newRow.find('.add-row')
+                                            .removeClass('btn-primary add-row')
+                                            .addClass('btn-danger delete-row')
+                                            .text('Delete');
+                                        row.find('input, select').val('');
+                                        row.find('.total').text('0.00');
+                                        $('#prItems tbody').append(newRow);
+                                    }
+                                });
+
+                                // Delete row
+                                $(document).on('click', '.delete-row', function() {
+                                    $(this).closest('tr').remove();
+                                    calculateGrandTotal();
+                                });
+
+                                // Calculate totals on input change
+                                $(document).on('input', '.quantity, .price', function() {
+                                    calculateTotal($(this).closest('tr'));
+                                });
+
+                                // Submit purchase request
+                                $('#submitPR').click(function() {
+                                    const isUpdate = $(this).hasClass('update-po');
+                                    const poId = $(this).data('po-id');
+                                    const vendor = $('#vendor').val();
+                                    const items = [];
+                                    
+                                    $('#prItems tbody tr').each(function() {
+                                        const item = $(this).find('.item-select').val();
+                                        if (item) {
+                                            items.push({
+                                                item_id: item,
+                                                quantity: $(this).find('.quantity').val(),
+                                                price: $(this).find('.price').val(),
+                                                total: $(this).find('.total').text()
+                                            });
+                                        }
+                                    });
+
+                                    if (vendor && items.length > 0) {
+                                        const submitData = {
+                                            vendor_id: vendor,
+                                            items: items
+                                        };
+                                        
+                                        // Add po_id if this is an update
+                                        if (isUpdate) {
+                                            submitData.po_id = poId;
+                                        }
+
+                                        $.ajax({
+                                            url: isUpdate ? 'inventory/update_po.php' : 'submit_purchase_request.php',
+                                            type: 'POST',
+                                            contentType: 'application/json',
+                                            data: JSON.stringify(submitData),
+                                            success: function(response) {
+                                                try {
+                                                    const jsonResponse = JSON.parse(response);
+                                                    if (jsonResponse.success) {
+                                                        alert(isUpdate ? 'Purchase order updated successfully!' : 'Purchase request submitted successfully!');
+                                                        $('#purchaseRequestModal').modal('hide');
+                                                        location.reload();
+                                                    } else {
+                                                        alert(isUpdate ? 'Error updating purchase order.' : 'Error submitting purchase request.');
+                                                    }
+                                                } catch (e) {
+                                                    console.error('Error parsing response:', response);
+                                                    alert('Error processing server response');
+                                                }
+                                            },
+                                            error: function(xhr, status, error) {
+                                                console.error('Ajax Error:', error);
+                                                console.log('Response:', xhr.responseText);
+                                                alert('Error processing request. Please try again.');
+                                            }
+                                        });
+                                    } else {
+                                        alert('Please fill in all required fields.');
+                                    }
+                                });
+
+                                // Add new empty row
+                                $('#addNewRow').click(function() {
+                                    var existingOptions = $('.item-select').first().html();
+                                    var newRow = 
+                                        '<tr>' +
+                                            '<td>' +
+                                                '<select class=\'form-select item-select\'>' +
+                                                    existingOptions +
+                                                '</select>' +
+                                            '</td>' +
+                                            '<td>' +
+                                                '<input type=\'number\' class=\'form-control quantity\' min=\'1\'>' +
+                                            '</td>' +
+                                            '<td>' +
+                                                '<input type=\'number\' class=\'form-control price\' min=\'0\' step=\'0.01\'>' +
+                                            '</td>' +
+                                            '<td class=\'total\'>0.00</td>' +
+                                            '<td>' +
+                                                '<button type=\'button\' class=\'btn btn-danger btn-sm delete-row\'>Delete</button>' +
+                                            '</td>' +
+                                        '</tr>';
+                                    $('#prItems tbody').append(newRow);
+                                });
+
+                                // Handle Edit button click
+                                $(document).on('click', '.edit-po', function() {
+                                    const poId = $(this).data('id');
+                                    // Fetch PO details and populate modal
+                                    $.ajax({
+                                        url: 'inventory/get_po_details.php',
+                                        type: 'GET',
+                                        data: { po_id: poId },
+                                        success: function(response) {
+                                            console.log('Response:', response); // For debugging
+                                            if (response.success) {
+                                                // Populate the purchase request modal with existing data
+                                                $('#purchaseRequestModal').modal('show');
+                                                
+                                                // Set vendor
+                                                $('#vendor').val(response.po_details.SP_ID);
+                                                
+                                                // Clear existing rows except the first one
+                                                $('#prItems tbody tr:not(:first)').remove();
+                                                
+                                                // Reset the first row
+                                                const firstRow = $('#prItems tbody tr:first');
+                                                firstRow.find('input').val('');
+                                                firstRow.find('.total').text('0.00');
+                                                
+                                                // Add rows for each item
+                                                response.items.forEach(function(item, index) {
+                                                    if (index === 0) {
+                                                        // Update first row
+                                                        firstRow.find('.item-select').val(item.INV_ID);
+                                                        firstRow.find('.quantity').val(item.POL_QUANTITY);
+                                                        firstRow.find('.price').val(item.POL_PRICE);
+                                                        firstRow.find('.total').text((item.POL_QUANTITY * item.POL_PRICE).toFixed(2));
+                                                    } else {
+                                                        // Add new rows for additional items
+                                                        var newRow = createItemRow(item);
+                                                        $('#prItems tbody').append(newRow);
+                                                    }
+                                                });
+                                                
+                                                // Update the submit button
+                                                $('#submitPR')
+                                                    .text('Update Purchase Request')
+                                                    .data('po-id', poId)
+                                                    .removeClass('submit-new')
+                                                    .addClass('update-po');
+                                                    
+                                                calculateGrandTotal();
+                                            } else {
+                                                alert('Error loading purchase order details: ' + response.message);
+                                            }
+                                        },
+                                        error: function(xhr, status, error) {
+                                            console.error('Ajax Error:', error);
+                                            console.log('Response:', xhr.responseText); // For debugging
+                                            alert('Error loading purchase order details. Please try again.');
+                                        }
+                                    });
+                                });
+
+                                // Handle Delete button click
+                                $(document).on('click', '.delete-po', function() {
+                                    const poId = $(this).data('id');
+                                    if (confirm('Are you sure you want to delete this purchase order?')) {
+                                        $.ajax({
+                                            url: 'inventory/delete_po.php',
+                                            type: 'POST',
+                                            data: { po_id: poId },
+                                            success: function(response) {
+                                                const result = JSON.parse(response);
+                                                if (result.success) {
+                                                    alert('Purchase order deleted successfully!');
+                                                    location.reload();
+                                                } else {
+                                                    alert('Error deleting purchase order: ' + result.message);
+                                                }
+                                            }
+                                        });
+                                    }
+                                });
+
+                                // Helper function to create item row with existing data
+                                function createItemRow(item) {
+                                    var existingOptions = $('.item-select').first().html();
+                                    var row = $('<tr>');
+                                    row.html(
+                                        '<td>' +
+                                            '<select class=\"form-select item-select\">' +
+                                                existingOptions +
+                                            '</select>' +
+                                        '</td>' +
+                                        '<td>' +
+                                            '<input type=\"number\" class=\"form-control quantity\" min=\"1\">' +
+                                        '</td>' +
+                                        '<td>' +
+                                            '<input type=\"number\" class=\"form-control price\" min=\"0\" step=\"0.01\">' +
+                                        '</td>' +
+                                        '<td class=\"total\">0.00</td>' +
+                                        '<td>' +
+                                            '<button type=\"button\" class=\"btn btn-danger btn-sm delete-row\">Delete</button>' +
+                                        '</td>'
+                                    );
+                                    
+                                    // Set values if item exists
+                                    if (item) {
+                                        row.find('.item-select').val(item.INV_ID);
+                                        row.find('.quantity').val(item.POL_QUANTITY);
+                                        row.find('.price').val(item.POL_PRICE);
+                                        row.find('.total').text((item.POL_QUANTITY * item.POL_PRICE).toFixed(2));
+                                    }
+                                    
+                                    return row;
+                                }
+
+                                // Update the submit handler to handle both new and update cases
+                                $('#submitPR').click(function() {
+                                    const isUpdate = $(this).hasClass('update-po');
+                                    const poId = $(this).data('po-id');
+                                    const vendor = $('#vendor').val();
+                                    const items = [];
+                                    
+                                    $('#prItems tbody tr').each(function() {
+                                        const item = $(this).find('.item-select').val();
+                                        if (item) {
+                                            items.push({
+                                                item_id: item,
+                                                quantity: $(this).find('.quantity').val(),
+                                                price: $(this).find('.price').val(),
+                                                total: $(this).find('.total').text()
+                                            });
+                                        }
+                                    });
+
+                                    if (vendor && items.length > 0) {
+                                        const submitData = {
+                                            vendor_id: vendor,
+                                            items: items
+                                        };
+                                        
+                                        // Add po_id if this is an update
+                                        if (isUpdate) {
+                                            submitData.po_id = poId;
+                                        }
+
+                                        $.ajax({
+                                            url: isUpdate ? 'inventory/update_po.php' : 'submit_purchase_request.php',
+                                            type: 'POST',
+                                            contentType: 'application/json',
+                                            data: JSON.stringify(submitData),
+                                            success: function(response) {
+                                                try {
+                                                    const jsonResponse = JSON.parse(response);
+                                                    if (jsonResponse.success) {
+                                                        alert(isUpdate ? 'Purchase order updated successfully!' : 'Purchase request submitted successfully!');
+                                                        $('#purchaseRequestModal').modal('hide');
+                                                        location.reload();
+                                                    } else {
+                                                        alert(isUpdate ? 'Error updating purchase order.' : 'Error submitting purchase request.');
+                                                    }
+                                                } catch (e) {
+                                                    console.error('Error parsing response:', response);
+                                                    alert('Error processing server response');
+                                                }
+                                            },
+                                            error: function(xhr, status, error) {
+                                                console.error('Ajax Error:', error);
+                                                console.log('Response:', xhr.responseText);
+                                                alert('Error processing request. Please try again.');
+                                            }
+                                        });
+                                    } else {
+                                        alert('Please fill in all required fields.');
+                                    }
+                                });
+                            });
+                            </script>
+
+                            <div class='card rounded-4 p-4'>
+                                <table class='table' id='requisitions-table'>
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Submitted Date</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>";
+                            
+                                    foreach ($pos as $po) {
+                                        echo "<tr>
+                                                <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                                <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
+                                                <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
+                                                <td>
+                                                    <a href='#' class='btn btn-sm btn-primary view-requisition' 
+                                                        data-content='purchase_request' 
+                                                        data-id='" . $po['PO_ID'] . "'>
+                                                        <i class='fas fa-eye'></i> View
+                                                    </a>
+                                                    <button class='btn btn-sm btn-warning edit-po' 
+                                                        data-id='" . $po['PO_ID'] . "'>
+                                                        <i class='fas fa-edit'></i> Edit
+                                                    </button>
+                                                    <button class='btn btn-sm btn-danger delete-po' 
+                                                        data-id='" . $po['PO_ID'] . "'>
+                                                        <i class='fas fa-trash'></i> Delete
+                                                    </button>
+                                                </td>
+                                            </tr>";
+                                        }
+                            
+                                    echo "</tbody>
+                                </table>
+                            </div>";
+                      }else{
+                        echo "
+                        <div>
+                            <h5>No Purchase order yet.</h5>
+                        </div>
+                        ";
+                      }
                   }
-              }
 
               
     } else {
@@ -481,8 +747,9 @@ if ($content === 'purchase_order') {
                             <td>" . htmlspecialchars($req['employee_name']) . "</td>
                             <td>" . htmlspecialchars($req['submitted_date']) . "</td>
                             <td>
-                                <a href='?content=approved_requisitions&req_id=" . $req['requisition_id'] . "' 
-                                class='btn btn-sm btn-primary'>
+                                <a href='#' class='btn btn-sm btn-primary view-requisition' 
+                                    data-content='approved_requisitions' 
+                                    data-id='" . $req['requisition_id'] . "'>
                                     <i class='fas fa-eye'></i> View
                                 </a>
                             </td>
