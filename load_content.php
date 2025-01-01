@@ -341,6 +341,7 @@ if ($content === 'purchase_order') {
 
                                 $(document).on('click', '.delete-po', function(e) {
                                     e.preventDefault();
+                                    e.stopImmediatePropagation();
                                     const poId = $(this).data('id');
                                     
                                     if (confirm('Are you sure you want to delete this purchase order?')) {
@@ -889,8 +890,7 @@ if ($content === 'purchase_order') {
         </script>
     ";
     }
-}
- else {
+}else {
     echo "<h3>Content not found.</h3>";
 }
 ?>
