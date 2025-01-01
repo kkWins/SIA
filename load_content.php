@@ -281,140 +281,142 @@ if ($content === 'purchase_order') {
                             $(document).ready(function() {
                                 // Load vendors
                                 $.ajax({
-                                    url: \'get_vendors.php\',
-                                    type: \'GET\',
+                                    url: 'get_vendors.php',
+                                    type: 'GET',
                                     success: function(response) {
                                         try {
                                             const data = JSON.parse(response);
                                             data.forEach(function(vendor) {
-                                                $(\'#vendor\').append(\"<option value=\'\" + vendor.id + \"\'>\"+vendor.name+\"</option>\");
+                                                $('#vendor').append(\"<option value='\" + vendor.id + \"'>\" + vendor.name + \"</option>\");
                                             });
                                         } catch(e) {
-                                            console.error(\'Error parsing JSON:\', e);
+                                            console.error('Error parsing JSON:', e);
                                         }
                                     },
                                     error: function(xhr, status, error) {
-                                        console.error(\'Ajax Error:\', error);
+                                        console.error('Ajax Error:', error);
                                     }
                                 });
 
                                 // Load inventory items
                                 $.ajax({
-                                    url: \'get_inventory.php\',
-                                    type: \'GET\',
+                                    url: 'get_inventory.php',
+                                    type: 'GET',
                                     success: function(data) {
                                         const items = JSON.parse(data);
                                         const options = items.map(function(item) {
-                                            return \'<option value=\"\' + item.id + \'\">\' + item.name + \'</option>\';
-                                        }).join(\'\');
-                                        $(\'.item-select\').append(options);
+                                            return '<option value=\"' + item.id + '\">' + item.name + '</option>';
+                                        }).join('');
+                                        $('.item-select').append(options);
                                     }
                                 });
 
                                 // Calculate total price
                                 function calculateTotal(row) {
-                                    const quantity = parseFloat(row.find(\'.quantity\').val()) || 0;
-                                    const price = parseFloat(row.find(\'.price\').val()) || 0;
+                                    const quantity = parseFloat(row.find('.quantity').val()) || 0;
+                                    const price = parseFloat(row.find('.price').val()) || 0;
                                     const total = quantity * price;
-                                    row.find(\'.total\').text(total.toFixed(2));
+                                    row.find('.total').text(total.toFixed(2));
                                     calculateGrandTotal();
                                 }
 
                                 // Calculate grand total
                                 function calculateGrandTotal() {
                                     let grandTotal = 0;
-                                    $(\'#prItems tbody tr\').each(function() {
-                                        grandTotal += parseFloat($(this).find(\'.total\').text()) || 0;
+                                    $('#prItems tbody tr').each(function() {
+                                        grandTotal += parseFloat($(this).find('.total').text()) || 0;
                                     });
-                                    $(\'#grandTotal\').text(grandTotal.toFixed(2));
+                                    $('#grandTotal').text(grandTotal.toFixed(2));
                                 }
 
-                                // Delete row
-                                $(document).on(\'click\', \'.delete-row\', function() {
-                                    $(this).closest(\'tr\').remove();
-                                    calculateGrandTotal();
+                                // Delete row from form (not delete PO)
+                                $(document).on('click', '.delete-row', function() {
+                                    if ($('#prItems tbody tr').length > 1) {
+                                        $(this).closest('tr').remove();
+                                        calculateGrandTotal();
+                                    } else {
+                                        alert('Cannot delete the last row.');
+                                    }
                                 });
 
                                 // Calculate totals on input change
-                                $(document).on(\'input\', \'.quantity, .price\', function() {
-                                    calculateTotal($(this).closest(\'tr\'));
+                                $(document).on('input', '.quantity, .price', function() {
+                                    calculateTotal($(this).closest('tr'));
                                 });
 
-                                // Add new empty row
-                                $(\'#addNewRow\').click(function() {
-                                    var existingOptions = $(\'.item-select\').first().html();
-                                    var newRow = 
-                                        \'<tr>\' +
-                                            \'<td>\' +
-                                                \'<select class=\"form-select item-select\">\' +
-                                                    existingOptions +
-                                                \'</select>\' +
-                                            \'</td>\' +
-                                            \'<td>\' +
-                                                \'<input type=\"number\" class=\"form-control quantity\" min=\"1\">\' +
-                                            \'</td>\' +
-                                            \'<td>\' +
-                                                \'<input type=\"number\" class=\"form-control price\" min=\"0\" step=\"0.01\">\' +
-                                            \'</td>\' +
-                                            \'<td class=\"total\">0.00</td>\' +
-                                            \'<td>\' +
-                                                \'<button type=\"button\" class=\"btn btn-danger btn-sm delete-row\">Delete</button>\' +
-                                            \'</td>\' +
-                                        \'</tr>\';
-                                    $(\'#prItems tbody\').append(newRow);
+                                // Add new row
+                                $('#addNewRow').click(function() {
+                                    var existingOptions = $('.item-select').first().html();
+                                    const newRow = 
+                                        '<tr>' +
+                                            '<td>' +
+                                                '<select class=\"form-select item-select\">' +
+                                                existingOptions +
+                                                '</select>' +
+                                            '</td>' +
+                                            '<td>' +
+                                                '<input type=\"number\" class=\"form-control quantity\" min=\"1\">' +
+                                            '</td>' +
+                                            '<td>' +
+                                                '<input type=\"number\" class=\"form-control price\" min=\"0\" step=\"0.01\">' +
+                                            '</td>' +
+                                            '<td class=\"total\">0.00</td>' +
+                                            '<td>' +
+                                                '<button type=\"button\" class=\"btn btn-danger btn-sm delete-row\">Delete</button>' +
+                                            '</td>' +
+                                        '</tr>';
+                                    $('#prItems tbody').append(newRow);
                                 });
 
                                 // Submit new purchase request
-                                $(\'#submitPR\').click(function() {
-                                    const vendor = $(\'#vendor\').val();
+                                $('#submitPR').click(function() {
+                                    const vendor = $('#vendor').val();
                                     const items = [];
                                     
-                                    $(\'#prItems tbody tr\').each(function() {
-                                        const item = $(this).find(\'.item-select\').val();
+                                    $('#prItems tbody tr').each(function() {
+                                        const item = $(this).find('.item-select').val();
                                         if (item) {
                                             items.push({
                                                 item_id: item,
-                                                quantity: $(this).find(\'.quantity\').val(),
-                                                price: $(this).find(\'.price\').val(),
-                                                total: $(this).find(\'.total\').text()
+                                                quantity: $(this).find('.quantity').val(),
+                                                price: $(this).find('.price').val(),
+                                                total: $(this).find('.total').text()
                                             });
                                         }
                                     });
 
                                     if (vendor && items.length > 0) {
-                                        const submitData = {
-                                            vendor_id: vendor,
-                                            items: items
-                                        };
-
                                         $.ajax({
-                                            url: \'submit_purchase_request.php\',
-                                            type: \'POST\',
-                                            contentType: \'application/json\',
-                                            data: JSON.stringify(submitData),
+                                            url: 'submit_purchase_request.php',
+                                            type: 'POST',
+                                            contentType: 'application/json',
+                                            data: JSON.stringify({
+                                                vendor_id: vendor,
+                                                items: items
+                                            }),
                                             success: function(response) {
                                                 try {
                                                     const jsonResponse = JSON.parse(response);
                                                     if (jsonResponse.success) {
-                                                        alert(\'Purchase request submitted successfully!\');
-                                                        $(\'#purchaseRequestModal\').modal(\'hide\');
+                                                        alert('Purchase request submitted successfully!');
+                                                        $('#purchaseRequestModal').modal('hide');
                                                         location.reload();
                                                     } else {
-                                                        alert(\'Error submitting purchase request.\');
+                                                        alert('Error submitting purchase request.');
                                                     }
                                                 } catch (e) {
-                                                    console.error(\'Error parsing response:\', response);
-                                                    alert(\'Error processing server response\');
+                                                    console.error('Error parsing response:', response);
+                                                    alert('Error processing server response');
                                                 }
                                             },
                                             error: function(xhr, status, error) {
-                                                console.error(\'Ajax Error:\', error);
-                                                console.log(\'Response:\', xhr.responseText);
-                                                alert(\'Error processing request. Please try again.\');
+                                                console.error('Ajax Error:', error);
+                                                console.log('Response:', xhr.responseText);
+                                                alert('Error processing request. Please try again.');
                                             }
                                         });
                                     } else {
-                                        alert(\'Please fill in all required fields.\');
+                                        alert('Please fill in all required fields.');
                                     }
                                 });
                             });
