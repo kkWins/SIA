@@ -26,7 +26,253 @@ if ($content === 'purchase_order') {
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
-} elseif ($content === 'requisition_approval') {
+}elseif($content === 'pending_pr'){
+    echo "<h2>Pending Purchase Request</h2>";
+    include('finance/finance_pending_pr.php');
+    
+    if(isset($_GET['pending_pr'])){
+        if($response['po_details']) {
+            echo "
+                <div class='card rounded-4 p-4'>
+                <h3>Purchase Request # {$_GET['pending_pr']}</h3>
+                <div class='row mb-3'>
+                    <div class='col-md-6'>
+                        <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
+                        <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                    </div>
+                    <div class='col-md-6'>
+                        <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
+                    </div>
+                </div>";
+
+                if($response['po_details']['PO_STATUS'] === 'rejected') {
+                    echo "<div class='alert alert-danger'>
+                            <strong>Rejection Reason:</strong> " . htmlspecialchars($response['po_details']['ap_desc']) . "
+                          </div>";
+                }
+
+                echo "<table class='table'>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Brand</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>";
+                    
+                    $grandTotal = 0;
+                    foreach ($response['items'] as $item) {
+                        $totalPrice = $item['POL_QUANTITY'] * $item['POL_PRICE'];
+                        $grandTotal += $totalPrice;
+                        echo "<tr>
+                                <td>" . htmlspecialchars($item['INV_MODEL_NAME']) . "</td>
+                                <td>" . htmlspecialchars($item['INV_BRAND']) . "</td>
+                                <td>" . htmlspecialchars($item['POL_QUANTITY']) . "</td>
+                                <td>₱" . number_format($item['POL_PRICE'], 2) . "</td>
+                                <td>₱" . number_format($totalPrice, 2) . "</td>
+                            </tr>";
+                    }
+                    
+                    echo "</tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan='4' class='text-end'><strong>Grand Total:</strong></td>
+                                <td><strong>₱" . number_format($grandTotal, 2) . "</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <div class='mt-3'>
+                        <button class='btn btn-danger reject-btn' data-id='" . htmlspecialchars($_GET['pending_pr']) . "'>Reject</button>
+                        <button class='btn btn-success approve-btn' data-id='" . htmlspecialchars($_GET['pending_pr']) . "'>Approve</button>
+                    </div>
+                </div>";
+
+                // Rejection Modal
+                echo "
+                <div class='modal fade' id='rejectModal' tabindex='-1' aria-labelledby='rejectModalLabel' aria-hidden='true'>
+                    <div class='modal-dialog'>
+                        <div class='modal-content'>
+                            <div class='modal-header'>
+                                <h5 class='modal-title' id='rejectModalLabel'>Reject Purchase Request</h5>
+                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                            </div>
+                            <div class='modal-body'>
+                                <form id='rejectForm'>
+                                    <input type='hidden' id='po_id' name='po_id'>
+                                    <div class='mb-3'>
+                                        <label for='reject_reason' class='form-label'>Reason for Rejection</label>
+                                        <textarea class='form-control' id='reject_reason' name='reject_reason' rows='3' required></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class='modal-footer'>
+                                <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                <button type='button' class='btn btn-danger' id='confirmReject'>Confirm Rejection</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Approval Modal -->
+                <div class='modal fade' id='approveModal' tabindex='-1' aria-labelledby='approveModalLabel' aria-hidden='true'>
+                    <div class='modal-dialog'>
+                        <div class='modal-content'>
+                            <div class='modal-header'>
+                                <h5 class='modal-title' id='approveModalLabel'>Approve Purchase Request</h5>
+                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                            </div>
+                            <div class='modal-body'>
+                                <p>Are you sure you want to approve this purchase request?</p>
+                                <input type='hidden' id='approve_po_id' name='po_id'>
+                            </div>
+                            <div class='modal-footer'>
+                                <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                <button type='button' class='btn btn-success' id='confirmApprove'>Confirm Approval</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    $(document).ready(function() {
+                        // Show rejection modal when reject button is clicked
+                        $('.reject-btn').on('click', function() {
+                            const poId = $(this).data('id');
+                            $('#po_id').val(poId);
+                            $('#rejectModal').modal('show');
+                        });
+
+
+                        // Show approval modal when approve button is clicked
+                        $('.approve-btn').on('click', function() {
+                            const poId = $(this).data('id');
+                            $('#approve_po_id').val(poId);
+                            $('#approveModal').modal('show');
+                        });
+
+                        //Handle sa approve sa PR brad
+                        $('#confirmApprove').on('click', function(){
+                            const poId = $('#approve_po_id').val();
+
+                            $.ajax({
+                                url: 'finance/approve_purchase_order.php',
+                                type: 'POST',
+                                data: {
+                                    po_id: poId
+                                },
+                                success: function(response) {
+                                    try {
+                                        const result = JSON.parse(response);
+                                        if (result.success) {
+                                            alert('Purchase order approved successfully');
+                                            $('#approveModal').modal('hide');
+                                            // Redirect back to the list view
+                                            window.location.href = '?content=pending_pr';
+                                        } else {
+                                            alert('Error: ' + result.message);
+                                        }
+                                    } catch (e) {
+                                        alert('Error processing response');
+                                    }
+                                },
+                                error: function() {
+                                    alert('Error processing request');
+                                }
+                            });
+                        
+                        
+                        });
+
+
+
+                        // Handle rejection confirmation
+                        $('#confirmReject').on('click', function() {
+                            const poId = $('#po_id').val();
+                            const rejectReason = $('#reject_reason').val();
+
+                            if (!rejectReason) {
+                                alert('Please provide a reason for rejection');
+                                return;
+                            }
+
+                            $.ajax({
+                                url: 'finance/reject_purchase_order.php',
+                                type: 'POST',
+                                data: {
+                                    po_id: poId,
+                                    reject_reason: rejectReason
+                                },
+                                success: function(response) {
+                                    try {
+                                        const result = JSON.parse(response);
+                                        if (result.success) {
+                                            alert('Purchase order rejected successfully');
+                                            $('#rejectModal').modal('hide');
+                                            // Redirect back to the list view
+                                            window.location.href = '?content=pending_pr';
+                                        } else {
+                                            alert('Error: ' + result.message);
+                                        }
+                                    } catch (e) {
+                                        alert('Error processing response');
+                                    }
+                                },
+                                error: function() {
+                                    alert('Error processing request');
+                                }
+                            });
+                        });
+                    });
+                </script>";
+        } else {
+            echo 'Purchase Order not found';
+        }
+    }else{
+        if(!empty($pos)){
+            echo "
+            <div class='card rounded-4 p-4'>
+                <table class='table' id='requisitions-table'>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Supplier</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>";
+                    
+                    foreach ($pos as $po) {
+                        echo "<tr>
+                                <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
+                                <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
+                                <td>
+                                    <a href='#' class='btn btn-sm btn-primary view-requisition' 
+                                        data-content='pending_pr' 
+                                        data-id='" . $po['PO_ID'] . "'>
+                                        <i class='fas fa-eye'></i> View
+                                    </a>
+                                </td>
+                            </tr>";
+                    }
+            
+            echo "</tbody>
+                </table>
+            </div>";
+        }else{
+            echo "
+            <div>
+                <h5>No Pending Purchase Request Found!</h5>
+            </div>
+            ";
+        }
+    }
+}elseif ($content === 'requisition_approval') {
     echo "<h2>Requisition Approval</h2>";
 
     // Check if viewing details of a specific requisition
@@ -145,24 +391,22 @@ if ($content === 'purchase_order') {
     }
 } elseif ($content === 'purchase_request') {
     include('manager_inv_pr.php');
+    
     if ($conca === 'Inventory Manager') {
-        echo "<h2>Purchase Request</h2>
-
-                    ";
+        echo "<h2>Purchase Request</h2>";
 
 
                 if(isset($_GET['pr_id'])) {
                   if($response['po_details']) {
                       echo "
                       <div class='card rounded-4 p-4'>
-                          <h3>Purchase Request # {$_GET['pr_id']}</h3>
+                          <h3> ID #{$_GET['pr_id']}</h3>
                           <div class='row mb-3'>
                               <div class='col-md-6'>
                                   <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
                                   <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
                               </div>
                               <div class='col-md-6'>
-                                  <p><strong>Date of Order:</strong> {$response['po_details']['PO_ORDER_DATE']}</p>
                                   <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
                               </div>
                           </div>";
@@ -477,7 +721,6 @@ if ($content === 'purchase_order') {
                                         <tr>
                                             <th>ID</th>
                                             <th>Supplier</th>
-                                            <th>Submitted Date</th>
                                             <th>Status</th>
                                             <th>Action</th>
                                         </tr>
@@ -497,7 +740,6 @@ if ($content === 'purchase_order') {
                                         echo "<tr>
                                                 <td>" . htmlspecialchars($po['PO_ID']) . "</td>
                                                 <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
-                                                <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
                                                 <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
                                                 <td>
                                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
@@ -544,7 +786,7 @@ if ($content === 'purchase_order') {
                                     </ul>
                                 </nav>
                             </div>";
-                      }else{
+                        }else{
                         echo "
                         <div>
                             <h5>No Purchase order yet.</h5>
