@@ -425,6 +425,10 @@ $department = $_SESSION['department'];
                 loadContent('account_settings');
             });
 
+            $(document).on('loadContentEvent', function(e, content, id, page) {
+                loadContent(content, id, page);
+            });
+
             // For handling detail view clicks (e.g., from a table row)
             $(document).on('click', '.view-requisition', function(e) {
                 e.preventDefault();

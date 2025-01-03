@@ -22,7 +22,7 @@ $emp_id = $_SESSION['ID'];
 
 $sql = "SELECT * FROM purchase_or_requisition_form 
 WHERE prf_date > DATE_SUB(CURDATE(), INTERVAL 7 DAY) 
-AND emp_id = " . $emp_id . " AND prf_status = 'Pending'";
+AND emp_id = " . $emp_id . " AND prf_status = 'pending'";
 
 $result1 = $connection->query($sql);
 
