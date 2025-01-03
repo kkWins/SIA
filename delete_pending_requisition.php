@@ -1,5 +1,6 @@
 <?php
 session_start();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['prf_id'])) {
     $servername = "localhost";
     $username = "root";
@@ -29,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['prf_id'])) {
             // Close the statement after fetching the result
             $stmt->close();
 
-            if ($prf_status === "Pending") {
+            if ($prf_status === "pending") {
                 // Prepare and execute deletion of associated items from item_list
                 $delete_items_stmt = $connection->prepare("DELETE FROM item_list WHERE PRF_ID = ?");
                 $delete_items_stmt->bind_param("i", $PRF_ID);
@@ -47,10 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['prf_id'])) {
 
                 // Return success
                 echo 1;
-            } elseif ($prf_status === "Approved") {
+            } elseif ($prf_status === "approved") {
                 // Return "Approved" status
                 echo 2;
-            } elseif ($prf_status === "Rejected") {
+            } elseif ($prf_status === "rejected") {
                 // Return "Rejected" status
                 echo 3;
             }
