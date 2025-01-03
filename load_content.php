@@ -795,7 +795,7 @@ elseif ($content === 'requisition_history') {
     // Make sure $response is initialized before use
     $response = $response ?? ['prf_status' => 'No Pending Requisition', 'items' => []];
 
-    if ($response['prf_status'] == 'Pending') {
+    if ($response['prf_status'] == 'pending') {
         // If there's a pending request, display it
         echo "<h2>Pending Requisition</h2>
               <h4>Status: " . $response['prf_status'] . "</h4>
