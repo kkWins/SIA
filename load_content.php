@@ -564,7 +564,7 @@ if ($content === 'purchase_order') {
         if (isset($_GET['req_id'])) {
             include('manager_inv_approved_req.php');
             // Display detailed view
-            if($response['items']){
+            if ($response['items']) {
                 echo "
                     <div class='card rounded-4 p-4'>
                         <h3>Requisition ID {$_GET['req_id']}</h3>
@@ -578,37 +578,156 @@ if ($content === 'purchase_order') {
                                 <p><strong>Department:</strong> {$response['department']}</p>
                             </div>
                         </div>
-                        
+          
                         <table class='table'>
                             <thead>
                                 <tr>
                                     <th>Item Name</th>
                                     <th>Description</th>
-                                    <th>Quantity/Stock</th>
+                                    <th>Ask</th>
+                                    <th>Item Stock</th>
+                                    <th>Withdrawn</th>
+                                    <th>Withdraw Amount</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>";
-                            
-                    foreach ($response['items'] as $item) {
+                                 
+                foreach ($response['items'] as $item) {
+                    echo "<tr>
+                        <td>" . htmlspecialchars($item['item_name']) . "</td>
+                        <td>" . htmlspecialchars($item['description']) . "</td>
+                        <td>" . htmlspecialchars($item['quantity']) . "</td>
+                        <td>" . htmlspecialchars($item['stock']) . "</td>
+                        <td>" . htmlspecialchars($item['withdrawed']) . "</td>
+                        <td>
+                            <input type='number' name='withdraw_amount' 
+                                class='form-control' 
+                                placeholder='Enter amount'>
+                        </td>
+                        <td>
+                            <button class='btn btn-primary withdraw-btn' 
+                                data-reqID ='{$_GET['req_id']}'
+                                data-id='{$item['item_id']}' 
+                                data-quantity='{$item['quantity']}' 
+                                data-stock='{$item['stock']}'>
+                                Withdraw
+                            </button>
+                        </td>
+                    </tr>";
+                }
+                echo"<script>
+                        $(document).ready(function() {
+                            // Handle Withdraw Button Click
+                            $('.withdraw-btn').on('click', function(event) {
+                                event.preventDefault(); // Prevent default form submission
+
+                                // Get the item ID, requested quantity, available stock, and withdrawal amount
+                                console.log($(this).data());
+                                var itemId = $(this).data('id');
+                                var reqId = $(this).data('reqid');
+                                var requestedQuantity = $(this).data('quantity');
+                                var availableStock = $(this).data('stock');
+                                var withdrawAmount = $(this).closest('tr').find('input[name=\"withdraw_amount\"]').val();
+                                
+                                // Validate the withdraw amount
+                                if (withdrawAmount && !isNaN(withdrawAmount)) {
+                                    // Check if the withdrawal amount exceeds the requested quantity
+                                    if (withdrawAmount > requestedQuantity) {
+                                        alert('Withdrawal amount cannot exceed the requested quantity.');
+                                        return; // Stop the AJAX request if the amount exceeds the requested quantity
+                                    }
+
+                                    // Check if the withdrawal amount exceeds the available inventory stock
+                                    if (withdrawAmount > availableStock) {
+                                        alert('Not enough inventory stock.');
+                                        return; // Stop the AJAX request if the amount exceeds the available stock
+                                    }
+                                    if (withdrawAmount < 0) {
+                                        alert('Do not input negative numbers');
+                                        return; // Stop the AJAX request if the amount exceeds the available stock
+                                    }
+
+                                    // Perform the POST request using jQuery's $.post()
+                                    // Perform the POST request using jQuery's $.post()
+                                    $.post('rf_withdrwa.php', {
+                                        req_id: reqId,
+                                        withdraw_amount: withdrawAmount,
+                                        item_id: itemId
+                                    }, function(response) {
+                                        console.log(response);
+                                        console.log(response.success);
+
+                                    if (response.success) {
+                                        alert('Withdrawal successful!');
+
+                                    $(document).trigger('loadContentEvent', ['approved_requisitions', reqId]);
+                                        } else {
+                                            alert('Error: ' + response.message);
+                                        }
+                                    }, 'json') // Specify that the response is expected to be JSON
+                                    .fail(function(jqXHR, textStatus, errorThrown) {
+                                        console.log(\"Request failed: \" + textStatus + \" \" + errorThrown); // Log failure reason
+                                    });
+                                } else {
+                                    alert('Please enter a valid amount');
+                                }
+                            });
+                        });
+                    </script>";
+
+
+                include('get_rf_withdrawal.php');
+                
+                echo "</tbody>
+                    </table>
+                    
+                    <div class='mt-3'>
+                        <button class='btn btn-danger' id='endBtn' data-id='{$_GET['req_id']}'>End</button>
+                    </div>
+                 ";
+                 if (isset($finalResult) && is_array($finalResult) && count($finalResult) > 0) {
+                    echo "<table class='table'>
+                            <thead>
+                                <tr>
+                                    <th colspan='6'>Withdrawal History</th>
+                                </tr>
+                                <tr>
+                                    <th>Withdrawal ID</th>
+                                    <th>Quantity</th>
+                                    <th>Withdraw Date</th>
+                                    <th>Received Date</th>
+                                    <th>Withdrawn By</th>
+                                    <th>Item Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>";
+                
+                    // Loop through the withdrawal data and display each record in a table row
+                    foreach ($finalResult as $withdrawal) {
                         echo "<tr>
-                                <td>" . htmlspecialchars($item['item_name']) . "</td>
-                                <td>" . htmlspecialchars($item['description']) . "</td>
-                                <td>" . htmlspecialchars($item['quantity'] . "/" . $item['stock']) . "</td>
-                            </tr>";
+                                <td>{$withdrawal['withdrawal_id']}</td>
+                                <td>{$withdrawal['quantity']}</td>
+                                <td>{$withdrawal['withdraw_date']}</td>
+                                <td>{$withdrawal['received_date']}</td>
+                                <td>{$withdrawal['withdrawn_by']}</td>
+                                <td>{$withdrawal['item_name']}</td>
+                              </tr>";
                     }
-                            
+                
                     echo "</tbody>
-                        </table>
-                        
-                        <div class='mt-3'>
-                            <button class='btn btn-danger' id='rejectBtn' data-id='{$_GET['req_id']}'>Cancel</button>
-                            <button class='btn btn-success' id='approveBtn' data-id='{$_GET['req_id']}'>Send</button>
-                        </div>
-                    </div>";
-            }else{
+                        </table>";
+                } else {
+                    // If no withdrawal details found, display a message
+                    echo "<p>No withdrawals yet.</p>";
+                }
+
+                echo"
+
+                </div>";
+            } else {
                 echo 'Requisition not found';
             }
-            
         } else {
             // Show list view
             include('manager_inv_approved_req.php');
@@ -652,7 +771,8 @@ if ($content === 'purchase_order') {
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
-} elseif ($content === 'requisition_history') {
+}
+elseif ($content === 'requisition_history') {
     // Inside the requisition_withdrawal section in load_content.php
     echo "<h2>Requisition History</h2>";
 
@@ -675,7 +795,7 @@ if ($content === 'purchase_order') {
     // Make sure $response is initialized before use
     $response = $response ?? ['prf_status' => 'No Pending Requisition', 'items' => []];
 
-    if ($response['prf_status'] == 'Pending') {
+    if ($response['prf_status'] == 'pending') {
         // If there's a pending request, display it
         echo "<h2>Pending Requisition</h2>
               <h4>Status: " . $response['prf_status'] . "</h4>

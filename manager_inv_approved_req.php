@@ -12,61 +12,87 @@ if ($connection->connect_error) {
 
 // Check if we're requesting details for a specific requisition
 if (isset($_GET['req_id'])) {
-    // Query for detailed view
-    $sql = "SELECT 
+    // Query for requisition details
+    $requisitionSql = "SELECT 
         CONCAT(e.EMP_FNAME, ' ', e.EMP_MNAME, ' ', e.EMP_LNAME) AS Employee_Name,
         e.EMP_NUMBER AS Contact_No,
         d.DEPT_NAME AS Department,
         prf.PRF_ID AS Requisition_ID,
-        prf.PRF_DATE AS Requisition_Date,
-        il.IT_ID AS Item_ID,
-        i.INV_MODEL_NAME AS Item_Name,
-        i.INV_QUANTITY AS Stock,
-        il.IT_DESCRIPTION AS Description,
-        il.IT_QUANTITY AS Quantity
+        prf.PRF_DATE AS Requisition_Date
     FROM 
-        item_list il
-    JOIN 
-        purchase_or_requisition_form prf ON il.PRF_ID = prf.PRF_ID
+        purchase_or_requisition_form prf
     JOIN 
         employee e ON prf.EMP_ID = e.EMP_ID
     JOIN 
         department d ON e.DEPT_ID = d.DEPT_ID
-    JOIN
-        inventory i ON il.INV_ID = i.INV_ID
     WHERE 
         prf.PRF_ID = ?;";
 
-    $stmt = $connection->prepare($sql);
+    $stmt = $connection->prepare($requisitionSql);
     $stmt->bind_param("s", $_GET['req_id']);
     $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows > 0) {
-        $firstRow = $result->fetch_assoc();
+    $requisitionResult = $stmt->get_result();
+
+    if ($requisitionResult->num_rows > 0) {
+        $requisitionRow = $requisitionResult->fetch_assoc();
         $response = [
-            'requisition_id' => $firstRow['Requisition_ID'],
-            'employee_name' => $firstRow['Employee_Name'],
-            'contact_no' => $firstRow['Contact_No'],
-            'department' => $firstRow['Department'],
-            'date' => $firstRow['Requisition_Date'],
+            'requisition_id' => $requisitionRow['Requisition_ID'],
+            'employee_name' => $requisitionRow['Employee_Name'],
+            'contact_no' => $requisitionRow['Contact_No'],
+            'department' => $requisitionRow['Department'],
+            'date' => $requisitionRow['Requisition_Date'],
             'items' => []
         ];
-        
-        // Reset result pointer
-        $result->data_seek(0);
-        
-        while ($row = $result->fetch_assoc()) {
+    } else {
+        echo "Requisition details not found.";
+        exit;
+    }
+
+    // Query for item details
+    $itemsSql = "SELECT 
+    il.IT_ID AS Item_ID,
+    i.INV_MODEL_NAME AS Item_Name,
+    i.INV_QUANTITY AS Stock,
+    il.IT_DESCRIPTION AS Description,
+    il.IT_QUANTITY AS Quantity,
+    SUM(rw.WD_QUANTITY) AS Withdrawed
+FROM 
+    item_list il
+LEFT JOIN 
+    inventory i ON il.INV_ID = i.INV_ID
+LEFT JOIN 
+    rf_withdrawal rw ON il.PRF_ID = rw.PRF_ID AND il.inv_id = rw.inv_id
+WHERE 
+    il.PRF_ID = ?
+GROUP BY 
+    i.INV_ID;
+";
+
+    $stmt = $connection->prepare($itemsSql);
+    $stmt->bind_param("s", $_GET['req_id']);
+    $stmt->execute();
+    $itemsResult = $stmt->get_result();
+
+    if ($itemsResult->num_rows > 0) {
+        while ($row = $itemsResult->fetch_assoc()) {
             $response['items'][] = [
+                'item_id'=> $row['Item_ID'] ,
                 'item_name' => $row['Item_Name'],
                 'description' => $row['Description'],
                 'quantity' => $row['Quantity'],
                 'stock' => $row['Stock'],
+                'withdrawed' => $row['Withdrawed']
             ];
         }
     } else {
-        $response = ['items' => ''];
+        echo "No items found for this requisition.";
+        exit;
     }
+
+    // Output the response
+   // echo "<pre>";
+   // print_r($response);
+   // echo "</pre>";
 } else {
     // Query for list view - modified to use GROUP BY
     $sql = "SELECT 
