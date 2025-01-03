@@ -41,7 +41,6 @@ if ($content === 'purchase_order') {
                         <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
                     </div>
                     <div class='col-md-6'>
-                        <p><strong>Date of Order:</strong> {$response['po_details']['PO_ORDER_DATE']}</p>
                         <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
                     </div>
                 </div>";
@@ -241,7 +240,6 @@ if ($content === 'purchase_order') {
                         <tr>
                             <th>ID</th>
                             <th>Supplier</th>
-                            <th>Submitted Date</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -252,7 +250,6 @@ if ($content === 'purchase_order') {
                         echo "<tr>
                                 <td>" . htmlspecialchars($po['PO_ID']) . "</td>
                                 <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
-                                <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
                                 <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
                                 <td>
                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
@@ -403,14 +400,13 @@ if ($content === 'purchase_order') {
                   if($response['po_details']) {
                       echo "
                       <div class='card rounded-4 p-4'>
-                          <h3>Purchase Request # {$_GET['pr_id']}</h3>
+                          <h3> ID #{$_GET['pr_id']}</h3>
                           <div class='row mb-3'>
                               <div class='col-md-6'>
                                   <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
                                   <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
                               </div>
                               <div class='col-md-6'>
-                                  <p><strong>Date of Order:</strong> {$response['po_details']['PO_ORDER_DATE']}</p>
                                   <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
                               </div>
                           </div>";
@@ -725,7 +721,6 @@ if ($content === 'purchase_order') {
                                         <tr>
                                             <th>ID</th>
                                             <th>Supplier</th>
-                                            <th>Submitted Date</th>
                                             <th>Status</th>
                                             <th>Action</th>
                                         </tr>
@@ -745,7 +740,6 @@ if ($content === 'purchase_order') {
                                         echo "<tr>
                                                 <td>" . htmlspecialchars($po['PO_ID']) . "</td>
                                                 <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
-                                                <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
                                                 <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
                                                 <td>
                                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
