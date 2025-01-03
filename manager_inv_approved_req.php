@@ -12,7 +12,7 @@ if ($connection->connect_error) {
 
 // Check if we're requesting details for a specific requisition
 if (isset($_GET['req_id'])) {
-    // Query for requisition details
+    // Query for requisition details (same as your original code)
     $requisitionSql = "SELECT 
         CONCAT(e.EMP_FNAME, ' ', e.EMP_MNAME, ' ', e.EMP_LNAME) AS Employee_Name,
         e.EMP_NUMBER AS Contact_No,
@@ -48,25 +48,49 @@ if (isset($_GET['req_id'])) {
         exit;
     }
 
-    // Query for item details
+    // Get employees from the "Inventory" department
+    $staffSql = "SELECT e.EMP_ID, CONCAT(EMP_FNAME, ' ', EMP_LNAME) AS Employee_Name
+                 FROM employee e
+                 JOIN department d ON e.DEPT_ID = d.DEPT_ID
+                 WHERE d.DEPT_NAME = 'Inventory'";  // Assuming the department name is 'Inventory'
+    
+    $staffResult = $connection->query($staffSql);
+    $response['staff'] = [];
+    
+    if ($staffResult->num_rows > 0) {
+        while ($staffRow = $staffResult->fetch_assoc()) {
+            $response['staff'][] = [
+                'emp_id' => $staffRow['EMP_ID'],
+                'employee_name' => $staffRow['Employee_Name']
+            ];
+        }
+    }
+
+    // Query for item details (same as your original code)
     $itemsSql = "SELECT 
-    il.IT_ID AS Item_ID,
-    i.INV_MODEL_NAME AS Item_Name,
-    i.INV_QUANTITY AS Stock,
-    il.IT_DESCRIPTION AS Description,
-    il.IT_QUANTITY AS Quantity,
-    SUM(rw.WD_QUANTITY) AS Withdrawed
-FROM 
-    item_list il
-LEFT JOIN 
-    inventory i ON il.INV_ID = i.INV_ID
-LEFT JOIN 
-    rf_withdrawal rw ON il.PRF_ID = rw.PRF_ID AND il.inv_id = rw.inv_id
-WHERE 
-    il.PRF_ID = ?
-GROUP BY 
-    i.INV_ID;
-";
+            il.IT_ID AS Item_ID,
+            i.INV_MODEL_NAME AS Item_Name,
+            i.INV_QUANTITY AS Stock,
+            il.IT_DESCRIPTION AS Description,
+            il.IT_QUANTITY AS Quantity,
+            SUM(CASE 
+                    WHEN rw.WD_DATE IS NOT NULL THEN rw.WD_QUANTITY
+                    ELSE 0 
+                END) AS Withdrawed,
+            SUM(CASE 
+                    WHEN rw.WD_DATE_RECEIVED IS NOT NULL AND rw.WD_DATE IS NOT NULL THEN rw.WD_QUANTITY
+                    ELSE 0 
+                END) AS Delivered
+        FROM 
+            item_list il
+        LEFT JOIN 
+            inventory i ON il.INV_ID = i.INV_ID
+        LEFT JOIN 
+            rf_withdrawal rw ON il.PRF_ID = rw.PRF_ID AND il.inv_id = rw.inv_id
+        WHERE 
+            il.PRF_ID = ? 
+        GROUP BY 
+            i.INV_ID";
 
     $stmt = $connection->prepare($itemsSql);
     $stmt->bind_param("s", $_GET['req_id']);
@@ -76,12 +100,13 @@ GROUP BY
     if ($itemsResult->num_rows > 0) {
         while ($row = $itemsResult->fetch_assoc()) {
             $response['items'][] = [
-                'item_id'=> $row['Item_ID'] ,
+                'item_id' => $row['Item_ID'],
                 'item_name' => $row['Item_Name'],
                 'description' => $row['Description'],
                 'quantity' => $row['Quantity'],
                 'stock' => $row['Stock'],
-                'withdrawed' => $row['Withdrawed']
+                'withdrawed' => $row['Withdrawed'],
+                'delivered' => $row['Delivered']
             ];
         }
     } else {
@@ -89,10 +114,6 @@ GROUP BY
         exit;
     }
 
-    // Output the response
-   // echo "<pre>";
-   // print_r($response);
-   // echo "</pre>";
 } else {
     // Query for list view - modified to use GROUP BY
     $sql = "SELECT 

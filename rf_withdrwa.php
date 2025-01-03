@@ -9,16 +9,11 @@ if ($connection->connect_error) {
     die("Connection failed: " . $connection->connect_error);
 }
 
-// Start the session to access session variables
-session_start();
-
-// Retrieve the employee ID from the session
-$empId = $_SESSION['ID'];
-
 // Retrieve data sent by the AJAX request
 $reqId = $_POST['req_id'];
 $withdrawAmount = $_POST['withdraw_amount'];
 $itemId = $_POST['item_id'];
+$empId = $_POST['emp_id']; // Get the employee ID from the AJAX request
 
 // Step 1: Get the inventory ID and the item quantity (IT_QUANTITY) from ITEM_LIST for the item being withdrawn
 $query = "SELECT INV_ID, IT_QUANTITY FROM ITEM_LIST WHERE IT_ID = ?";
@@ -38,7 +33,7 @@ $invId = $item['INV_ID'];
 $itemQuantity = $item['IT_QUANTITY'];  // The available quantity in ITEM_LIST
 
 // Step 2: Get the total quantity already withdrawn for the same inventory ID and requisition form ID
-$query = "SELECT SUM(WD_QUANTITY) as total_withdrawn FROM RF_WITHDRAWAL WHERE INV_ID = ? AND PRF_ID = ?";
+$query = "SELECT SUM(WD_QUANTITY) as total_withdrawn FROM RF_WITHDRAWAL WHERE INV_ID = ? AND WD_DATE IS NOT NULL AND PRF_ID = ?";
 $stmt = $connection->prepare($query);
 $stmt->bind_param("ii", $invId, $reqId); // 'ii' for two integers
 $stmt->execute();
@@ -64,7 +59,7 @@ if ($withdrawAmount > $itemQuantity) {
 $query = "INSERT INTO RF_WITHDRAWAL (WD_QUANTITY, WD_DATE, WD_DATE_RECEIVED, EMP_ID, PRF_ID, INV_ID) 
           VALUES (?, NOW(), NULL, ?, ?, ?)";
 $stmt = $connection->prepare($query);
-$stmt->bind_param("iiii", $withdrawAmount, $empId, $reqId, $invId); // 'iii' for three integers
+$stmt->bind_param("iiii", $withdrawAmount, $empId, $reqId, $invId); // 'iiii' for four integers
 $stmt->execute();
 
 // Return success response

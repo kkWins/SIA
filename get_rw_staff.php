@@ -61,7 +61,7 @@ if (isset($_GET['req_id'])) {
     // Handle case when 'req_id' is not set
     $finalResult = "No requisition ID provided.";
 }
-//echo json_encode($finalResult);
+echo json_encode($finalResult);
 
 
 $connection->close();
