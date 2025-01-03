@@ -341,6 +341,9 @@ $department = $_SESSION['department'];
                     } else if (content === 'pending_pr') {
                         params.pending_pr = id;
                         url += `&pending_pr=${id}`;
+                    } else if (content === 'purchase_order') {
+                        params.po_id = id;
+                        url += `&po_id=${id}`;
                     } else if (content === 'requisition_approval' || content === 'approved_requisitions') {
                         params.req_id = id;
                         url += `&req_id=${id}`;

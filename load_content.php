@@ -21,9 +21,177 @@ $conca = $department . " " . $role;
 // Check the content and show the appropriate page
 if ($content === 'purchase_order') {
     if ($conca === 'Finance Manager') {
+        include('finance/purchase_orders.php');
         echo "<h2>Purchase Order</h2>
-              <p>Manage your purchase orders here.</p>";
-    } else {
+        <p>Manage your purchase orders here.</p>";
+
+        if(isset($_GET['po_id'])){
+            if($response['po_details']) {
+                echo "
+                    <div class='card rounded-4 p-4'>
+                    <h3>Purchase Request # {$_GET['po_id']}</h3>
+                    <div class='row mb-3'>
+                        <div class='col-md-6'>
+                            <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
+                            <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                        </div>
+                        <div class='col-md-6'>
+                            <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Add new date/time inputs with pre-filled values -->
+                    <div class='row mb-3'>
+                        <div class='col-md-6'>
+                            <label for='order_datetime' class='form-label'><strong>Order Date & Time:</strong></label>
+                            <input type='datetime-local' class='form-control' id='order_datetime' 
+                                value='" . (!empty($response['po_details']['PO_ORDER_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ORDER_DATE'])) : '') . "' 
+                                required>
+                        </div>
+                        <div class='col-md-6'>
+                            <label for='arrival_datetime' class='form-label'><strong>Expected Arrival Date & Time:</strong></label>
+                            <input type='datetime-local' class='form-control' id='arrival_datetime' 
+                                value='" . (!empty($response['po_details']['PO_ARRIVAL_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ARRIVAL_DATE'])) : '') . "' 
+                                required>
+                        </div>
+                    </div>";
+    
+                    if($response['po_details']['PO_STATUS'] === 'rejected') {
+                        echo "<div class='alert alert-danger'>
+                                <strong>Rejection Reason:</strong> " . htmlspecialchars($response['po_details']['ap_desc']) . "
+                              </div>";
+                    }
+    
+                    echo "<table class='table'>
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Brand</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+                        
+                        $grandTotal = 0;
+                        foreach ($response['items'] as $item) {
+                            $totalPrice = $item['POL_QUANTITY'] * $item['POL_PRICE'];
+                            $grandTotal += $totalPrice;
+                            echo "<tr>
+                                    <td>" . htmlspecialchars($item['INV_MODEL_NAME']) . "</td>
+                                    <td>" . htmlspecialchars($item['INV_BRAND']) . "</td>
+                                    <td>" . htmlspecialchars($item['POL_QUANTITY']) . "</td>
+                                    <td>₱" . number_format($item['POL_PRICE'], 2) . "</td>
+                                    <td>₱" . number_format($totalPrice, 2) . "</td>
+                                </tr>";
+                        }
+                        
+                        echo "</tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan='4' class='text-end'><strong>Grand Total:</strong></td>
+                                    <td><strong>₱" . number_format($grandTotal, 2) . "</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+    
+                        <div class='mt-3'>
+                            <button class='btn btn-secondary cancel-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Cancel</button>
+                            <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                        </div>
+                    </div>
+                    <script>
+                        $(document).ready(function() {
+                            $('.submit-btn').on('click', function() {
+                                const poId = $(this).data('id');
+                                const orderDateTime = $('#order_datetime').val();
+                                const arrivalDateTime = $('#arrival_datetime').val();
+                                console.log(orderDateTime);
+                                
+                                // Validate inputs
+                                if (!orderDateTime || !arrivalDateTime) {
+                                    alert('Please fill in both order and arrival date/time');
+                                    return;
+                                }
+                                
+                                // Send AJAX request
+                                $.ajax({
+                                    url: 'finance/submit_purchase_order.php',
+                                    type: 'POST',
+                                    data: {
+                                        po_id: poId,
+                                        order_datetime: orderDateTime,
+                                        arrival_datetime: arrivalDateTime
+                                    },
+                                    success: function(response) {
+                                        try {
+                                            const result = JSON.parse(response);
+                                            if (result.success) {
+                                                alert('Purchase order submitted successfully');
+                                                window.location.href = '?content=purchase_order';
+                                            } else {
+                                                alert('Error: ' + (result.message || 'Unknown error'));
+                                            }
+                                        } catch (e) {
+                                            console.error('Error parsing response:', e);
+                                            alert('Error processing response');
+                                        }
+                                    },
+                                    error: function() {
+                                        alert('Error submitting purchase order');
+                                    }
+                                });
+                            });
+                        });
+                        </script>";
+    
+            } else {
+                echo 'Purchase Order not found';
+            }
+        }else{
+            if(!empty($pos)){
+                echo "
+                <div class='card rounded-4 p-4'>
+                    <table class='table' id='requisitions-table'>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Supplier</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+                        
+                        foreach ($pos as $po) {
+                            echo "<tr>
+                                    <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                    <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
+                                    <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
+                                    <td>
+                                        <a href='#' class='btn btn-sm btn-primary view-requisition' 
+                                            data-content='purchase_order' 
+                                            data-id='" . $po['PO_ID'] . "'>
+                                            <i class='fas fa-eye'></i> View
+                                        </a>
+                                    </td>
+                                </tr>";
+                        }
+                
+                echo "</tbody>
+                    </table>
+                </div>";
+            }else{
+                echo "
+                <div>
+                    <h5>No Pending Purchase Request Found!</h5>
+                </div>
+                ";
+            }
+        }
+
+    }else {
         echo "<h3>You do not have access to this content.</h3>";
     }
 }elseif($content === 'pending_pr'){
