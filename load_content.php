@@ -661,17 +661,21 @@ if ($content === 'purchase_order') {
                                 // Check if Received Date is NULL and provide a cancel option
                                 if (is_null($withdrawal['received_date'])) {
                                     $cancelButton = "<button class='btn btn-danger cancel-btn' data-reqID='{$_GET['req_id']}' data-withdrawal-id='{$withdrawal['withdrawal_id']}'>Cancel</button>";
+                                    $receivedText = ''; // No "Received" text if the button is shown
+                                } else {
+                                    $cancelButton = ''; // No button if the withdrawal is received
+                                    $receivedText = 'Received'; // Display "Received" text if received_date is not null
                                 }
                             
                                 echo "<tr>
-                                        <td>{$withdrawal['withdrawal_id']}</td>
-                                        <td>{$withdrawal['quantity']}</td>
-                                        <td>{$withdrawal['withdraw_date']}</td>
-                                        <td>{$withdrawal['received_date']}</td>
-                                        <td>{$withdrawal['withdrawn_by']}</td>
-                                        <td>{$withdrawal['item_name']}</td>
-                                        <td>$cancelButton</td> <!-- Display Cancel button if condition met -->
-                                    </tr>";
+                                    <td>{$withdrawal['withdrawal_id']}</td>
+                                    <td>{$withdrawal['quantity']}</td>
+                                    <td>{$withdrawal['withdraw_date']}</td>
+                                    <td>{$withdrawal['received_date']}</td>
+                                    <td>{$withdrawal['withdrawn_by']}</td>
+                                    <td>{$withdrawal['item_name']}</td>
+                                    <td>{$cancelButton}{$receivedText}</td> <!-- Display Cancel button or 'Received' -->
+                                </tr>";
                             }
                             
                             echo "</tbody>
@@ -940,7 +944,7 @@ elseif ($content === 'requisition_history') {
                             if (!withdrawal.received_date) {
                                 html += '<td><button class=\"btn btn-success btn-sm\" onclick=\"markReceived(' + withdrawal.withdrawal_id + ')\">Received</button></td>';
                             } else {
-                                html += '<td></td>'; // Empty cell if already received
+                                html += '<td>Received</td>'; // Empty cell if already received
                             }
     
                             html += '</tr>';

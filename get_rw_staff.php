@@ -29,7 +29,7 @@ if (isset($_GET['req_id'])) {
         WHERE 
             RW.PRF_ID = ? AND RW.WD_DATE IS NOT NULL
         ORDER BY 
-            RW.WD_DATE ASC;
+            RW.WD_DATE DESC;
     ";
 
     $stmt = $connection->prepare($query);
