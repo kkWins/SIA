@@ -60,7 +60,8 @@ if(isset($_GET['pending_pr'])){
     po.SP_ID, 
     sp.SP_NAME 
     FROM purchase_order po 
-    JOIN supplier sp ON sp.SP_ID = po.SP_ID";
+    JOIN supplier sp ON sp.SP_ID = po.SP_ID
+    WHERE po.PO_STATUS IN ('pending', 'rejected')";
 
     $result = $db->query($sql);
     $pos = [];

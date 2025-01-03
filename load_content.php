@@ -118,6 +118,26 @@ if ($content === 'purchase_order') {
                     </div>
                 </div>
 
+                <!-- Approval Modal -->
+                <div class='modal fade' id='approveModal' tabindex='-1' aria-labelledby='approveModalLabel' aria-hidden='true'>
+                    <div class='modal-dialog'>
+                        <div class='modal-content'>
+                            <div class='modal-header'>
+                                <h5 class='modal-title' id='approveModalLabel'>Approve Purchase Request</h5>
+                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                            </div>
+                            <div class='modal-body'>
+                                <p>Are you sure you want to approve this purchase request?</p>
+                                <input type='hidden' id='approve_po_id' name='po_id'>
+                            </div>
+                            <div class='modal-footer'>
+                                <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                <button type='button' class='btn btn-success' id='confirmApprove'>Confirm Approval</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <script>
                     $(document).ready(function() {
                         // Show rejection modal when reject button is clicked
@@ -128,14 +148,45 @@ if ($content === 'purchase_order') {
                         });
 
 
-                        //Apporved button click
-                        $('.approve-btn').on('click', function(){
-                            const prId = $(this).data('id');
-                            $('#po_id').val(prId);
-                            $('#rejectModal').modal('show');
-                        
-                        }
+                        // Show approval modal when approve button is clicked
+                        $('.approve-btn').on('click', function() {
+                            const poId = $(this).data('id');
+                            $('#approve_po_id').val(poId);
+                            $('#approveModal').modal('show');
+                        });
 
+                        //Handle sa approve sa PR brad
+                        $('#confirmApprove').on('click', function(){
+                            const poId = $('#approve_po_id').val();
+
+                            $.ajax({
+                                url: 'finance/approve_purchase_order.php',
+                                type: 'POST',
+                                data: {
+                                    po_id: poId
+                                },
+                                success: function(response) {
+                                    try {
+                                        const result = JSON.parse(response);
+                                        if (result.success) {
+                                            alert('Purchase order approved successfully');
+                                            $('#approveModal').modal('hide');
+                                            // Redirect back to the list view
+                                            window.location.href = '?content=pending_pr';
+                                        } else {
+                                            alert('Error: ' + result.message);
+                                        }
+                                    } catch (e) {
+                                        alert('Error processing response');
+                                    }
+                                },
+                                error: function() {
+                                    alert('Error processing request');
+                                }
+                            });
+                        
+                        
+                        });
 
 
 
