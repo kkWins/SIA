@@ -1,5 +1,5 @@
 <?php
-require_once 'db.php';  // Include the database connection
+require_once 'db.php'; // Include the database connection
 
 // Create connection using the existing db.php configuration
 $connection = new mysqli($servername, $username, $password, $database, 3306);
@@ -13,26 +13,48 @@ if ($connection->connect_error) {
 if (isset($_POST['withdrawal_id'])) {
     $withdrawalId = $_POST['withdrawal_id'];
 
-    // Prepare the SQL statement to update the status of the withdrawal
-    // Assuming you have a column `cancelled` in the RF_WITHDRAWAL table to mark the withdrawal as canceled
-    $sql = "UPDATE RF_WITHDRAWAL SET WD_DATE = NULL WHERE WD_ID = ?";
-
-    // Prepare the statement
+    // Step 1: Fetch the withdrawal details (WD_QUANTITY and INV_ID)
+    $sql = "SELECT WD_QUANTITY, INV_ID FROM RF_WITHDRAWAL WHERE WD_ID = ?";
     if ($stmt = $connection->prepare($sql)) {
-        // Bind the withdrawal ID parameter
         $stmt->bind_param("i", $withdrawalId);
-
-        // Execute the query
-        if ($stmt->execute()) {
-            // Successful cancellation
-            echo json_encode(['success' => true, 'message' => 'Success to cancel withdrawal']);
-        } else {
-            // Error during execution
-            echo json_encode(['success' => false, 'message' => 'Failed to cancel withdrawal']);
-        }
-
-        // Close the statement
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $withdrawal = $result->fetch_assoc();
         $stmt->close();
+
+        // Check if the withdrawal exists
+        if ($withdrawal) {
+            $withdrawQuantity = $withdrawal['WD_QUANTITY'];
+            $invId = $withdrawal['INV_ID'];
+
+            // Step 2: Update the inventory to return the withdrawn quantity
+            $updateInventory = "UPDATE INVENTORY SET INV_QUANTITY = INV_QUANTITY + ? WHERE INV_ID = ?";
+            if ($stmt = $connection->prepare($updateInventory)) {
+                $stmt->bind_param("ii", $withdrawQuantity, $invId);
+                $stmt->execute();
+                $stmt->close();
+
+                // Step 3: Mark the withdrawal as canceled
+                $updateWithdrawal = "UPDATE RF_WITHDRAWAL SET WD_DATE = NULL WHERE WD_ID = ?";
+                if ($stmt = $connection->prepare($updateWithdrawal)) {
+                    $stmt->bind_param("i", $withdrawalId);
+                    $stmt->execute();
+                    $stmt->close();
+
+                    // Success response
+                    echo json_encode(['success' => true, 'message' => 'Withdrawal canceled and quantity returned to inventory']);
+                } else {
+                    // Error updating the withdrawal
+                    echo json_encode(['success' => false, 'message' => 'Failed to update withdrawal status']);
+                }
+            } else {
+                // Error updating the inventory
+                echo json_encode(['success' => false, 'message' => 'Failed to update inventory']);
+            }
+        } else {
+            // Withdrawal not found
+            echo json_encode(['success' => false, 'message' => 'Withdrawal record not found']);
+        }
     } else {
         // Error preparing the SQL statement
         echo json_encode(['success' => false, 'message' => 'Error preparing query']);

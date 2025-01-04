@@ -1326,7 +1326,7 @@ if ($content === 'purchase_order') {
                                             alert('Error: ' + response.message);
                                         }
                                     }, 'json').fail(function(jqXHR, textStatus, errorThrown) {
-                                        console.log(\"Request failed: \" + textStatus + \" \" + errorThrown);
+                                        alert(\"Request failed: \" + textStatus + \" \" + errorThrown);
                                     });
                                 } else {
                                     alert('Please enter a valid amount');

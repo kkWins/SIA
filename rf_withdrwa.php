@@ -62,6 +62,12 @@ $stmt = $connection->prepare($query);
 $stmt->bind_param("iiii", $withdrawAmount, $empId, $reqId, $invId); // 'iiii' for four integers
 $stmt->execute();
 
+// Step 5: Reduce the stock in the INVENTORY table
+$query = "UPDATE INVENTORY SET INV_QUANTITY = INV_QUANTITY - ? WHERE INV_ID = ?";
+$stmt = $connection->prepare($query);
+$stmt->bind_param("ii", $withdrawAmount, $invId); // 'ii' for integers
+$stmt->execute();
+
 // Return success response
 echo json_encode(['success' => true, 'message' => 'Withdrawal successful!']);
 
