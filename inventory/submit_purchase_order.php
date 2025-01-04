@@ -3,7 +3,7 @@ session_start();
 require_once('../db.php');
 
 // Check if user is logged in and has appropriate role
-if (!isset($_SESSION['loggedIn']) || $_SESSION['department'] . " " . $_SESSION['role'] !== 'Finance Manager') {
+if (!isset($_SESSION['loggedIn']) || $_SESSION['department'] . " " . $_SESSION['role'] !== 'Inventory Manager') {
     echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit;
 }
@@ -13,11 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $order_datetime = $_POST['order_datetime'] ?? '';
     $arrival_datetime = $_POST['arrival_datetime'] ?? '';
     
-    // Validate inputs
-    if (empty($po_id) || empty($order_datetime) || empty($arrival_datetime)) {
-        echo json_encode(['success' => false, 'message' => 'Missing required fields']);
-        exit;
-    }
     
     try {
         // First check if dates already exist

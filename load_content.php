@@ -109,15 +109,10 @@ if ($content === 'purchase_order') {
                                 const arrivalDateTime = $('#arrival_datetime').val();
                                 console.log(orderDateTime);
                                 
-                                // Validate inputs
-                                if (!orderDateTime || !arrivalDateTime) {
-                                    alert('Please fill in both order and arrival date/time');
-                                    return;
-                                }
                                 
                                 // Send AJAX request
                                 $.ajax({
-                                    url: 'finance/submit_purchase_order.php',
+                                    url: 'inventory/submit_purchase_order.php',
                                     type: 'POST',
                                     data: {
                                         po_id: poId,
