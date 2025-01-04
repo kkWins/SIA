@@ -23,9 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['items'], $_POST['quan
 
 
         if ($emp_position === "Staff"){
-            $prf_status = 'Pending';
+            $prf_status = 'pending';
         }else if($emp_position === "Manager"){
-            $prf_status = 'Approved';
+            $prf_status = 'approved';
         }
 
 

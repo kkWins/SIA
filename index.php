@@ -269,6 +269,7 @@ $department = $_SESSION['department'];
                     <a href="#" class="sidebar-link" id="withdrawal-deposit-link">Withdrawal & Deposit</a>
                     <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
                     <a href="#" class="sidebar-link" id="approved-requisitions-link">Approved Requisitions</a>
+                    <a href="#" class="sidebar-link" id="purchase-order-link">Purchase Order</a>
                     <a href="#" class="sidebar-link" id="purchase-request-link">Purchase Request</a>
                     <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
                     <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a> 
@@ -341,6 +342,9 @@ $department = $_SESSION['department'];
                     } else if (content === 'pending_pr') {
                         params.pending_pr = id;
                         url += `&pending_pr=${id}`;
+                    } else if (content === 'purchase_order') {
+                        params.po_id = id;
+                        url += `&po_id=${id}`;
                     } else if (content === 'requisition_approval' || content === 'approved_requisitions') {
                         params.req_id = id;
                         url += `&req_id=${id}`;

@@ -20,10 +20,356 @@ $conca = $department . " " . $role;
 
 // Check the content and show the appropriate page
 if ($content === 'purchase_order') {
-    if ($conca === 'Finance Manager') {
+    if ($conca === 'Inventory Manager') {
+        include('inventory/purchase_orders.php');
         echo "<h2>Purchase Order</h2>
-              <p>Manage your purchase orders here.</p>";
-    } else {
+        <p>Manage your purchase orders here.</p>";
+
+        if(isset($_GET['po_id'])){
+            if($response['po_details']) {
+                echo "
+                    <div class='card rounded-4 p-4'>
+                    <h3>Purchase Request # {$_GET['po_id']}</h3>
+                    <div class='row mb-3'>
+                        <div class='col-md-6'>
+                            <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
+                            <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                        </div>
+                        <div class='col-md-6'>
+                            <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Add new date/time inputs with pre-filled values -->
+                    <div class='row mb-3'>
+                        <div class='col-md-6'>
+                            <label for='order_datetime' class='form-label'><strong>Order Date & Time:</strong></label>
+                            <input type='datetime-local' class='form-control' id='order_datetime' 
+                                value='" . (!empty($response['po_details']['PO_ORDER_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ORDER_DATE'])) : '') . "' 
+                                required>
+                        </div>
+                        <div class='col-md-6'>
+                            <label for='arrival_datetime' class='form-label'><strong>Expected Arrival Date & Time:</strong></label>
+                            <input type='datetime-local' class='form-control' id='arrival_datetime' 
+                                value='" . (!empty($response['po_details']['PO_ARRIVAL_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ARRIVAL_DATE'])) : '') . "' 
+                                required>
+                        </div>
+                    </div>";
+    
+                    if($response['po_details']['PO_STATUS'] === 'rejected') {
+                        echo "<div class='alert alert-danger'>
+                                <strong>Rejection Reason:</strong> " . htmlspecialchars($response['po_details']['ap_desc']) . "
+                              </div>";
+                    }
+    
+                    echo "<table class='table'>
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Brand</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>
+                                <th>Total Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+                        
+                        $grandTotal = 0;
+                        foreach ($response['items'] as $item) {
+                            $totalPrice = $item['POL_QUANTITY'] * $item['POL_PRICE'];
+                            $grandTotal += $totalPrice;
+                            echo "<tr>
+                                    <td>" . htmlspecialchars($item['INV_MODEL_NAME']) . "</td>
+                                    <td>" . htmlspecialchars($item['INV_BRAND']) . "</td>
+                                    <td>" . htmlspecialchars($item['POL_QUANTITY']) . "</td>
+                                    <td>₱" . number_format($item['POL_PRICE'], 2) . "</td>
+                                    <td>₱" . number_format($totalPrice, 2) . "</td>
+                                </tr>";
+                        }
+                        
+                        echo "</tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan='4' class='text-end'><strong>Grand Total:</strong></td>
+                                    <td><strong>₱" . number_format($grandTotal, 2) . "</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+    
+                        <div class='mt-3'>
+                            <button class='btn btn-secondary cancel-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Cancel</button>
+                            <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                        </div>
+                    </div>
+                    <script>
+                        $(document).ready(function() {
+                            $('.submit-btn').on('click', function() {
+                                const poId = $(this).data('id');
+                                const orderDateTime = $('#order_datetime').val();
+                                const arrivalDateTime = $('#arrival_datetime').val();
+                                console.log(orderDateTime);
+                                
+                                
+                                // Send AJAX request
+                                $.ajax({
+                                    url: 'inventory/submit_purchase_order.php',
+                                    type: 'POST',
+                                    data: {
+                                        po_id: poId,
+                                        order_datetime: orderDateTime,
+                                        arrival_datetime: arrivalDateTime
+                                    },
+                                    success: function(response) {
+                                        try {
+                                            const result = JSON.parse(response);
+                                            if (result.success) {
+                                                alert('Purchase order submitted successfully');
+                                                window.location.href = '?content=purchase_order';
+                                            } else {
+                                                alert('Error: ' + (result.message || 'Unknown error'));
+                                            }
+                                        } catch (e) {
+                                            console.error('Error parsing response:', e);
+                                            alert('Error processing response');
+                                        }
+                                    },
+                                    error: function() {
+                                        alert('Error submitting purchase order');
+                                    }
+                                });
+                            });
+                        });
+                        </script>";
+    
+            } else {
+                echo 'Purchase Order not found';
+            }
+        }else{
+            if(!empty($pos)){
+                echo "
+                <div class='card rounded-4 p-4'>
+                    <table class='table' id='requisitions-table'>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Supplier</th>
+                                <th>Order Date</th>
+                                <th>Arrival Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+                        
+                        foreach ($pos as $po) {
+                            echo "<tr>
+                                    <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                    <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
+                                    <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
+                                    <td>" . htmlspecialchars($po['PO_ARRIVAL_DATE']) . "</td>
+                                    <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
+                                    <td>
+                                        <a href='#' class='btn btn-sm btn-primary view-requisition' 
+                                            data-content='purchase_order' 
+                                            data-id='" . $po['PO_ID'] . "'>
+                                            <i class='fas fa-eye'></i> View
+                                        </a>
+                                    </td>
+                                </tr>";
+                        }
+                
+                echo "</tbody>
+                    </table>
+                </div>";
+            }else{
+                echo "
+                <div>
+                    <h5>No Pending Purchase Request Found!</h5>
+                </div>
+                ";
+            }
+        }
+
+    }elseif($conca === 'Finance Manager'){
+        include('inventory/purchase_orders.php');
+        echo "<h2>Finance Manager - Purchase Orders</h2>
+        <p>Manage purchase order payments here.</p>";
+
+        if(isset($_GET['po_id'])){
+            if($response['po_details']) {
+                echo "
+                    <div class='card rounded-4 p-4'>
+                    <h3>Purchase Request # {$_GET['po_id']}</h3>
+                    <div class='row mb-3'>
+                        <div class='col-md-6'>
+                            <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
+                            <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                        </div>
+                        <div class='col-md-6'>
+                            <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Replace datetime inputs with payment details -->
+                    <div class='row mb-3'>
+                        <div class='col-md-4'>
+                            <label for='payment_type' class='form-label'><strong>Payment Type:</strong></label>
+                            <select class='form-select' id='payment_type' required>
+                                <option value=''>Select payment type</option>
+                                <option value='cash' " . ($response['payment_details']['PD_PAYMENT_TYPE'] === 'cash' ? 'selected' : '') . ">Cash</option>
+                                <option value='check' " . ($response['payment_details']['PD_PAYMENT_TYPE'] === 'check' ? 'selected' : '') . ">Check</option>
+                            </select>
+                        </div>
+                        <div class='col-md-4'>
+                            <label for='payment_amount' class='form-label'><strong>Payment Amount:</strong></label>
+                            <input type='number' class='form-control' id='payment_amount' 
+                                value='" . (!empty($response['payment_details']['PD_AMMOUNT']) ? $response['payment_details']['PD_AMMOUNT'] : '') . "'
+                                min='0' step='0.01' required>
+                        </div>
+                        <div class='col-md-4'>
+                            <label for='payment_change' class='form-label'><strong>Change:</strong></label>
+                            <input type='number' class='form-control' id='payment_change' 
+                                value='" . (!empty($response['payment_details']['PD_CHANGE']) ? $response['payment_details']['PD_CHANGE'] : '') . "'
+                                min='0' step='0.01' required>
+                        </div>
+                    </div>";
+
+                if($response['po_details']['PO_STATUS'] === 'rejected') {
+                    echo "<div class='alert alert-danger'>
+                            <strong>Rejection Reason:</strong> " . htmlspecialchars($response['po_details']['ap_desc']) . "
+                          </div>";
+                }
+
+                echo "<table class='table'>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Brand</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>";
+                    
+                    $grandTotal = 0;
+                    foreach ($response['items'] as $item) {
+                        $totalPrice = $item['POL_QUANTITY'] * $item['POL_PRICE'];
+                        $grandTotal += $totalPrice;
+                        echo "<tr>
+                                <td>" . htmlspecialchars($item['INV_MODEL_NAME']) . "</td>
+                                <td>" . htmlspecialchars($item['INV_BRAND']) . "</td>
+                                <td>" . htmlspecialchars($item['POL_QUANTITY']) . "</td>
+                                <td>₱" . number_format($item['POL_PRICE'], 2) . "</td>
+                                <td>₱" . number_format($totalPrice, 2) . "</td>
+                            </tr>";
+                    }
+                    
+                    echo "</tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan='4' class='text-end'><strong>Grand Total:</strong></td>
+                                <td><strong>₱" . number_format($grandTotal, 2) . "</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+    
+                    <div class='mt-3'>
+                        <button class='btn btn-secondary cancel-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Cancel</button>
+                        <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                    </div>
+                </div>
+                <script>
+                    $(document).ready(function() {
+                        $('.submit1-btn').on('click', function() {
+                            const poId = $(this).data('id');
+                            const paymentType = $('#payment_type').val();
+                            const paymentAmount = $('#payment_amount').val();
+                            const paymentChange = $('#payment_change').val();
+                            
+                            // Validate inputs
+                            if (!paymentType || !paymentAmount || !paymentChange) {
+                                alert('Please fill in all payment details');
+                                return;
+                            }
+                            
+                            // Send AJAX request
+                            $.ajax({
+                                url: 'finance/submit_payment.php',
+                                type: 'POST',
+                                data: {
+                                    po_id: poId,
+                                    payment_type: paymentType,
+                                    payment_amount: paymentAmount,
+                                    payment_change: paymentChange
+                                },
+                                success: function(response) {
+                                    try {
+                                        // Check if response is already an object
+                                        const result = typeof response === 'object' ? response : JSON.parse(response);
+                                        if (result.success) {
+                                            alert('Payment submitted successfully');
+                                            window.location.href = '?content=purchase_order';
+                                        } else {
+                                            alert('Error: ' + (result.message || 'Unknown error'));
+                                        }
+                                    } catch (e) {
+                                        alert('Error processing response');
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    alert('Error submitting payment. Check console for details.');
+                                }
+                            });
+                        });
+                    });
+                    </script>";
+    
+            } else {
+                echo 'Purchase Order not found';
+            }
+        }else{
+            if(!empty($pos)){
+                echo "
+                <div class='card rounded-4 p-4'>
+                    <table class='table' id='requisitions-table'>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Supplier</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+                        
+                        foreach ($pos as $po) {
+                            echo "<tr>
+                                    <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                    <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
+                                    <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
+                                    <td>
+                                        <a href='#' class='btn btn-sm btn-primary view-requisition' 
+                                            data-content='purchase_order' 
+                                            data-id='" . $po['PO_ID'] . "'>
+                                            <i class='fas fa-eye'></i> View
+                                        </a>
+                                    </td>
+                                </tr>";
+                        }
+                
+                echo "</tbody>
+                    </table>
+                </div>";
+            }else{
+                echo "
+                <div>
+                    <h5>No Pending Purchase Request Found!</h5>
+                </div>
+                ";
+            }
+        }
+    }else {
         echo "<h3>You do not have access to this content.</h3>";
     }
 }elseif($content === 'pending_pr'){
@@ -159,7 +505,7 @@ if ($content === 'purchase_order') {
                             const poId = $('#approve_po_id').val();
 
                             $.ajax({
-                                url: 'finance/approve_purchase_order.php',
+                                url: 'finance/approve_purchase_request.php',
                                 type: 'POST',
                                 data: {
                                     po_id: poId
@@ -200,7 +546,7 @@ if ($content === 'purchase_order') {
                             }
 
                             $.ajax({
-                                url: 'finance/reject_purchase_order.php',
+                                url: 'finance/reject_purchase_request.php',
                                 type: 'POST',
                                 data: {
                                     po_id: poId,
@@ -829,147 +1175,193 @@ if ($content === 'purchase_order') {
                                     <th>Ask</th>
                                     <th>Item Stock</th>
                                     <th>Withdrawn</th>
+                                    <th>Delivered Amount</th>
                                     <th>Withdraw Amount</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>";
                                  
-                foreach ($response['items'] as $item) {
-                    echo "<tr>
-                        <td>" . htmlspecialchars($item['item_name']) . "</td>
-                        <td>" . htmlspecialchars($item['description']) . "</td>
-                        <td>" . htmlspecialchars($item['quantity']) . "</td>
-                        <td>" . htmlspecialchars($item['stock']) . "</td>
-                        <td>" . htmlspecialchars($item['withdrawed']) . "</td>
-                        <td>
-                            <input type='number' name='withdraw_amount' 
-                                class='form-control' 
-                                placeholder='Enter amount'>
-                        </td>
-                        <td>
-                            <button class='btn btn-primary withdraw-btn' 
-                                data-reqID ='{$_GET['req_id']}'
-                                data-id='{$item['item_id']}' 
-                                data-quantity='{$item['quantity']}' 
-                                data-stock='{$item['stock']}'>
-                                Withdraw
-                            </button>
-                        </td>
-                    </tr>";
-                }
-                echo"<script>
+                            foreach ($response['items'] as $item) {
+                                echo "<tr>
+                                        <td>" . htmlspecialchars($item['item_name']) . "</td>
+                                        <td>" . htmlspecialchars($item['description']) . "</td>
+                                        <td>" . htmlspecialchars($item['quantity']) . "</td>
+                                        <td>" . htmlspecialchars($item['stock']) . "</td>
+                                        <td>" . htmlspecialchars($item['withdrawed']) . "</td>
+                                        <td>" . htmlspecialchars($item['delivered']) . "</td>
+                                        <td>
+                                            <input type='number' name='withdraw_amount' 
+                                                class='form-control' 
+                                                placeholder='Enter amount'>
+                                        </td>
+                                        <td>
+                                            <select name='employee' class='form-control'>
+                                                <option value=''>Select Employee</option>";
+                                
+                                // Display the staff dropdown
+                                foreach ($response['staff'] as $staff) {
+                                    echo "<option value='" . htmlspecialchars($staff['emp_id']) . "'>" . htmlspecialchars($staff['employee_name']) . "</option>";
+                                }
+                                
+                                echo "</select>
+                                        </td>
+                                        <td>
+                                            <button class='btn btn-primary withdraw-btn' 
+                                                data-reqID='{$_GET['req_id']}'
+                                                data-id='{$item['item_id']}' 
+                                                data-quantity='{$item['quantity']}' 
+                                                data-stock='{$item['stock']}'>
+                                                Withdraw
+                                            </button>
+                                        </td>
+                                    </tr>";
+                            }
+                            include('get_rf_withdrawal.php');
+                
+                            echo "</tbody>
+                                </table>
+                                
+                                <div class='mt-3'>
+                                    <button class='btn btn-danger' id='endBtn' data-id='{$_GET['req_id']}'>End</button>
+                                </div>
+                             ";
+                             if (isset($finalResult) && is_array($finalResult) && count($finalResult) > 0) {
+                                    echo "<table class='table'>
+                                    <thead>
+                                        <tr>
+                                            <th colspan='7'>Withdrawal History</th>
+                                        </tr>
+                                        <tr>
+                                            <th>Withdrawal ID</th>
+                                            <th>Quantity</th>
+                                            <th>Withdraw Date</th>
+                                            <th>Received Date</th>
+                                            <th>Withdrawn By</th>
+                                            <th>Item Name</th>
+                                            <th>Action</th> <!-- New column for Cancel -->
+                                        </tr>
+                                    </thead>
+                                    <tbody>";
+                            
+                            foreach ($finalResult as $withdrawal) {
+                                $cancelButton = '';
+                                // Check if Received Date is NULL and provide a cancel option
+                                if (is_null($withdrawal['received_date'])) {
+                                    $cancelButton = "<button class='btn btn-danger cancel-btn' data-reqID='{$_GET['req_id']}' data-withdrawal-id='{$withdrawal['withdrawal_id']}'>Cancel</button>";
+                                    $receivedText = ''; // No "Received" text if the button is shown
+                                } else {
+                                    $cancelButton = ''; // No button if the withdrawal is received
+                                    $receivedText = 'Received'; // Display "Received" text if received_date is not null
+                                }
+                            
+                                echo "<tr>
+                                    <td>{$withdrawal['withdrawal_id']}</td>
+                                    <td>{$withdrawal['quantity']}</td>
+                                    <td>{$withdrawal['withdraw_date']}</td>
+                                    <td>{$withdrawal['received_date']}</td>
+                                    <td>{$withdrawal['withdrawn_by']}</td>
+                                    <td>{$withdrawal['item_name']}</td>
+                                    <td>{$cancelButton}{$receivedText}</td> <!-- Display Cancel button or 'Received' -->
+                                </tr>";
+                            }
+                            
+                            echo "</tbody>
+                                </table>";
+                            } else {
+                                // If no withdrawal details found, display a message
+                                echo "<p>No withdrawals yet.</p>";
+                            }
+            
+                            echo"
+            
+                            </div>";
+                        } else {
+                            echo 'Requisition not found';
+                        }
+                
+                
+                
+                    echo"<script>
                         $(document).ready(function() {
                             // Handle Withdraw Button Click
                             $('.withdraw-btn').on('click', function(event) {
                                 event.preventDefault(); // Prevent default form submission
 
-                                // Get the item ID, requested quantity, available stock, and withdrawal amount
-                                console.log($(this).data());
                                 var itemId = $(this).data('id');
                                 var reqId = $(this).data('reqid');
                                 var requestedQuantity = $(this).data('quantity');
                                 var availableStock = $(this).data('stock');
                                 var withdrawAmount = $(this).closest('tr').find('input[name=\"withdraw_amount\"]').val();
-                                
+                                var empId = $(this).closest('tr').find('select[name=\"employee\"]').val();
+
                                 // Validate the withdraw amount
                                 if (withdrawAmount && !isNaN(withdrawAmount)) {
-                                    // Check if the withdrawal amount exceeds the requested quantity
                                     if (withdrawAmount > requestedQuantity) {
                                         alert('Withdrawal amount cannot exceed the requested quantity.');
-                                        return; // Stop the AJAX request if the amount exceeds the requested quantity
+                                        return;
                                     }
-
-                                    // Check if the withdrawal amount exceeds the available inventory stock
                                     if (withdrawAmount > availableStock) {
                                         alert('Not enough inventory stock.');
-                                        return; // Stop the AJAX request if the amount exceeds the available stock
+                                        return;
                                     }
                                     if (withdrawAmount < 0) {
                                         alert('Do not input negative numbers');
-                                        return; // Stop the AJAX request if the amount exceeds the available stock
+                                        return;
                                     }
 
-                                    // Perform the POST request using jQuery's $.post()
-                                    // Perform the POST request using jQuery's $.post()
+                                    // Perform the POST request for withdrawal
                                     $.post('rf_withdrwa.php', {
                                         req_id: reqId,
                                         withdraw_amount: withdrawAmount,
-                                        item_id: itemId
+                                        item_id: itemId,
+                                        emp_id: empId
                                     }, function(response) {
                                         console.log(response);
-                                        console.log(response.success);
-
-                                    if (response.success) {
-                                        alert('Withdrawal successful!');
-
-                                    $(document).trigger('loadContentEvent', ['approved_requisitions', reqId]);
+                                        if (response.success) {
+                                            alert('Withdrawal successful!');
+                                            $(document).trigger('loadContentEvent', ['approved_requisitions', reqId]);
                                         } else {
                                             alert('Error: ' + response.message);
                                         }
-                                    }, 'json') // Specify that the response is expected to be JSON
-                                    .fail(function(jqXHR, textStatus, errorThrown) {
-                                        console.log(\"Request failed: \" + textStatus + \" \" + errorThrown); // Log failure reason
+                                    }, 'json').fail(function(jqXHR, textStatus, errorThrown) {
+                                        alert(\"Request failed: \" + textStatus + \" \" + errorThrown);
                                     });
                                 } else {
                                     alert('Please enter a valid amount');
                                 }
                             });
+
+                            // Handle Cancel Button Click
+                            $('.cancel-btn').on('click', function(event) {
+                                event.preventDefault(); // Prevent default form submission
+                                var reqId = $(this).data('reqid');
+                                console.log(reqId);
+                                var withdrawalId = $(this).data('withdrawal-id'); // Get the withdrawal ID
+
+                                // Perform the POST request for cancellation
+                                $.post('cancel_withdrawal.php', { withdrawal_id: withdrawalId }, function(response) {
+                                    console.log(response); // Log the response for debugging
+                                    if (response.success) {
+                                        // Display success message
+                                        alert(response.message);
+                                        console.log();
+                                        $(document).trigger('loadContentEvent', ['approved_requisitions', reqId]);
+                                    } else {
+                                        // Display error message
+                                        alert('Error: ' + response.message);
+                                    }
+                                }, 'json').fail(function(jqXHR, textStatus, errorThrown) {
+                                    // If the request fails, log the error
+                                    console.log(\"Request failed: \" + textStatus + \" \" + errorThrown);
+                                    console.log(\"Response: \" + jqXHR.responseText); // Log the raw response from the server
+                                });
+                            });
                         });
                     </script>";
 
 
-                include('get_rf_withdrawal.php');
                 
-                echo "</tbody>
-                    </table>
-                    
-                    <div class='mt-3'>
-                        <button class='btn btn-danger' id='endBtn' data-id='{$_GET['req_id']}'>End</button>
-                    </div>
-                 ";
-                 if (isset($finalResult) && is_array($finalResult) && count($finalResult) > 0) {
-                    echo "<table class='table'>
-                            <thead>
-                                <tr>
-                                    <th colspan='6'>Withdrawal History</th>
-                                </tr>
-                                <tr>
-                                    <th>Withdrawal ID</th>
-                                    <th>Quantity</th>
-                                    <th>Withdraw Date</th>
-                                    <th>Received Date</th>
-                                    <th>Withdrawn By</th>
-                                    <th>Item Name</th>
-                                </tr>
-                            </thead>
-                            <tbody>";
-                
-                    // Loop through the withdrawal data and display each record in a table row
-                    foreach ($finalResult as $withdrawal) {
-                        echo "<tr>
-                                <td>{$withdrawal['withdrawal_id']}</td>
-                                <td>{$withdrawal['quantity']}</td>
-                                <td>{$withdrawal['withdraw_date']}</td>
-                                <td>{$withdrawal['received_date']}</td>
-                                <td>{$withdrawal['withdrawn_by']}</td>
-                                <td>{$withdrawal['item_name']}</td>
-                              </tr>";
-                    }
-                
-                    echo "</tbody>
-                        </table>";
-                } else {
-                    // If no withdrawal details found, display a message
-                    echo "<p>No withdrawals yet.</p>";
-                }
-
-                echo"
-
-                </div>";
-            } else {
-                echo 'Requisition not found';
-            }
         } else {
             // Show list view
             include('manager_inv_approved_req.php');
@@ -1036,8 +1428,144 @@ elseif ($content === 'requisition_history') {
 
     // Make sure $response is initialized before use
     $response = $response ?? ['prf_status' => 'No Pending Requisition', 'items' => []];
+    
+    
 
-    if ($response['prf_status'] == 'pending') {
+    if (isset($response['prf_status']) && $response['prf_status'] == 'approved') {
+        // Approved requisition logic here
+        echo "<h2>Approved Requisition</h2>";
+        echo "<h4>Status: " . $response['prf_status'] . "</h4>";
+    
+        // Display requisition details in a compact, horizontal format
+        echo "
+        <div class='card rounded-4 p-4'>
+            <h3>Requisition Details</h3>
+            <div class='row'>
+                <div class='col-md-4'>
+                    <p><strong>Requisition ID:</strong> " . htmlspecialchars($response['requisition_id']) . "</p>
+                </div>
+                <div class='col-md-4'>
+                    <p><strong>Employee Name:</strong> " . htmlspecialchars($response['employee_name']) . "</p>
+                </div>
+                <div class='col-md-4'>
+                    <p><strong>Contact Number:</strong> " . htmlspecialchars($response['contact_no']) . "</p>
+                </div>
+            </div>
+            <div class='row'>
+                <div class='col-md-4'>
+                    <p><strong>Department:</strong> " . htmlspecialchars($response['department']) . "</p>
+                </div>
+                <div class='col-md-4'>
+                    <p><strong>Requisition Date:</strong> " . htmlspecialchars($response['date']) . "</p>
+                </div>
+                <div class='col-md-4'>
+                    <p><strong>Status:</strong> " . htmlspecialchars($response['prf_status']) . "</p>
+                </div>
+            </div>";
+    
+        // Display the items in a table
+        echo "
+        <h3>Items in Requisition</h3>
+        <table class='table'>
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Description</th>
+                    <th>Quantity Requested</th>
+                    <th>Stock</th>
+                    <th>Withdrawn Quantity</th>
+                    <th>Delivered Quantity</th>
+                </tr>
+            </thead>
+            <tbody>";
+    
+        // Loop through the items and display them in the table
+        foreach ($response['items'] as $item) {
+            echo "<tr>
+                    <td>" . htmlspecialchars($item['item_name']) . "</td>
+                    <td>" . htmlspecialchars($item['description']) . "</td>
+                    <td>" . htmlspecialchars($item['quantity']) . "</td>
+                    <td>" . htmlspecialchars($item['stock']) . "</td>
+                    <td>" . ($item['withdrawed'] === null ? '0' : htmlspecialchars($item['withdrawed'])) . "</td>
+                    <td>" . ($item['delivered'] === null ? '0' : htmlspecialchars($item['delivered'])) . "</td>
+                </tr>";
+        }
+    
+        echo "</tbody></table>";
+    
+        // Fetch withdrawal history using .get() AJAX request
+        echo "<h3>Withdrawal History</h3>";
+        echo "<table class='table'>
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Quantity Withdrawn</th>
+                        <th>Withdrawn By</th>
+                        <th>Withdraw Date</th>
+                        <th>Received Date</th>
+                        <th>Acknowledge</th> <!-- New column for Received button -->
+                    </tr>
+                </thead>
+                <tbody id='withdrawal-history'></tbody>
+              </table>";
+    
+        // Add JavaScript for AJAX request to fetch withdrawal data
+        echo "
+        <script>
+            $(document).ready(function() {
+                var reqId = '" . htmlspecialchars($response['requisition_id']) . "';
+                
+                $.get('get_rw_staff.php', { req_id: reqId }, function(data) {
+                    var withdrawalData = JSON.parse(data);
+                    var html = '';
+                    
+                    if (Array.isArray(withdrawalData) && withdrawalData.length > 0) {
+                        withdrawalData.forEach(function(withdrawal) {
+                            html += '<tr>';
+                            html += '<td>' + withdrawal.item_name + '</td>';
+                            html += '<td>' + withdrawal.quantity + '</td>';
+                            html += '<td>' + withdrawal.withdrawn_by + '</td>';
+                            html += '<td>' + withdrawal.withdraw_date + '</td>';
+                            html += '<td>' + (withdrawal.received_date || 'Not Received') + '</td>';
+                            
+                            // If the received date is null, add a \"Received\" button
+                            if (!withdrawal.received_date) {
+                                html += '<td><button class=\"btn btn-success btn-sm\" onclick=\"markReceived(' + withdrawal.withdrawal_id + ')\">Received</button></td>';
+                            } else {
+                                html += '<td>Received</td>'; // Empty cell if already received
+                            }
+    
+                            html += '</tr>';
+                        });
+                    } else {
+                        html = '<tr><td colspan=\"6\">No withdrawal information available.</td></tr>';
+                    }
+                    
+                    $('#withdrawal-history').html(html);
+                });
+            });
+    
+            // Function to mark the item as received (for future implementation)
+            function markReceived(withdrawalId) {
+                $.ajax({
+                    url: 'mark_received.php',  // PHP file to process the request
+                    type: 'POST',
+                    data: { wd_id: withdrawalId },
+                    success: function(response) {
+                        if (response === 'success') {
+                            alert('Item marked as received');
+                            location.reload();  // Reload the page to update the table
+                        } else {
+                            alert('Error updating received date');
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while marking as received');
+                    }
+                });
+            }
+        </script>";
+    } elseif (isset($response['prf_status']) && $response['prf_status'] == 'pending') {
         // If there's a pending request, display it
         echo "<h2>Pending Requisition</h2>
               <h4>Status: " . $response['prf_status'] . "</h4>
@@ -1256,8 +1784,8 @@ elseif ($content === 'requisition_history') {
 
                 $('#added-items tr').each(function() {
                     var itemID = $(this).find('td:first').data('id'); // Item ID
-                    var quantity = $(this).find('td').eq(1).text(); // Quantity
-                    var reason = $(this).find('td').eq(2).text(); // Reason
+                    var quantity = $(this).find('td').eq(1).text()); // Quantity
+                    var reason = $(this).find('td').eq(2).text()); // Reason
 
                     items.push(itemID);
                     quantities.push(quantity);
