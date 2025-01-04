@@ -273,10 +273,12 @@ $department = $_SESSION['department'];
                     <a href="#" class="sidebar-link" id="purchase-request-link">Purchase Request</a>
                     <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
                     <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a> 
-                    <a href="#" class="sidebar-link" id="requisition-withdrawal-link">Requisition Withdrawal</a> 
+                    <a href="#" class="sidebar-link" id="requisition-withdrawal-link">Requisition Withdrawal</a>
+                    <a href="#" class="sidebar-link" id="inventory-task-link">Requisition Withdrawal/Delivery Task</a>   
                 <?php elseif ($role == 'Staff'): ?>
                     <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
-                    <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>  
+                    <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
+                    <a href="#" class="sidebar-link" id="inventory-task-link">Requisition Withdrawal/Delivery Task</a>    
 
                 <?php endif; ?>
             <?php elseif ($department == 'Labor'): ?>
@@ -348,6 +350,9 @@ $department = $_SESSION['department'];
                     } else if (content === 'requisition_approval' || content === 'approved_requisitions') {
                         params.req_id = id;
                         url += `&req_id=${id}`;
+                    }else if (content === 'inventory-task') {
+                        params.req_id = id;
+                        url += `&req_id=${id}`;
                     }
                 }
 
@@ -391,6 +396,10 @@ $department = $_SESSION['department'];
                 loadContent('requisition_form');
             });
 
+            $('#inventory-task-link').click(function (e) {
+                e.preventDefault();
+                loadContent('inventory-task');
+            });
            
 
             $('#requisition-approval-link').click(function (e) {
@@ -438,6 +447,14 @@ $department = $_SESSION['department'];
                 e.preventDefault();
                 const id = $(this).data('id');
                 const contentType = $(this).data('content');
+                loadContent(contentType, id);
+            });
+            
+            $(document).on('click', '.view-wd', function(e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+                const contentType = $(this).data('content');
+                console.log("")
                 loadContent(contentType, id);
             });
 

@@ -18,6 +18,8 @@ if (isset($_GET['req_id'])) {
             RW.WD_QUANTITY,
             RW.WD_DATE,
             RW.WD_DATE_RECEIVED,
+            RW.WD_DATE_WITHDRAWN,
+            RW.WD_DATE_DELIVERED,
             CONCAT(E.EMP_FNAME, ' ', E.EMP_LNAME) AS Withdrawn_By,
             I.INV_MODEL_NAME AS Item_Name
         FROM 
@@ -44,15 +46,17 @@ if (isset($_GET['req_id'])) {
             $withdrawalData[] = [
                 'withdrawal_id' => $row['WD_ID'],
                 'quantity' => $row['WD_QUANTITY'],
-                'withdraw_date' => $row['WD_DATE'],
+                'task_given' => $row['WD_DATE'],
                 'received_date' => $row['WD_DATE_RECEIVED'],
-                'withdrawn_by' => $row['Withdrawn_By'],
+                'withdraw_date' => $row['WD_DATE_WITHDRAWN'], // Date Withdrawn
+                'date_delivered' => $row['WD_DATE_DELIVERED'], // Date Delivered
+                'tasked_to' => $row['Withdrawn_By'],
                 'item_name' => $row['Item_Name']
             ];
         }
 
         // Store result in a variable for further use
-        $finalResult = $withdrawalData; 
+        $finalResult = $withdrawalData;
         
     } else {
         $finalResult = "No withdrawal details found.";
@@ -61,9 +65,7 @@ if (isset($_GET['req_id'])) {
     // Handle case when 'req_id' is not set
     $finalResult = "No requisition ID provided.";
 }
-//echo json_encode($finalResult);
 
-
+// $finalResult contains the data for further use
 $connection->close();
-
 ?>

@@ -77,13 +77,10 @@ if ($result1->num_rows > 0) {
         SELECT 
             il.IT_ID AS Item_ID,
             i.INV_MODEL_NAME AS Item_Name,
-            i.INV_QUANTITY AS Stock,
+           
             il.IT_DESCRIPTION AS Description,
             il.IT_QUANTITY AS Quantity,
-            SUM(CASE 
-                    WHEN rw.WD_DATE IS NOT NULL THEN rw.WD_QUANTITY
-                    ELSE 0 
-                END) AS Withdrawed,
+            
             SUM(CASE 
                     WHEN rw.WD_DATE_RECEIVED IS NOT NULL AND rw.WD_DATE IS NOT NULL THEN rw.WD_QUANTITY
                     ELSE 0 
@@ -111,8 +108,6 @@ if ($result1->num_rows > 0) {
                     'item_name' => $itemRow['Item_Name'],
                     'description' => $itemRow['Description'],
                     'quantity' => $itemRow['Quantity'],
-                    'stock' => $itemRow['Stock'],
-                    'withdrawed' => $itemRow['Withdrawed'],
                     'delivered' => $itemRow['Delivered']
                 ];
             }
