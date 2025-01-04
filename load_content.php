@@ -153,6 +153,8 @@ if ($content === 'purchase_order') {
                             <tr>
                                 <th>ID</th>
                                 <th>Supplier</th>
+                                <th>Order Date</th>
+                                <th>Arrival Date</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -163,6 +165,8 @@ if ($content === 'purchase_order') {
                             echo "<tr>
                                     <td>" . htmlspecialchars($po['PO_ID']) . "</td>
                                     <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
+                                    <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
+                                    <td>" . htmlspecialchars($po['PO_ARRIVAL_DATE']) . "</td>
                                     <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
                                     <td>
                                         <a href='#' class='btn btn-sm btn-primary view-requisition' 

@@ -66,6 +66,7 @@ if(isset($_GET['po_id'])){
 } else {
     $sql = "SELECT po.PO_ID, 
     po.PO_ORDER_DATE, 
+    po.PO_ARRIVAL_DATE, 
     po.PO_STATUS, 
     po.SP_ID, 
     sp.SP_NAME 
