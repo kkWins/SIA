@@ -1297,6 +1297,11 @@ if ($content === 'purchase_order') {
                                 var withdrawAmount = $(this).closest('tr').find('input[name=\"withdraw_amount\"]').val();
                                 var empId = $(this).closest('tr').find('select[name=\"employee\"]').val();
 
+                                if (!empId) {
+                                    alert('Please select an employee.');
+                                    return;
+                                }
+
                                 // Validate the withdraw amount
                                 if (withdrawAmount && !isNaN(withdrawAmount)) {
                                     if (withdrawAmount > requestedQuantity) {
