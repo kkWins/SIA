@@ -700,6 +700,7 @@ if ($content === 'purchase_order') {
                             <th>ID</th>
                             <th>Requester Name</th>
                             <th>Submitted Date</th>
+                            <th>Status</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -710,6 +711,7 @@ if ($content === 'purchase_order') {
                                 <td>" . htmlspecialchars($req['requisition_id']) . "</td>
                                 <td>" . htmlspecialchars($req['employee_name']) . "</td>
                                 <td>" . htmlspecialchars($req['submitted_date']) . "</td>
+                                <td>" . htmlspecialchars($req['requisition_status']) . "</td>
                                 <td>
                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
                                         data-content='requisition_approval' 
