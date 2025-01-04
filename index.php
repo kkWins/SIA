@@ -269,6 +269,7 @@ $department = $_SESSION['department'];
                     <a href="#" class="sidebar-link" id="withdrawal-deposit-link">Withdrawal & Deposit</a>
                     <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
                     <a href="#" class="sidebar-link" id="approved-requisitions-link">Approved Requisitions</a>
+                    <a href="#" class="sidebar-link" id="purchase-order-link">Purchase Order</a>
                     <a href="#" class="sidebar-link" id="purchase-request-link">Purchase Request</a>
                     <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
                     <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a> 

@@ -14,13 +14,18 @@ if(isset($_GET['po_id'])){
         supplier.SP_NAME,
         supplier.SP_ADDRESS,
         supplier.SP_NUMBER,
-        approval.ap_desc
+        approval.ap_desc,
+        pd.PD_PAYMENT_TYPE,
+        pd.PD_CHANGE,
+        pd.PD_AMMOUNT
     FROM 
         purchase_order po
     LEFT JOIN 
         supplier ON po.SP_ID = supplier.SP_ID
     LEFT JOIN
         approval ON po.ap_id = approval.ap_id
+    LEFT JOIN
+        payment_details pd ON po.PO_ID = pd.PO_ID
     WHERE 
         po.PO_ID = ?";
 
@@ -51,7 +56,12 @@ if(isset($_GET['po_id'])){
     // Store results in response array
     $response = [
         'po_details' => $poDetails,
-        'items' => $items
+        'items' => $items,
+        'payment_details' => [
+            'PD_PAYMENT_TYPE' => $poDetails['PD_PAYMENT_TYPE'] ?? null,
+            'PD_CHANGE' => $poDetails['PD_CHANGE'] ?? null,
+            'PD_AMMOUNT' => $poDetails['PD_AMMOUNT'] ?? null
+        ]
     ];
 } else {
     $sql = "SELECT po.PO_ID, 

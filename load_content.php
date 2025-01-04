@@ -20,8 +20,8 @@ $conca = $department . " " . $role;
 
 // Check the content and show the appropriate page
 if ($content === 'purchase_order') {
-    if ($conca === 'Finance Manager') {
-        include('finance/purchase_orders.php');
+    if ($conca === 'Inventory Manager') {
+        include('inventory/purchase_orders.php');
         echo "<h2>Purchase Order</h2>
         <p>Manage your purchase orders here.</p>";
 
@@ -191,6 +191,185 @@ if ($content === 'purchase_order') {
             }
         }
 
+    }elseif($conca === 'Finance Manager'){
+        include('inventory/purchase_orders.php');
+        echo "<h2>Finance Manager - Purchase Orders</h2>
+        <p>Manage purchase order payments here.</p>";
+
+        if(isset($_GET['po_id'])){
+            if($response['po_details']) {
+                echo "
+                    <div class='card rounded-4 p-4'>
+                    <h3>Purchase Request # {$_GET['po_id']}</h3>
+                    <div class='row mb-3'>
+                        <div class='col-md-6'>
+                            <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
+                            <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                        </div>
+                        <div class='col-md-6'>
+                            <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Replace datetime inputs with payment details -->
+                    <div class='row mb-3'>
+                        <div class='col-md-4'>
+                            <label for='payment_type' class='form-label'><strong>Payment Type:</strong></label>
+                            <select class='form-select' id='payment_type' required>
+                                <option value=''>Select payment type</option>
+                                <option value='cash' " . ($response['payment_details']['PD_PAYMENT_TYPE'] === 'cash' ? 'selected' : '') . ">Cash</option>
+                                <option value='check' " . ($response['payment_details']['PD_PAYMENT_TYPE'] === 'check' ? 'selected' : '') . ">Check</option>
+                            </select>
+                        </div>
+                        <div class='col-md-4'>
+                            <label for='payment_amount' class='form-label'><strong>Payment Amount:</strong></label>
+                            <input type='number' class='form-control' id='payment_amount' 
+                                value='" . (!empty($response['payment_details']['PD_AMMOUNT']) ? $response['payment_details']['PD_AMMOUNT'] : '') . "'
+                                min='0' step='0.01' required>
+                        </div>
+                        <div class='col-md-4'>
+                            <label for='payment_change' class='form-label'><strong>Change:</strong></label>
+                            <input type='number' class='form-control' id='payment_change' 
+                                value='" . (!empty($response['payment_details']['PD_CHANGE']) ? $response['payment_details']['PD_CHANGE'] : '') . "'
+                                min='0' step='0.01' required>
+                        </div>
+                    </div>";
+
+                if($response['po_details']['PO_STATUS'] === 'rejected') {
+                    echo "<div class='alert alert-danger'>
+                            <strong>Rejection Reason:</strong> " . htmlspecialchars($response['po_details']['ap_desc']) . "
+                          </div>";
+                }
+
+                echo "<table class='table'>
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Brand</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>";
+                    
+                    $grandTotal = 0;
+                    foreach ($response['items'] as $item) {
+                        $totalPrice = $item['POL_QUANTITY'] * $item['POL_PRICE'];
+                        $grandTotal += $totalPrice;
+                        echo "<tr>
+                                <td>" . htmlspecialchars($item['INV_MODEL_NAME']) . "</td>
+                                <td>" . htmlspecialchars($item['INV_BRAND']) . "</td>
+                                <td>" . htmlspecialchars($item['POL_QUANTITY']) . "</td>
+                                <td>₱" . number_format($item['POL_PRICE'], 2) . "</td>
+                                <td>₱" . number_format($totalPrice, 2) . "</td>
+                            </tr>";
+                    }
+                    
+                    echo "</tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan='4' class='text-end'><strong>Grand Total:</strong></td>
+                                <td><strong>₱" . number_format($grandTotal, 2) . "</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+    
+                    <div class='mt-3'>
+                        <button class='btn btn-secondary cancel-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Cancel</button>
+                        <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                    </div>
+                </div>
+                <script>
+                    $(document).ready(function() {
+                        $('.submit1-btn').on('click', function() {
+                            const poId = $(this).data('id');
+                            const paymentType = $('#payment_type').val();
+                            const paymentAmount = $('#payment_amount').val();
+                            const paymentChange = $('#payment_change').val();
+                            
+                            // Validate inputs
+                            if (!paymentType || !paymentAmount || !paymentChange) {
+                                alert('Please fill in all payment details');
+                                return;
+                            }
+                            
+                            // Send AJAX request
+                            $.ajax({
+                                url: 'finance/submit_payment.php',
+                                type: 'POST',
+                                data: {
+                                    po_id: poId,
+                                    payment_type: paymentType,
+                                    payment_amount: paymentAmount,
+                                    payment_change: paymentChange
+                                },
+                                success: function(response) {
+                                    try {
+                                        // Check if response is already an object
+                                        const result = typeof response === 'object' ? response : JSON.parse(response);
+                                        if (result.success) {
+                                            alert('Payment submitted successfully');
+                                            window.location.href = '?content=purchase_order';
+                                        } else {
+                                            alert('Error: ' + (result.message || 'Unknown error'));
+                                        }
+                                    } catch (e) {
+                                        alert('Error processing response');
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    alert('Error submitting payment. Check console for details.');
+                                }
+                            });
+                        });
+                    });
+                    </script>";
+    
+            } else {
+                echo 'Purchase Order not found';
+            }
+        }else{
+            if(!empty($pos)){
+                echo "
+                <div class='card rounded-4 p-4'>
+                    <table class='table' id='requisitions-table'>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Supplier</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+                        
+                        foreach ($pos as $po) {
+                            echo "<tr>
+                                    <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                    <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
+                                    <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
+                                    <td>
+                                        <a href='#' class='btn btn-sm btn-primary view-requisition' 
+                                            data-content='purchase_order' 
+                                            data-id='" . $po['PO_ID'] . "'>
+                                            <i class='fas fa-eye'></i> View
+                                        </a>
+                                    </td>
+                                </tr>";
+                        }
+                
+                echo "</tbody>
+                    </table>
+                </div>";
+            }else{
+                echo "
+                <div>
+                    <h5>No Pending Purchase Request Found!</h5>
+                </div>
+                ";
+            }
+        }
     }else {
         echo "<h3>You do not have access to this content.</h3>";
     }
@@ -327,7 +506,7 @@ if ($content === 'purchase_order') {
                             const poId = $('#approve_po_id').val();
 
                             $.ajax({
-                                url: 'finance/approve_purchase_order.php',
+                                url: 'finance/approve_purchase_request.php',
                                 type: 'POST',
                                 data: {
                                     po_id: poId
@@ -368,7 +547,7 @@ if ($content === 'purchase_order') {
                             }
 
                             $.ajax({
-                                url: 'finance/reject_purchase_order.php',
+                                url: 'finance/reject_purchase_request.php',
                                 type: 'POST',
                                 data: {
                                     po_id: poId,
@@ -1424,8 +1603,8 @@ elseif ($content === 'requisition_history') {
 
                 $('#added-items tr').each(function() {
                     var itemID = $(this).find('td:first').data('id'); // Item ID
-                    var quantity = $(this).find('td').eq(1).text(); // Quantity
-                    var reason = $(this).find('td').eq(2).text(); // Reason
+                    var quantity = $(this).find('td').eq(1).text()); // Quantity
+                    var reason = $(this).find('td').eq(2).text()); // Reason
 
                     items.push(itemID);
                     quantities.push(quantity);
