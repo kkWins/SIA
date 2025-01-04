@@ -2013,13 +2013,24 @@ echo "
                             data.wd_date_withdrawn = wdDateWithdrawn;
                         }
         
-                        if (wdDateDelivered) {
-                            data.wd_date_delivered = wdDateDelivered;
-                            if(data.wd_date_delivered < wdate){
-                            alert(\"Delivery date cant be earlier than withdrawal date\");
-                            return;
-                            }
+                    if (wdDateDelivered) {
+                        data.wd_date_delivered = wdDateDelivered;
+
+                        // Normalize both wdate (from HTML input) and wdDateDelivered (from SQL) to ensure proper comparison.
+                        var wdateNormalized = new Date(wdate);
+                        var wdDateDeliveredNormalized = new Date(data.wd_date_delivered);
+
+                        // If wdate is '12:00' (representing midnight in HTML), convert it to '00:00' for comparison.
+                        if (wdateNormalized.getHours() === 12 && wdateNormalized.getMinutes() === 0) {
+                            wdateNormalized.setHours(0);  // Convert 12:00 AM to 00:00 for comparison
                         }
+
+                        // Compare the normalized dates
+                        if (wdDateDeliveredNormalized < wdateNormalized) {
+                            alert(\"Delivery date can't be earlier than withdrawal date\");
+                            return;
+                        }
+                    }
 
         
                         // Send the data to the server using AJAX
