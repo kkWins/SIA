@@ -2,8 +2,8 @@
 
 require_once 'db.php';
 
-if(isset($_GET['pr_id'])){
-    $prId = $_GET['pr_id'];
+if(isset($_GET['pending_pr'])){
+    $pendingPr = $_GET['pending_pr'];
 
     // First query to get PO details, supplier info, and approval info
     $sql = "SELECT 
@@ -25,7 +25,7 @@ if(isset($_GET['pr_id'])){
         po.PO_ID = ?";
 
     $stmt = $db->prepare($sql);
-    $stmt->bind_param("s", $prId);
+    $stmt->bind_param("s", $pendingPr);
     $stmt->execute();
     $poDetails = $stmt->get_result()->fetch_assoc();
 
@@ -44,7 +44,7 @@ if(isset($_GET['pr_id'])){
         po_list.PO_ID = ?";
 
     $stmt = $db->prepare($sql);
-    $stmt->bind_param("s", $prId);
+    $stmt->bind_param("s", $pendingPr);
     $stmt->execute();
     $items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
@@ -62,9 +62,10 @@ if(isset($_GET['pr_id'])){
     FROM purchase_order po 
     JOIN supplier sp ON sp.SP_ID = po.SP_ID
     WHERE po.PO_STATUS IN ('pending', 'rejected')";
-    
+
     $result = $db->query($sql);
     $pos = [];
+    error_log("fdADADADADfd");
     while($row = $result->fetch_assoc()){
         $pos[] = $row;
     }

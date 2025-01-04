@@ -15,8 +15,8 @@ try {
     $items = $data['items'];
 
     // Insert into PO table
-    $stmt = $db->prepare("INSERT INTO purchase_order (PO_ORDER_DATE, PO_STATUS, EMP_ID, SP_ID) 
-                         VALUES (NOW(), 'PENDING', ?, ?)");
+    $stmt = $db->prepare("INSERT INTO purchase_order (PO_STATUS, EMP_ID, SP_ID) 
+                         VALUES ('PENDING', ?, ?)");
     $stmt->bind_param("ii", $emp_id, $vendor_id); // Both parameters are integers
     $stmt->execute();
     $po_id = $db->insert_id;

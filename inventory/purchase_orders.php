@@ -2,8 +2,8 @@
 
 require_once 'db.php';
 
-if(isset($_GET['pr_id'])){
-    $prId = $_GET['pr_id'];
+if(isset($_GET['po_id'])){
+    $po_id = $_GET['po_id'];
 
     // First query to get PO details, supplier info, and approval info
     $sql = "SELECT 
@@ -14,18 +14,23 @@ if(isset($_GET['pr_id'])){
         supplier.SP_NAME,
         supplier.SP_ADDRESS,
         supplier.SP_NUMBER,
-        approval.ap_desc
+        approval.ap_desc,
+        pd.PD_PAYMENT_TYPE,
+        pd.PD_CHANGE,
+        pd.PD_AMMOUNT
     FROM 
         purchase_order po
     LEFT JOIN 
         supplier ON po.SP_ID = supplier.SP_ID
     LEFT JOIN
         approval ON po.ap_id = approval.ap_id
+    LEFT JOIN
+        payment_details pd ON po.PO_ID = pd.PO_ID
     WHERE 
         po.PO_ID = ?";
 
     $stmt = $db->prepare($sql);
-    $stmt->bind_param("s", $prId);
+    $stmt->bind_param("s", $po_id);
     $stmt->execute();
     $poDetails = $stmt->get_result()->fetch_assoc();
 
@@ -44,14 +49,19 @@ if(isset($_GET['pr_id'])){
         po_list.PO_ID = ?";
 
     $stmt = $db->prepare($sql);
-    $stmt->bind_param("s", $prId);
+    $stmt->bind_param("s", $po_id);
     $stmt->execute();
     $items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
     // Store results in response array
     $response = [
         'po_details' => $poDetails,
-        'items' => $items
+        'items' => $items,
+        'payment_details' => [
+            'PD_PAYMENT_TYPE' => $poDetails['PD_PAYMENT_TYPE'] ?? null,
+            'PD_CHANGE' => $poDetails['PD_CHANGE'] ?? null,
+            'PD_AMMOUNT' => $poDetails['PD_AMMOUNT'] ?? null
+        ]
     ];
 } else {
     $sql = "SELECT po.PO_ID, 
@@ -61,8 +71,8 @@ if(isset($_GET['pr_id'])){
     sp.SP_NAME 
     FROM purchase_order po 
     JOIN supplier sp ON sp.SP_ID = po.SP_ID
-    WHERE po.PO_STATUS IN ('pending', 'rejected')";
-    
+    WHERE po.PO_STATUS = 'approved'";
+
     $result = $db->query($sql);
     $pos = [];
     while($row = $result->fetch_assoc()){
