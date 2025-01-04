@@ -1784,14 +1784,14 @@ elseif ($content === 'requisition_history') {
 
                 $('#added-items tr').each(function() {
                     var itemID = $(this).find('td:first').data('id'); // Item ID
-                    var quantity = $(this).find('td').eq(1).text()); // Quantity
-                    var reason = $(this).find('td').eq(2).text()); // Reason
+                    var quantity = $(this).find('td').eq(1).text(); // Remove extra parenthesis
+                    var reason = $(this).find('td').eq(2).text(); // Remove extra parenthesis
 
                     items.push(itemID);
                     quantities.push(quantity);
                     reasons.push(reason);
                 });
-               
+            
                 if (items.length > 0) {
                     $.ajax({
                         url: 'submit_requisition.php',
@@ -1949,7 +1949,7 @@ elseif ($content === 'requisition_history') {
             });
             });
             </script>";
-    }else {
+}else {
     echo "<h3>Content not found.</h3>";
 }
 ?>
