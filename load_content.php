@@ -1176,7 +1176,7 @@ if ($content === 'purchase_order') {
                                     <th>Description</th>
                                     <th>Ask</th>
                                     <th>Item Stock</th>
-                                    <th>Withdrawn</th>
+                                    <th>Withdrawn / To Be Withdrawn</th>
                                     <th>Delivered Amount</th>
                                     <th>Withdraw Amount</th>
                                     <th>Action</th>
@@ -1237,9 +1237,11 @@ if ($content === 'purchase_order') {
                                         <tr>
                                             <th>Withdrawal ID</th>
                                             <th>Quantity</th>
+                                            <th>Task Given Date</th>
                                             <th>Withdraw Date</th>
+                                            <th>Delivered Date</th>
                                             <th>Received Date</th>
-                                            <th>Withdrawn By</th>
+                                            <th>Tasked To</th>
                                             <th>Item Name</th>
                                             <th>Action</th> <!-- New column for Cancel -->
                                         </tr>
@@ -1249,20 +1251,25 @@ if ($content === 'purchase_order') {
                             foreach ($finalResult as $withdrawal) {
                                 $cancelButton = '';
                                 // Check if Received Date is NULL and provide a cancel option
-                                if (is_null($withdrawal['received_date'])) {
+                                if (is_null($withdrawal['withdraw_date'])) {
                                     $cancelButton = "<button class='btn btn-danger cancel-btn' data-reqID='{$_GET['req_id']}' data-withdrawal-id='{$withdrawal['withdrawal_id']}'>Cancel</button>";
                                     $receivedText = ''; // No "Received" text if the button is shown
-                                } else {
+                                } else if(!is_null($withdrawal['received_date'])) {
                                     $cancelButton = ''; // No button if the withdrawal is received
                                     $receivedText = 'Received'; // Display "Received" text if received_date is not null
+                                }else{
+                                    
+                                    $receivedText = ''; // Display "Received" text if received_date is not null
                                 }
                             
                                 echo "<tr>
                                     <td>{$withdrawal['withdrawal_id']}</td>
                                     <td>{$withdrawal['quantity']}</td>
+                                    <td>{$withdrawal['task_given']}</td>
                                     <td>{$withdrawal['withdraw_date']}</td>
+                                    <td>{$withdrawal['date_delivered']}</td>
                                     <td>{$withdrawal['received_date']}</td>
-                                    <td>{$withdrawal['withdrawn_by']}</td>
+                                    <td>{$withdrawal['tasked_to']}</td>
                                     <td>{$withdrawal['item_name']}</td>
                                     <td>{$cancelButton}{$receivedText}</td> <!-- Display Cancel button or 'Received' -->
                                 </tr>";
@@ -1479,8 +1486,8 @@ elseif ($content === 'requisition_history') {
                     <th>Item Name</th>
                     <th>Description</th>
                     <th>Quantity Requested</th>
-                    <th>Stock</th>
-                    <th>Withdrawn Quantity</th>
+                    
+                    
                     <th>Delivered Quantity</th>
                 </tr>
             </thead>
@@ -1492,8 +1499,7 @@ elseif ($content === 'requisition_history') {
                     <td>" . htmlspecialchars($item['item_name']) . "</td>
                     <td>" . htmlspecialchars($item['description']) . "</td>
                     <td>" . htmlspecialchars($item['quantity']) . "</td>
-                    <td>" . htmlspecialchars($item['stock']) . "</td>
-                    <td>" . ($item['withdrawed'] === null ? '0' : htmlspecialchars($item['withdrawed'])) . "</td>
+                    
                     <td>" . ($item['delivered'] === null ? '0' : htmlspecialchars($item['delivered'])) . "</td>
                 </tr>";
         }
@@ -1502,76 +1508,81 @@ elseif ($content === 'requisition_history') {
     
         // Fetch withdrawal history using .get() AJAX request
         echo "<h3>Withdrawal History</h3>";
-        echo "<table class='table'>
-                <thead>
-                    <tr>
-                        <th>Item Name</th>
-                        <th>Quantity Withdrawn</th>
-                        <th>Withdrawn By</th>
-                        <th>Withdraw Date</th>
-                        <th>Received Date</th>
-                        <th>Acknowledge</th> <!-- New column for Received button -->
-                    </tr>
-                </thead>
-                <tbody id='withdrawal-history'></tbody>
-              </table>";
-    
-        // Add JavaScript for AJAX request to fetch withdrawal data
-        echo "
-        <script>
-            $(document).ready(function() {
-                var reqId = '" . htmlspecialchars($response['requisition_id']) . "';
-                
-                $.get('get_rw_staff.php', { req_id: reqId }, function(data) {
-                    var withdrawalData = JSON.parse(data);
-                    var html = '';
+echo "<table class='table'>
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Quantity Withdrawn</th>
+                <th>Withdrawn By</th>
+                <th>Date Withdrawn</th>
+                <th>Date Delivered</th>
+                <th>Date Received</th>
+                <th>Acknowledge</th> <!-- New column for Delivered button -->
+            </tr>
+        </thead>
+        <tbody id='withdrawal-history'></tbody>
+      </table>";
+
+// Add JavaScript for AJAX request to fetch withdrawal data
+echo "
+<script>
+    $(document).ready(function() {
+        var reqId = '" . htmlspecialchars($response['requisition_id']) . "';
+        
+        $.get('get_rw_staff.php', { req_id: reqId }, function(data) {
+            var withdrawalData = JSON.parse(data);
+            var html = '';
+            
+            if (Array.isArray(withdrawalData) && withdrawalData.length > 0) {
+                withdrawalData.forEach(function(withdrawal) {
+                    html += '<tr>';
+                    html += '<td>' + withdrawal.item_name + '</td>';
+                    html += '<td>' + withdrawal.quantity + '</td>';
+                    html += '<td>' + withdrawal.withdrawn_by + '</td>';
+                    html += '<td>' + (withdrawal.date_withdrawn || '') + '</td>';
+                    html += '<td>' + (withdrawal.date_delivered || '') + '</td>';
+                    html += '<td>' + (withdrawal.received_date  || '') + '</td>';
                     
-                    if (Array.isArray(withdrawalData) && withdrawalData.length > 0) {
-                        withdrawalData.forEach(function(withdrawal) {
-                            html += '<tr>';
-                            html += '<td>' + withdrawal.item_name + '</td>';
-                            html += '<td>' + withdrawal.quantity + '</td>';
-                            html += '<td>' + withdrawal.withdrawn_by + '</td>';
-                            html += '<td>' + withdrawal.withdraw_date + '</td>';
-                            html += '<td>' + (withdrawal.received_date || 'Not Received') + '</td>';
-                            
-                            // If the received date is null, add a \"Received\" button
-                            if (!withdrawal.received_date) {
-                                html += '<td><button class=\"btn btn-success btn-sm\" onclick=\"markReceived(' + withdrawal.withdrawal_id + ')\">Received</button></td>';
-                            } else {
-                                html += '<td>Received</td>'; // Empty cell if already received
-                            }
-    
-                            html += '</tr>';
-                        });
+                    // If the date delivered is null, add a \"Delivered\" button
+                    if (withdrawal.date_delivered && !withdrawal.received_date) {
+                        html += '<td><button class=\"btn btn-success btn-sm\" onclick=\"markDelivered(' + withdrawal.withdrawal_id + ')\">Mark as Delivered</button></td>';
+                    }else if(!withdrawal.received_date){
+                        html += '<td></td>'; // Empty cell if already delivered
                     } else {
-                        html = '<tr><td colspan=\"6\">No withdrawal information available.</td></tr>';
+                        html += '<td>Delivered</td>'; // Empty cell if already delivered
                     }
-                    
-                    $('#withdrawal-history').html(html);
+
+                    html += '</tr>';
                 });
-            });
-    
-            // Function to mark the item as received (for future implementation)
-            function markReceived(withdrawalId) {
-                $.ajax({
-                    url: 'mark_received.php',  // PHP file to process the request
-                    type: 'POST',
-                    data: { wd_id: withdrawalId },
-                    success: function(response) {
-                        if (response === 'success') {
-                            alert('Item marked as received');
-                            location.reload();  // Reload the page to update the table
-                        } else {
-                            alert('Error updating received date');
-                        }
-                    },
-                    error: function() {
-                        alert('An error occurred while marking as received');
-                    }
-                });
+            } else {
+                html = '<tr><td colspan=\"6\">No withdrawal information available.</td></tr>';
             }
-        </script>";
+            
+            $('#withdrawal-history').html(html);
+        });
+    });
+
+    // Function to mark the item as delivered (for future implementation)
+    function markDelivered(withdrawalId) {
+        $.ajax({
+            url: 'mark_received.php',  // PHP file to process the request
+            type: 'POST',
+            data: { wd_id: withdrawalId },
+            success: function(response) {
+                if (response === 'success') {
+                    alert('Item marked as delivered');
+                    location.reload();  // Reload the page to update the table
+                } else {
+                    alert('Error updating delivered date');
+                }
+            },
+            error: function() {
+                alert('An error occurred while marking as delivered');
+            }
+        });
+    }
+</script>";
+
     } elseif (isset($response['prf_status']) && $response['prf_status'] == 'pending') {
         // If there's a pending request, display it
         echo "<h2>Pending Requisition</h2>
@@ -1873,7 +1884,227 @@ elseif ($content === 'requisition_history') {
         </script>
     ";
     }
-}elseif ($content === 'account_settings') {
+}elseif ($content === 'inventory-task') {
+    // Include the inventory_task.php file which will populate $withdrawalRecords
+    
+    
+    // Check if there are any withdrawal records to display
+    // Check if 'req_id' is set in the URL
+    if (isset($_GET['req_id'])) {
+        $reqId = $_GET['req_id'];
+        echo "<h3>Requisition Withdrawal Task</h3>";
+
+        // Include the file that contains the query result  
+        require_once 'task_rf_withdrawal.php';
+        
+        // Check if there are results
+        if ($requisitionData) {
+            // Display requisition details in a 3x3 grid inside a Bootstrap card
+            echo "<div class='card'>
+                    <div class='card-header'>
+                        <h5>Requisition Details</h5>
+                    </div>
+                    <div class='card-body'>
+                        <div class='row'>
+                            <div class='col-md-4'>
+                                <p><strong>Requisition ID:</strong> {$requisitionData['requisition_id']}</p>
+                            </div>
+                            <div class='col-md-4'>
+                                <p><strong>Name:</strong> {$requisitionData['employee_name']}</p>
+                            </div>
+                            <div class='col-md-4'>
+                                <p><strong>Contact No:</strong> {$requisitionData['contact_number']}</p>
+                            </div>
+                        </div>
+                        <div class='row'>
+                            <div class='col-md-4'>
+                                <p><strong>Date of Request:</strong> {$requisitionData['date_of_request']}</p>
+                            </div>
+                            <div class='col-md-4'>
+                                <p><strong>Department:</strong> {$requisitionData['department_name']}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div><br>";
+        }
+        
+        // Check if there are withdrawal records
+        if ($withdrawalResult->num_rows > 0) {
+            // Now display the withdrawal records in a table
+            echo "<table class='table'>
+                    <thead>
+                        <tr>
+                            <th>Withdrawal ID</th>
+                            <th>Quantity</th>
+                            <th>Task Given Date</th>
+                            <th>Model Name</th>
+                            <th>Location</th>
+                            <th>Withdrawn Date</th>
+                            <th>Delivered Date</th>
+                            <th>Received Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>";
+        
+            // Loop through each withdrawal record and display it
+            while ($row = $withdrawalResult->fetch_assoc()) {
+                echo "<tr>
+                        <td>{$row['withdrawal_id']}</td>
+                        <td>{$row['WD_QUANTITY']}</td>
+                        <td>" . ($row['WD_DATE'] ?: 'Not Withdrawn') . "</td>
+                        <td>{$row['INV_MODEL_NAME']}</td>
+                        <td>{$row['INV_LOCATION']}</td>
+                        <td>";
+        
+                // If WD_DATE_WITHDRAWN is null, show a date-time input field
+                if (is_null($row['WD_DATE_WITHDRAWN'])) {
+                    echo "<input type='datetime-local' name='WD_DATE_WITHDRAWN[{$row['withdrawal_id']}]' class='WD_DATE_WITHDRAWN'>";
+                } else {
+                    echo $row['WD_DATE_WITHDRAWN'];
+                }
+        
+                echo "</td>
+                        <td>";
+        
+                // If WD_DATE_DELIVERED is missing but WD_DATE_WITHDRAWN is null, show a blank field
+                if (!is_null($row['WD_DATE_WITHDRAWN']) && is_null($row['WD_DATE_DELIVERED'])) {
+                    echo "<input type='datetime-local' name='WD_DATE_DELIVERED[{$row['withdrawal_id']}]' class='WD_DATE_DELIVERED'>";
+                } else {
+                    echo $row['WD_DATE_DELIVERED'];
+                }
+        
+                echo "</td>
+                        <td>";
+        
+                // If WD_DATE_RECEIVED is null, leave it blank
+                if (is_null($row['WD_DATE_RECEIVED'])) {
+                    echo "";  // Leave blank instead of showing an input field
+                } else {
+                    echo $row['WD_DATE_RECEIVED'];  // Display the received date
+                }
+        
+                // Save button for each row
+                echo "</td>
+                        <td>";
+                        if (is_null($row['WD_DATE_WITHDRAWN']) || is_null($row['WD_DATE_DELIVERED']) || is_null($row['WD_DATE_RECEIVED'])) {
+                            echo "<button type='button' class='btn btn-primary save-btn' data-wdate ='{$row['WD_DATE_WITHDRAWN']}' data-id='{$row['withdrawal_id']}'>Save</button>";
+                        }
+                echo"</td>
+                    </tr>";
+            }
+        
+            echo "</tbody></table>";
+        
+            // Script for handling save action
+            echo "<script>
+                $(document).ready(function() {
+                    // Attach the click event to each Save button
+                    var reqId = {$reqId};
+                    $('.save-btn').click(function() {
+                        var withdrawalId = $(this).data('id');  // Get the withdrawal ID from the button
+                        var wdate = $(this).data('wdate'); 
+                        // Get the values of the input fields
+                        var wdDateWithdrawn = $('input[name=\"WD_DATE_WITHDRAWN[' + withdrawalId + ']\"]').val();
+                        var wdDateDelivered = $('input[name=\"WD_DATE_DELIVERED[' + withdrawalId + ']\"]').val();
+        
+                        // Prepare data object, but only include the fields that have values
+                        var data = { withdrawal_id: withdrawalId };
+        
+                        if (wdDateWithdrawn) {
+                            data.wd_date_withdrawn = wdDateWithdrawn;
+                        }
+        
+                    if (wdDateDelivered) {
+                        data.wd_date_delivered = wdDateDelivered;
+
+                        // Normalize both wdate (from HTML input) and wdDateDelivered (from SQL) to ensure proper comparison.
+                        var wdateNormalized = new Date(wdate);
+                        var wdDateDeliveredNormalized = new Date(data.wd_date_delivered);
+
+                        // If wdate is '12:00' (representing midnight in HTML), convert it to '00:00' for comparison.
+                        if (wdateNormalized.getHours() === 12 && wdateNormalized.getMinutes() === 0) {
+                            wdateNormalized.setHours(0);  // Convert 12:00 AM to 00:00 for comparison
+                        }
+
+                        // Compare the normalized dates
+                        if (wdDateDeliveredNormalized < wdateNormalized) {
+                            alert(\"Delivery date can't be earlier than withdrawal date\");
+                            return;
+                        }
+                    }
+
+        
+                        // Send the data to the server using AJAX
+                        $.ajax({
+                            url: 'save_withdrawal.php', // PHP script to handle saving
+                            type: 'POST',
+                            data: data,
+                            success: function(response) {
+                                // Process the response from the server (echoed response)
+                                var result = JSON.parse(response);
+                                if (result.success) {
+                                    alert('Record saved successfully!');
+                                    // Optionally, update the UI or feedback
+                                    $(document).trigger('loadContentEvent', ['inventory-task', reqId]);
+                                } else {
+                                    alert('Error saving record.');
+                                }
+                            },
+                            error: function() {
+                                alert('There was an error with the request.');
+                            }
+                        });
+                    });
+                });
+            </script>";
+        } else {
+            echo "<p>No withdrawal records found for this requisition.</p>";
+        }
+    } else {
+        include('inventory_task.php');
+        if (!empty($withdrawals)) {
+            // Create the table with the retrieved records
+            echo "<h3>Requisition Withdrawal Task</h3>";
+    
+            echo "<table class='table'>
+                    <thead>
+                        <tr>
+                            <th>Requisition ID</th>
+                            <th>Department</th>
+                            <th>Employee Name</th>
+                            <th>Pending Task</th> <!-- Column for Pending Count -->
+                            <th>Action</th> <!-- New column for View button -->
+                        </tr>
+                    </thead>
+                    <tbody>";
+            
+            // Loop through each withdrawal record and display it
+            foreach ($withdrawals as $row) {
+                // Add a row for each withdrawal
+                echo "<tr>
+                        <td>{$row['requisition_id']}</td>
+                        <td>{$row['DEPT_NAME']}</td>
+                        <td>{$row['employee_name']}</td>
+                        <td>" . ($pendingCount > 0 ? $pendingCount : 'N/A') . "</td> <!-- Show Pending Count -->
+                        <td>
+                            <a href='#' class='btn btn-sm btn-primary view-wd' 
+                               data-content='inventory-task' 
+                               data-id='" . $row['requisition_id'] . "'>
+                               <i class='fas fa-eye'></i> View
+                            </a>
+                        </td>
+                    </tr>";
+            }
+    
+            echo "</tbody></table>";
+        } else {
+            // If no withdrawal records are found, display a message
+            echo "<p>No task available.</p>";
+        }
+    }
+}
+elseif ($content === 'account_settings') {
     include('account_settings.php');
     // Display the form
     echo "<div class='container'>

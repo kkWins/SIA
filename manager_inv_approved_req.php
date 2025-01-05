@@ -67,7 +67,7 @@ if (isset($_GET['req_id'])) {
     }
 
     // Query for item details (same as your original code)
-    $itemsSql = "SELECT 
+$itemsSql = "SELECT 
             il.IT_ID AS Item_ID,
             i.INV_MODEL_NAME AS Item_Name,
             i.INV_QUANTITY AS Stock,
@@ -80,17 +80,26 @@ if (isset($_GET['req_id'])) {
             SUM(CASE 
                     WHEN rw.WD_DATE_RECEIVED IS NOT NULL AND rw.WD_DATE IS NOT NULL THEN rw.WD_QUANTITY
                     ELSE 0 
-                END) AS Delivered
+                END) AS Delivered,
+            SUM(CASE 
+                    WHEN rw.WD_DATE IS NOT NULL 
+                        AND rw.WD_DATE_WITHDRAWN IS NULL 
+                        AND rw.WD_DATE_DELIVERED IS NULL 
+                        AND rw.WD_DATE_RECEIVED IS NULL 
+                    THEN rw.WD_QUANTITY
+                    ELSE 0 
+                END) AS To_Be_Delivered
         FROM 
             item_list il
         LEFT JOIN 
             inventory i ON il.INV_ID = i.INV_ID
         LEFT JOIN 
-            rf_withdrawal rw ON il.PRF_ID = rw.PRF_ID AND il.inv_id = rw.inv_id
+            rf_withdrawal rw ON il.PRF_ID = rw.PRF_ID AND il.INV_ID = rw.INV_ID
         WHERE 
             il.PRF_ID = ? 
         GROUP BY 
             i.INV_ID";
+
 
     $stmt = $connection->prepare($itemsSql);
     $stmt->bind_param("s", $_GET['req_id']);

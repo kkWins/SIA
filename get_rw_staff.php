@@ -18,6 +18,8 @@ if (isset($_GET['req_id'])) {
             RW.WD_QUANTITY,
             RW.WD_DATE,
             RW.WD_DATE_RECEIVED,
+            RW.WD_DATE_WITHDRAWN,
+            RW.WD_DATE_DELIVERED,
             CONCAT(E.EMP_FNAME, ' ', E.EMP_LNAME) AS Withdrawn_By,
             I.INV_MODEL_NAME AS Item_Name
         FROM 
@@ -27,7 +29,7 @@ if (isset($_GET['req_id'])) {
         JOIN 
             INVENTORY I ON RW.INV_ID = I.INV_ID
         WHERE 
-            RW.PRF_ID = ? AND RW.WD_DATE IS NOT NULL
+            RW.PRF_ID = ? AND RW.WD_DATE_WITHDRAWN IS NOT NULL
         ORDER BY 
             RW.WD_DATE DESC;
     ";
@@ -46,6 +48,8 @@ if (isset($_GET['req_id'])) {
                 'quantity' => $row['WD_QUANTITY'],
                 'withdraw_date' => $row['WD_DATE'],
                 'received_date' => $row['WD_DATE_RECEIVED'],
+                'date_withdrawn' => $row['WD_DATE_WITHDRAWN'], // Date Withdrawn
+                'date_delivered' => $row['WD_DATE_DELIVERED'], // Date Delivered
                 'withdrawn_by' => $row['Withdrawn_By'],
                 'item_name' => $row['Item_Name']
             ];
@@ -61,8 +65,8 @@ if (isset($_GET['req_id'])) {
     // Handle case when 'req_id' is not set
     $finalResult = "No requisition ID provided.";
 }
-echo json_encode($finalResult);
 
+echo json_encode($finalResult);
 
 $connection->close();
 
