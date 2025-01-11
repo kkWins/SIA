@@ -2187,7 +2187,164 @@ elseif ($content === 'account_settings') {
             });
             });
             </script>";
-}else {
+} elseif ($content === 'manage_employees') {
+    if ($role === 'Admin') {
+        // Get employees data with pagination
+        $page = isset($_GET['page']) ? $_GET['page'] : 1;
+        require_once 'admin/get_employees.php';
+        $result = get_employees(); // Add this line to call the function
+
+        echo "<h2>Manage Employees</h2>
+              <p>Add and manage employee accounts here.</p>
+              
+          <div class='card rounded-4 p-4'>
+            <div class='d-flex justify-content-between align-items-center mb-3'>
+                <h4>Employee List</h4>
+                <button type='button' class='btn btn-primary' data-bs-toggle='modal' data-bs-target='#addEmployeeModal'>
+                    Add Employee
+                </button>
+            </div>
+            <div class='table-responsive'>
+                <table class='table' id='employeesTable'>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Contact</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>";
+                    
+                    if (!empty($result['employees'])) {
+                        foreach ($result['employees'] as $row) {
+                            echo "<tr>
+                                    <td>" . htmlspecialchars($row['FULL_NAME']) . "</td>
+                                    <td>" . htmlspecialchars($row['EMP_EMAIL']) . "</td>
+                                    <td>" . htmlspecialchars($row['DEPT_NAME']) . "</td>
+                                    <td>" . htmlspecialchars($row['EMP_POSITION']) . "</td>
+                                    <td>" . htmlspecialchars($row['EMP_NUMBER']) . "</td>
+                                    <td>
+                                        <button class='btn btn-sm btn-primary edit-employee' data-id='" . $row['EMP_ID'] . "'>
+                                            <i class='fas fa-edit'></i> Edit
+                                        </button>
+                                        <button class='btn btn-sm btn-danger delete-employee' data-id='" . $row['EMP_ID'] . "'>
+                                            <i class='fas fa-trash'></i> Delete
+                                        </button>
+                                    </td>
+                                </tr>";
+                        }
+                    } else {
+                        echo "<tr><td colspan='6' class='text-center'>No employees found</td></tr>";
+                    }
+
+                    echo "</tbody>
+                </table>";
+
+                // Pagination
+                if (isset($result['pagination']) && $result['pagination']['total_pages'] > 1) {
+                    $pagination = $result['pagination'];
+                    echo "<nav aria-label='Page navigation' class='mt-4'>
+                            <ul class='pagination justify-content-center'>";
+                    
+                    // Previous button
+                    $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+                    echo "<li class='page-item{$prevDisabled}'>
+                            <a class='page-link' href='?content=manage_employees&page=" . ($pagination['current_page'] - 1) . "'>Previous</a>
+                          </li>";
+
+                    // Page numbers
+                    for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+                        $active = $pagination['current_page'] == $i ? ' active' : '';
+                        echo "<li class='page-item{$active}'>
+                                <a class='page-link' href='?content=manage_employees&page={$i}'>{$i}</a>
+                              </li>";
+                    }
+
+                    // Next button
+                    $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+                    echo "<li class='page-item{$nextDisabled}'>
+                            <a class='page-link' href='?content=manage_employees&page=" . ($pagination['current_page'] + 1) . "'>Next</a>
+                          </li>";
+
+                    echo "</ul>
+                        </nav>";
+                }
+
+            echo "</div>
+        </div>";
+
+        // Add Employee Modal HTML remains the same
+        echo "<!-- Add Employee Modal -->
+          <div class='modal fade' id='addEmployeeModal' tabindex='-1' aria-labelledby='addEmployeeModalLabel' aria-hidden='true'>
+            <div class='modal-dialog modal-lg'>
+                <div class='modal-content'>
+                    <div class='modal-header'>
+                        <h5 class='modal-title' id='addEmployeeModalLabel'>Add New Employee</h5>
+                        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                    </div>
+                    <div class='modal-body'>
+                        <form id='addEmployeeForm'>
+                            <div class='row'>
+                                <div class='col-md-6 mb-3'>
+                                    <label for='emp_fname' class='form-label'>First Name</label>
+                                    <input type='text' class='form-control' id='emp_fname' name='emp_fname' required>
+                                </div>
+                                <div class='col-md-6 mb-3'>
+                                    <label for='emp_lname' class='form-label'>Last Name</label>
+                                    <input type='text' class='form-control' id='emp_lname' name='emp_lname' required>
+                                </div>
+                            </div>
+                            <div class='row'>
+                                <div class='col-md-6 mb-3'>
+                                    <label for='emp_email' class='form-label'>Email</label>
+                                    <input type='email' class='form-control' id='emp_email' name='emp_email' required>
+                                </div>
+                                <div class='col-md-6 mb-3'>
+                                    <label for='emp_password' class='form-label'>Password</label>
+                                    <input type='password' class='form-control' id='emp_password' name='emp_password' required>
+                                </div>
+                            </div>
+                            <div class='row'>
+                                <div class='col-md-4 mb-3'>
+                                    <label for='department' class='form-label'>Department</label>
+                                    <select class='form-select' id='department' name='department' required>
+                                        <option value=''>Select Department</option>
+                                        <option value='Finance'>Finance</option>
+                                        <option value='Inventory'>Inventory</option>
+                                        <option value='Labor'>Labor</option>
+                                    </select>
+                                </div>
+                                <div class='col-md-4 mb-3'>
+                                    <label for='position' class='form-label'>Position</label>
+                                    <select class='form-select' id='position' name='position' required>
+                                        <option value=''>Select Position</option>
+                                        <option value='Manager'>Manager</option>
+                                        <option value='Staff'>Staff</option>
+                                    </select>
+                                </div>
+                                <div class='col-md-4 mb-3'>
+                                    <label for='contact_no' class='form-label'>Contact Number</label>
+                                    <input type='text' class='form-control' id='contact_no' name='contact_no' required>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class='modal-footer'>
+                        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                        <button type='button' class='btn btn-primary' id='submitEmployee'>Add Employee</button>
+                    </div>
+                </div>
+            </div>
+          </div>"; // Rest of the modal HTML
+
+    } else {
+        echo "<h3>You do not have access to this content.</h3>";
+    }
+}
+else {
     echo "<h3>Content not found.</h3>";
 }
 ?>

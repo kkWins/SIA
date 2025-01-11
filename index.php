@@ -293,6 +293,12 @@ $department = $_SESSION['department'];
 
                 <?php endif; ?>
             <?php endif; ?>
+
+            <!-- Role-based sidebar links -->
+            <?php if ($role == 'Admin'): ?>
+                <a href="#" class="sidebar-link" id="manage-employees-link">Manage Employees</a>
+            <?php endif; ?>
+            
         </div>
 
         <div class="user-dropdown">
@@ -438,6 +444,12 @@ $department = $_SESSION['department'];
                 loadContent('account_settings');
             });
 
+            // Add this with the other sidebar link handlers
+            $('#manage-employees-link').click(function (e) {
+                e.preventDefault();
+                loadContent('manage_employees');
+            });
+
             $(document).on('loadContentEvent', function(e, content, id, page) {
                 loadContent(content, id, page);
             });
@@ -505,6 +517,7 @@ $department = $_SESSION['department'];
             });
 
             
+
         });
     </script>
 </body>
