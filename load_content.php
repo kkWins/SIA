@@ -2228,7 +2228,7 @@ elseif ($content === 'account_settings') {
                                     <td>" . htmlspecialchars($row['EMP_POSITION']) . "</td>
                                     <td>" . htmlspecialchars($row['EMP_NUMBER']) . "</td>
                                     <td>
-                                        <button class='btn btn-sm btn-primary edit-employee' data-id='" . $row['EMP_ID'] . "'>
+                                        <button class='btn btn-sm btn-primary edit-employee' data-bs-toggle='modal' data-bs-target='#editEmployeeModal' data-id='" . $row['EMP_ID'] . "'>
                                             <i class='fas fa-edit'></i> Edit
                                         </button>
                                         <button class='btn btn-sm btn-danger delete-employee' data-id='" . $row['EMP_ID'] . "'>
@@ -2279,70 +2279,199 @@ elseif ($content === 'account_settings') {
 
         // Add Employee Modal HTML remains the same
         echo "<!-- Add Employee Modal -->
-          <div class='modal fade' id='addEmployeeModal' tabindex='-1' aria-labelledby='addEmployeeModalLabel' aria-hidden='true'>
-            <div class='modal-dialog modal-lg'>
-                <div class='modal-content'>
-                    <div class='modal-header'>
-                        <h5 class='modal-title' id='addEmployeeModalLabel'>Add New Employee</h5>
-                        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-                    </div>
-                    <div class='modal-body'>
-                        <form id='addEmployeeForm'>
-                            <div class='row'>
-                                <div class='col-md-6 mb-3'>
-                                    <label for='emp_fname' class='form-label'>First Name</label>
-                                    <input type='text' class='form-control' id='emp_fname' name='emp_fname' required>
+            <div class='modal fade' id='addEmployeeModal' tabindex='-1' aria-labelledby='addEmployeeModalLabel' aria-hidden='true'>
+                <div class='modal-dialog modal-lg'>
+                    <div class='modal-content'>
+                        <div class='modal-header'>
+                            <h5 class='modal-title' id='addEmployeeModalLabel'>Add New Employee</h5>
+                            <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                        </div>
+                        <div class='modal-body'>
+                            <form id='addEmployeeForm'>
+                                <div class='row'>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='emp_fname' class='form-label'>First Name</label>
+                                        <input type='text' class='form-control' id='emp_fname' name='emp_fname' required>
+                                    </div>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='emp_lname' class='form-label'>Last Name</label>
+                                        <input type='text' class='form-control' id='emp_lname' name='emp_lname' required>
+                                    </div>
                                 </div>
-                                <div class='col-md-6 mb-3'>
-                                    <label for='emp_lname' class='form-label'>Last Name</label>
-                                    <input type='text' class='form-control' id='emp_lname' name='emp_lname' required>
+                                <div class='row'>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='emp_email' class='form-label'>Email</label>
+                                        <input type='email' class='form-control' id='emp_email' name='emp_email' required>
+                                    </div>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='emp_password' class='form-label'>Password</label>
+                                        <input type='password' class='form-control' id='emp_password' name='emp_password' required>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class='row'>
-                                <div class='col-md-6 mb-3'>
-                                    <label for='emp_email' class='form-label'>Email</label>
-                                    <input type='email' class='form-control' id='emp_email' name='emp_email' required>
+                                <div class='row'>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='department' class='form-label'>Department</label>
+                                        <select class='form-select' id='department' name='department' required>
+                                            <option value=''>Select Department</option>
+                                            <option value='Finance'>Finance</option>
+                                            <option value='Inventory'>Inventory</option>
+                                            <option value='Labor'>Labor</option>
+                                        </select>
+                                    </div>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='position' class='form-label'>Position</label>
+                                        <select class='form-select' id='position' name='position' required>
+                                            <option value=''>Select Position</option>
+                                            <option value='Manager'>Manager</option>
+                                            <option value='Staff'>Staff</option>
+                                        </select>
+                                    </div>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='contact_no' class='form-label'>Contact Number</label>
+                                        <input type='text' class='form-control' id='contact_no' name='contact_no' required>
+                                    </div>
                                 </div>
-                                <div class='col-md-6 mb-3'>
-                                    <label for='emp_password' class='form-label'>Password</label>
-                                    <input type='password' class='form-control' id='emp_password' name='emp_password' required>
-                                </div>
-                            </div>
-                            <div class='row'>
-                                <div class='col-md-4 mb-3'>
-                                    <label for='department' class='form-label'>Department</label>
-                                    <select class='form-select' id='department' name='department' required>
-                                        <option value=''>Select Department</option>
-                                        <option value='Finance'>Finance</option>
-                                        <option value='Inventory'>Inventory</option>
-                                        <option value='Labor'>Labor</option>
-                                    </select>
-                                </div>
-                                <div class='col-md-4 mb-3'>
-                                    <label for='position' class='form-label'>Position</label>
-                                    <select class='form-select' id='position' name='position' required>
-                                        <option value=''>Select Position</option>
-                                        <option value='Manager'>Manager</option>
-                                        <option value='Staff'>Staff</option>
-                                    </select>
-                                </div>
-                                <div class='col-md-4 mb-3'>
-                                    <label for='contact_no' class='form-label'>Contact Number</label>
-                                    <input type='text' class='form-control' id='contact_no' name='contact_no' required>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class='modal-footer'>
-                        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
-                        <button type='button' class='btn btn-primary' id='submitEmployee'>Add Employee</button>
+                            </form>
+                        </div>
+                        <div class='modal-footer'>
+                            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                            <button type='button' class='btn btn-primary' id='submitEmployee'>Add Employee</button>
+                        </div>
                     </div>
                 </div>
             </div>
-          </div>
+
+            <!-- Edit Employee Modal -->
+            <div class='modal fade' id='editEmployeeModal' tabindex='-1' aria-labelledby='editEmployeeModalLabel' aria-hidden='true'>
+                <div class='modal-dialog modal-lg'>
+                    <div class='modal-content'>
+                        <div class='modal-header'>
+                            <h5 class='modal-title' id='editEmployeeModalLabel'>Edit Employee</h5>
+                            <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                        </div>
+                        <div class='modal-body'>
+                            <form id='editEmployeeForm'>
+                                <input type='hidden' id='edit_emp_id' name='emp_id'>
+                                <div class='row'>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='edit_emp_fname' class='form-label'>First Name</label>
+                                        <input type='text' class='form-control' id='edit_emp_fname' name='emp_fname' required>
+                                    </div>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='edit_emp_lname' class='form-label'>Last Name</label>
+                                        <input type='text' class='form-control' id='edit_emp_lname' name='emp_lname' required>
+                                    </div>
+                                </div>
+                                <div class='row'>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='edit_emp_email' class='form-label'>Email</label>
+                                        <input type='email' class='form-control' id='edit_emp_email' name='emp_email' required>
+                                    </div>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='edit_emp_password' class='form-label'>Password (leave blank if unchanged)</label>
+                                        <input type='password' class='form-control' id='edit_emp_password' name='emp_password'>
+                                    </div>
+                                </div>
+                                <div class='row'>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='edit_department' class='form-label'>Department</label>
+                                        <select class='form-select' id='edit_department' name='department' required>
+                                            <option value=''>Select Department</option>
+                                            <option value='Finance'>Finance</option>
+                                            <option value='Inventory'>Inventory</option>
+                                            <option value='Labor'>Labor</option>
+                                        </select>
+                                    </div>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='edit_position' class='form-label'>Position</label>
+                                        <select class='form-select' id='edit_position' name='position' required>
+                                            <option value=''>Select Position</option>
+                                            <option value='Manager'>Manager</option>
+                                            <option value='Staff'>Staff</option>
+                                        </select>
+                                    </div>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='edit_contact_no' class='form-label'>Contact Number</label>
+                                        <input type='text' class='form-control' id='edit_contact_no' name='contact_no' required>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class='modal-footer'>
+                            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                            <button type='button' class='btn btn-primary' id='updateEmployee'>Update Employee</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
           
           <script>
             $(document).ready(function() {
+
+                $('.edit-employee').click(function() {
+                const empId = $(this).data('id');
+                
+                // Fetch employee details
+                $.ajax({
+                    url: 'admin/get_employee_details.php',
+                    type: 'GET',
+                    data: { emp_id: empId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            const emp = response.data;
+                            // Populate the edit form
+                            $('#edit_emp_id').val(emp.EMP_ID);
+                            $('#edit_emp_fname').val(emp.EMP_FNAME);
+                            $('#edit_emp_lname').val(emp.EMP_LNAME);
+                            $('#edit_emp_email').val(emp.EMP_EMAIL);
+                            $('#edit_department').val(emp.DEPT_NAME);
+                            $('#edit_position').val(emp.EMP_POSITION);
+                            $('#edit_contact_no').val(emp.EMP_NUMBER);
+                            
+                            // Show the modal
+                            $('#editEmployeeModal').modal('show');
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error fetching employee details: ' + error);
+                    }
+                    });
+                });
+
+                $('#updateEmployee').click(function(e) {
+                e.preventDefault();
+                
+                // Form validation
+                if (!$('#editEmployeeForm')[0].checkValidity()) {
+                    $('#editEmployeeForm')[0].reportValidity();
+                    return;
+                }
+
+                $.ajax({
+                    url: 'admin/update_employee.php',
+                    type: 'POST',
+                    data: $('#editEmployeeForm').serialize(),
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            alert(response.message);
+                            $('#editEmployeeModal').modal('hide');
+                            window.location.href = 'index.php?content=manage_employees';
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error updating employee: ' + error);
+                    }
+                    });
+                });
+
+
+
                 // Form submission
                 $('#submitEmployee').click(function(e) {
                     e.preventDefault();
