@@ -34,7 +34,7 @@ function get_employees() {
                 FROM EMPLOYEE E
                 LEFT JOIN DEPARTMENT D ON E.DEPT_ID = D.DEPT_ID
                 WHERE E.EMP_POSITION != 'Admin'
-                ORDER BY D.DEPT_NAME, E.EMP_POSITION, FULL_NAME
+                ORDER BY E.EMP_ID DESC
                 LIMIT ?, ?";
 
         $stmt = $db->prepare($query);

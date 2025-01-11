@@ -2195,6 +2195,7 @@ elseif ($content === 'account_settings') {
         $result = get_employees(); // Add this line to call the function
 
         echo "<h2>Manage Employees</h2>
+
               <p>Add and manage employee accounts here.</p>
               
           <div class='card rounded-4 p-4'>
@@ -2338,7 +2339,57 @@ elseif ($content === 'account_settings') {
                     </div>
                 </div>
             </div>
-          </div>"; // Rest of the modal HTML
+          </div>
+          
+          <script>
+            $(document).ready(function() {
+                // Form submission
+                $('#submitEmployee').click(function(e) {
+                    e.preventDefault();
+                    
+                    // Form validation
+                    if (!$('#addEmployeeForm')[0].checkValidity()) {
+                        $('#addEmployeeForm')[0].reportValidity();
+                        return;
+                    }
+
+                    $.ajax({
+                        url: 'admin/add_employee.php',
+                        type: 'POST',
+                        data: $('#addEmployeeForm').serialize(),
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                $('#addEmployeeForm')[0].reset();
+                                $('#addEmployeeModal').modal('hide');
+                                alert(response.message);
+                                // Reload the employee list without refreshing the page
+                                window.location.href = '?content=manage_employees';
+                            } else {
+                                alert('Error: ' + response.message);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('Response:', xhr.responseText); // Add this for debugging
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                alert('Error: ' + response.message);
+                            } catch(e) {
+                                alert('Error adding employee: ' + error);
+                            }
+                        }
+                    });
+                });
+
+                // Clear form when modal is closed
+                $('#addEmployeeModal').on('hidden.bs.modal', function () {
+                    $('#addEmployeeForm')[0].reset();
+                });
+            });
+          </script>
+          
+          
+          "; // Rest of the modal HTML
 
     } else {
         echo "<h3>You do not have access to this content.</h3>";
