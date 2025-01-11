@@ -2221,6 +2221,11 @@ elseif ($content === 'account_settings') {
                     
                     if (!empty($result['employees'])) {
                         foreach ($result['employees'] as $row) {
+                            // Determine button class and text based on status
+                            $statusBtnClass = $row['EMP_STATUS'] == 1 ? 'btn-danger' : 'btn-success';
+                            $statusBtnText = $row['EMP_STATUS'] == 1 ? 'Deactivate' : 'Activate';
+                            $statusBtnIcon = $row['EMP_STATUS'] == 1 ? 'fa-user-slash' : 'fa-user-check';
+                            
                             echo "<tr>
                                     <td>" . htmlspecialchars($row['FULL_NAME']) . "</td>
                                     <td>" . htmlspecialchars($row['EMP_EMAIL']) . "</td>
@@ -2231,8 +2236,10 @@ elseif ($content === 'account_settings') {
                                         <button class='btn btn-sm btn-primary edit-employee' data-bs-toggle='modal' data-bs-target='#editEmployeeModal' data-id='" . $row['EMP_ID'] . "'>
                                             <i class='fas fa-edit'></i> Edit
                                         </button>
-                                        <button class='btn btn-sm btn-danger delete-employee' data-id='" . $row['EMP_ID'] . "'>
-                                            <i class='fas fa-trash'></i> Delete
+                                        <button class='btn btn-sm " . $statusBtnClass . " toggle-status' 
+                                                data-id='" . $row['EMP_ID'] . "'
+                                                data-status='" . $row['EMP_STATUS'] . "'>
+                                            <i class='fas " . $statusBtnIcon . "'></i> " . $statusBtnText . "
                                         </button>
                                     </td>
                                 </tr>";
@@ -2341,6 +2348,27 @@ elseif ($content === 'account_settings') {
                 </div>
             </div>
 
+            <!-- Deactivate Confirmation Modal -->
+            <div class='modal fade' id='toggleStatusModal' tabindex='-1' aria-labelledby='toggleStatusModalLabel' aria-hidden='true'>
+            <div class='modal-dialog'>
+                <div class='modal-content'>
+                    <div class='modal-header'>
+                        <h5 class='modal-title' id='toggleStatusModalLabel'>Confirm Status Change</h5>
+                        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                    </div>
+                    <div class='modal-body'>
+                        <p id='toggleStatusMessage'></p>
+                        <input type='hidden' id='toggle_emp_id'>
+                        <input type='hidden' id='toggle_status'>
+                    </div>
+                    <div class='modal-footer'>
+                        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Cancel</button>
+                        <button type='button' class='btn btn-primary' id='confirmToggleStatus'>Confirm</button>
+                    </div>
+                </div>
+            </div>
+            </div>
+
             <!-- Edit Employee Modal -->
             <div class='modal fade' id='editEmployeeModal' tabindex='-1' aria-labelledby='editEmployeeModalLabel' aria-hidden='true'>
                 <div class='modal-dialog modal-lg'>
@@ -2407,7 +2435,51 @@ elseif ($content === 'account_settings') {
           
           <script>
             $(document).ready(function() {
+                
+                $('.toggle-status').click(function() {
+                    const empId = $(this).data('id');
+                    const currentStatus = $(this).data('status');
+                    const newStatus = currentStatus == 1 ? 0 : 1;
+                    const actionText = currentStatus == 1 ? 'deactivate' : 'activate';
+                    
+                    // Set both values when opening the modal
+                    $('#toggle_emp_id').val(empId);
+                    $('#toggle_status').val(newStatus);  // Add this line
+                    $('#toggleStatusMessage').text('Are you sure you want to ' + actionText + ' this employee?');
+                    $('#toggleStatusModal').modal('show');
+                });
 
+                // Confirm status toggle
+                $('#confirmToggleStatus').click(function() {
+                    const empId = $('#toggle_emp_id').val();
+                    const newStatus = $('#toggle_status').val();
+                    
+                    $.ajax({
+                        url: 'admin/toggle_employee_status.php',
+                        type: 'POST',
+                        data: { 
+                            emp_id: empId,
+                            status: newStatus
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                alert(response.message);
+                                $('#toggleStatusModal').modal('hide');
+                                window.location.href = 'index.php?content=manage_employees';
+                            } else {
+                                alert('Error: ' + response.message);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('Server Response:', xhr.responseText); // Add this for debugging
+                            alert('Error changing employee status: ' + error);
+                        }
+                    });
+                });
+
+
+               
                 $('.edit-employee').click(function() {
                 const empId = $(this).data('id');
                 
