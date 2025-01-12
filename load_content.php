@@ -850,17 +850,13 @@ if ($content === 'purchase_order') {
                               echo 'Purchase Order not found';
                     }
                 }else{
-                    if(!empty($pos)){
-                        echo "
-
-                            <button type='button' class='btn btn-primary mb-3' data-bs-toggle='modal' data-bs-target='#purchaseRequestModal'>
-                                Create Purchase Request
-                            </button>
-                
-                            
-
-                            
-                            <!-- Purchase Request Modal -->
+                    // Always show the Create Purchase Request button
+                    echo "
+                        <button type='button' class='btn btn-primary mb-3' data-bs-toggle='modal' data-bs-target='#purchaseRequestModal'>
+                            Create Purchase Request
+                        </button>
+                        
+                        <!-- Purchase Request Modal -->
                             <div class='modal fade' id='purchaseRequestModal' tabindex='-1' aria-labelledby='purchaseRequestModalLabel' aria-hidden='true'>
                                 <div class='modal-dialog modal-lg'>
                                     <div class='modal-content'>
@@ -932,9 +928,8 @@ if ($content === 'purchase_order') {
                                     </div>
                                 </div>
                             </div>
-
-
-                            <script>
+                          
+                        <script>
                             $(document).ready(function() {
                                 // Load vendors
                                 $.ajax({
@@ -1107,7 +1102,23 @@ if ($content === 'purchase_order') {
                                     }
                                 });
                             });
-                            </script>
+                            </script> 
+                            
+
+                          ";
+
+                    if(!empty($pos)){
+                        echo "
+
+                            
+                
+                            
+
+                            
+                            
+
+
+                            
 
                             <div class='card rounded-4 p-4'>
                                 <table class='table' id='requisitions-table'>
@@ -1183,7 +1194,7 @@ if ($content === 'purchase_order') {
                         }else{
                         echo "
                         <div>
-                            <h5>No Purchase order yet.</h5>
+                            <h5>No Purchase request yet.</h5>
                         </div>
                         ";
                       }
