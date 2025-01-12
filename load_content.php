@@ -1109,17 +1109,6 @@ if ($content === 'purchase_order') {
 
                     if(!empty($pos)){
                         echo "
-
-                            
-                
-                            
-
-                            
-                            
-
-
-                            
-
                             <div class='card rounded-4 p-4'>
                                 <table class='table' id='requisitions-table'>
                                     <thead>
