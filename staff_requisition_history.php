@@ -40,7 +40,7 @@ if ($result->num_rows > 0) {
     echo "<thead>";
     echo "<tr>";
     echo "<th>PRF ID</th>";
-    echo "<th>Date</th>";
+    echo "<th>Date & Time</th>";
     echo "<th>Status</th>";
     echo "<th>Action</th>";
     echo "</tr>";

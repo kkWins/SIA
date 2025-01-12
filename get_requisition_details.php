@@ -14,7 +14,9 @@ $query = "SELECT prf.PRF_ID,
           prf.PRF_QUANTITY,
           prf.PRF_DATE,
           prf.rejection_reason,
-          prf.PRF_DESC
+          prf.PRF_DESC,
+          prf.PRF_STATUS,
+          prf.approval_notes
           FROM purchase_or_requisition_form prf
           JOIN employee emp ON prf.EMP_ID = emp.EMP_ID
           JOIN inventory inv ON prf.INV_ID = inv.INV_ID
@@ -45,12 +47,17 @@ if ($details) {
                 </div>
             </div>
             <div class='row mt-3'>
-                <div class='col-12'>
-                    <p><strong>Rejection Reason:</strong></p>
-                    <p class='text-danger'>" . htmlspecialchars($details['rejection_reason']) . "</p>
-                </div>
-            </div>
-          </div>";
+                <div class='col-12'>";
+    if ($details['PRF_STATUS'] == 'rejected') {
+        echo "<p><strong>Rejection Reason:</strong></p>
+              <p class='text-danger'>" . htmlspecialchars($details['rejection_reason']) . "</p>";
+    } else if ($details['PRF_STATUS'] == 'approved') {
+        echo "<p><strong>Approval Notes:</strong></p>
+              <p class='text-success'>" . htmlspecialchars($details['approval_notes']) . "</p>";
+    } else {
+        echo "<p><strong>Status:</strong> Pending Review</p>";
+    }
+    echo "</div></div>";
 } else {
     echo "Requisition details not found";
 }

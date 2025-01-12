@@ -1431,6 +1431,10 @@ elseif ($content === 'requisition_history') {
         // Manager 
         include('manager_requisition_history.php');
     }
+}
+elseif ($content === 'purchase_order_history') {
+    include('purchase_order_history.php');
+    
 } elseif ($content === 'requisition_withdrawal') {
     echo "<h2>Requisition Withdrawal</h2>";
 

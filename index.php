@@ -258,6 +258,7 @@ $department = $_SESSION['department'];
                     <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
                     <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
                     <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
+                    <a href="#" class="sidebar-link" id="purchase-order-history-link">Purchase Order History</a>
 
                 <?php elseif ($role == 'Staff'): ?>
                     <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
@@ -273,6 +274,7 @@ $department = $_SESSION['department'];
                     <a href="#" class="sidebar-link" id="purchase-request-link">Purchase Request</a>
                     <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
                     <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a> 
+                    <a href="#" class="sidebar-link" id="purchase-order-history-link">Purchase Order History</a>
                     <a href="#" class="sidebar-link" id="requisition-withdrawal-link">Requisition Withdrawal</a>
                     <a href="#" class="sidebar-link" id="inventory-task-link">Requisition Withdrawal/Delivery Task</a>   
                 <?php elseif ($role == 'Staff'): ?>
@@ -431,6 +433,11 @@ $department = $_SESSION['department'];
             $('#requisition-history-link').click(function (e) {
                 e.preventDefault();
                 loadContent('requisition_history');
+            });
+
+            $('#purchase-order-history-link').click(function (e) {
+                e.preventDefault();
+                loadContent('purchase_order_history');
             });
 
             $('#account-settings-link').click(function(e) {

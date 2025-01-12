@@ -7,7 +7,7 @@ if (!isset($_SESSION['loggedIn']) || !$_SESSION['loggedIn']) {
     exit;
 }
 
-// Main query for requisitions - only show rejected ones
+
 $query = "SELECT 
             prf.PRF_ID, 
             prf.PRF_DATE, 
@@ -17,10 +17,14 @@ $query = "SELECT
           FROM purchase_or_requisition_form prf
           JOIN employee emp ON prf.EMP_ID = emp.emp_id
           JOIN department dep ON emp.DEPT_ID = dep.DEPT_ID
-          WHERE prf.PRF_STATUS = 'rejected'
+          WHERE (prf.PRF_STATUS = 'approved' 
+             OR prf.PRF_STATUS = 'rejected'
+             OR prf.PRF_STATUS = 'pending')
+          AND emp.DEPT_ID = ?
           ORDER BY prf.PRF_DATE DESC";
 
 $stmt = $db->prepare($query);
+$stmt->bind_param("i", $_SESSION['department_id']);
 
 if (!$stmt->execute()) {
     echo "<p>Error executing query: " . $stmt->error . "</p>";
@@ -39,7 +43,7 @@ if ($result->num_rows > 0) {
     echo "<th>PRF ID</th>";
     echo "<th>Employee Name</th>";
     echo "<th>Department</th>";
-    echo "<th>Date</th>";
+    echo "<th>Date & Time</th>";
     echo "<th>Status</th>";
     echo "<th>Action</th>";
     echo "</tr>";
@@ -52,7 +56,17 @@ if ($result->num_rows > 0) {
         echo "<td>" . htmlspecialchars($row['DEPT_NAME']) . "</td>";
         echo "<td>" . htmlspecialchars($row['PRF_DATE']) . "</td>";
         echo "<td>";
-        echo "<span class='badge bg-danger'>Rejected</span>";
+        switch($row['PRF_STATUS']) {
+            case 'approved':
+                echo "<span class='badge bg-success'>Approved</span>";
+                break;
+            case 'rejected':
+                echo "<span class='badge bg-danger'>Rejected</span>";
+                break;
+            case 'pending':
+                echo "<span class='badge bg-warning'>Pending</span>";
+                break;
+        }
         echo "</td>";
         echo "<td>";
         echo "<button class='btn btn-sm btn-info view-details' data-bs-toggle='modal' data-bs-target='#itemsModal' data-prf-id='" . htmlspecialchars($row['PRF_ID']) . "'>View Details</button>";
@@ -73,7 +87,7 @@ echo <<<HTML
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="itemsModalLabel">Rejected Requisition Items</h5>
+                <h5 class="modal-title" id="itemsModalLabel">Requisition Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
