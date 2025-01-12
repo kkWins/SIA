@@ -706,23 +706,23 @@ if ($content === 'purchase_order') {
                     </thead>
                     <tbody>";
             
-                    foreach ($response as $req) {
-                        echo "<tr>
-                                <td>" . htmlspecialchars($req['requisition_id']) . "</td>
-                                <td>" . htmlspecialchars($req['employee_name']) . "</td>
-                                <td>" . htmlspecialchars($req['submitted_date']) . "</td>
-                                <td>" . htmlspecialchars($req['requisition_status']) . "</td>
-                                <td>
-                                    <a href='#' class='btn btn-sm btn-primary view-requisition' 
-                                        data-content='requisition_approval' 
-                                        data-id='" . $req['requisition_id'] . "'>
-                                        <i class='fas fa-eye'></i> View
-                                    </a>
-                                </td>
-                            </tr>";
-                        }
+            foreach ($response as $req) {
+                echo "<tr>
+                        <td>" . htmlspecialchars($req['requisition_id']) . "</td>
+                        <td>" . htmlspecialchars($req['employee_name']) . "</td>
+                        <td>" . htmlspecialchars($req['submitted_date']) . "</td>
+                        <td>" . htmlspecialchars($req['requisition_status']) . "</td>
+                        <td>
+                            <a href='#' class='btn btn-sm btn-primary view-requisition' 
+                                data-content='requisition_approval' 
+                                data-id='" . $req['requisition_id'] . "'>
+                                <i class='fas fa-eye'></i> View
+                            </a>
+                        </td>
+                    </tr>";
+                }
             
-                    echo "</tbody>
+            echo "</tbody>
                 </table>
             </div>";
         } else {
@@ -1421,14 +1421,16 @@ if ($content === 'purchase_order') {
     }
 }
 elseif ($content === 'requisition_history') {
-    // Inside the requisition_withdrawal section in load_content.php
     echo "<h2>Requisition History</h2>";
 
-    // Button to load requisition history
-    echo "<button id=\"goToWithdrawal\" class=\"btn btn-primary\">Go to Requisition History</button>";
-
-
-
+    // Check if the user is a staff or manager
+    if ($role === 'Staff') {
+        // Staff 
+        include('staff_requisition_history.php');
+    } elseif ($role === 'Manager') {
+        // Manager 
+        include('manager_requisition_history.php');
+    }
 } elseif ($content === 'requisition_withdrawal') {
     echo "<h2>Requisition Withdrawal</h2>";
 
