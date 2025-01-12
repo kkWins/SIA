@@ -297,6 +297,9 @@ $department = $_SESSION['department'];
             <!-- Role-based sidebar links -->
             <?php if ($role == 'Admin'): ?>
                 <a href="#" class="sidebar-link" id="manage-employees-link">Manage Employees</a>
+                <a href="#" class="sidebar-link" id="requisition-form-history-link">Requisition Form History</a>
+                <a href="#" class="sidebar-link" id="purchase-request-history-link">Purchase Request History</a>
+                <a href="#" class="sidebar-link" id="purchase-order-history-link">Purchase Order History</a>
             <?php endif; ?>
             
         </div>
@@ -448,6 +451,21 @@ $department = $_SESSION['department'];
             $('#manage-employees-link').click(function (e) {
                 e.preventDefault();
                 loadContent('manage_employees');
+            });
+
+            $('#requisition-form-history-link').click(function (e) {
+                e.preventDefault();
+                loadContent('requisition_form_history');
+            });
+
+            $('#purchase-request-history-link').click(function (e) {
+                e.preventDefault();
+                loadContent('purchase_request_history');
+            });
+
+            $('#purchase-order-history-link').click(function (e) {
+                e.preventDefault();
+                loadContent('purchase_order_history');
             });
 
             $(document).on('loadContentEvent', function(e, content, id, page) {

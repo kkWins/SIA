@@ -2233,8 +2233,8 @@ elseif ($content === 'account_settings') {
             });
             });
             </script>";
-} elseif ($content === 'manage_employees') {
-    if ($role === 'Admin') {
+} elseif ($role === 'Admin') {
+    if ($content === 'manage_employees') {
         // Get employees data with pagination
         $page = isset($_GET['page']) ? $_GET['page'] : 1;
         require_once 'admin/get_employees.php';
@@ -2638,6 +2638,12 @@ elseif ($content === 'account_settings') {
           
           "; // Rest of the modal HTML
 
+    }elseif($content === 'requisition_form_history'){
+        echo "<h3>Requisition Form History</h3>";
+    } elseif($content === 'purchase_request_history'){
+        echo "<h3>Purchase Request History</h3>";
+    } elseif($content === 'purchase_order_history'){
+        echo "<h3>Purchase Order History</h3>";
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
