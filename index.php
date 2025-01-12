@@ -347,7 +347,7 @@ $department = $_SESSION['department'];
                 
                 // Only add ID parameters if they're provided
                 if (id) {
-                    if (content === 'purchase_request') {
+                    if (content === 'purchase_request' || content === 'purchase_request_history') {
                         params.pr_id = id;
                         url += `&pr_id=${id}`;
                     } else if (content === 'pending_pr') {
@@ -482,12 +482,18 @@ $department = $_SESSION['department'];
                 const contentType = $(this).data('content');
                 loadContent(contentType, id);
             });
+
+            $(document).on('click', '.view-purchase-request', function(e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+                const contentType = $(this).data('content');
+                loadContent(contentType, id);
+            });
             
             $(document).on('click', '.view-wd', function(e) {
                 e.preventDefault();
                 const id = $(this).data('id');
                 const contentType = $(this).data('content');
-                console.log("")
                 loadContent(contentType, id);
             });
 

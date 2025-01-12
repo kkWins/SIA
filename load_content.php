@@ -1109,6 +1109,17 @@ if ($content === 'purchase_order') {
 
                     if(!empty($pos)){
                         echo "
+
+                            
+                
+                            
+
+                            
+                            
+
+
+                            
+
                             <div class='card rounded-4 p-4'>
                                 <table class='table' id='requisitions-table'>
                                     <thead>
@@ -2774,7 +2785,144 @@ elseif ($content === 'account_settings') {
             echo "</div>";
         }
     } elseif($content === 'purchase_request_history'){
-        echo "<h3>Purchase Request History</h3>";
+        if(isset($_GET['pr_id'])){
+            include('admin/get_po_details.php');
+            
+            if ($poDetails) {
+                echo "<div class='d-flex justify-content-between align-items-center mb-3'>
+                        <h3>Purchase Request Details #{$poDetails['PO_ID']}</h3>
+                        <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_request_history'>
+                            <i class='fas fa-arrow-left'></i> Back
+                        </a>
+                      </div>
+                      <div class='card rounded-4 p-4'>
+                          <div class='row'>
+                              <div class='col-md-6'>
+                                  <p><strong>Supplier:</strong> {$poDetails['SP_NAME']}</p>
+                                  <p><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
+                                  <p><strong>Contact:</strong> {$poDetails['SP_NUMBER']}</p>
+                              </div>
+                              <div class='col-md-6'>
+                                  <p><strong>Order Date:</strong> {$poDetails['PO_ORDER_DATE']}</p>
+                                  <p><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
+                                  <p><strong>Approval Status:</strong> {$poDetails['ap_desc']}</p>
+                              </div>
+                          </div>
+                          
+                          <h4>Items</h4>
+                          <table class='table'>
+                              <thead>
+                                  <tr>
+                                      <th>Item</th>
+                                      <th>Quantity</th>
+                                      <th>Price</th>
+                                      <th>Total</th>
+                                  </tr>
+                              </thead>
+                              <tbody>";
+                      
+                $grandTotal = 0;
+                foreach ($poDetails['items'] as $item) {
+                    $total = $item['POL_QUANTITY'] * $item['POL_PRICE'];
+                    $grandTotal += $total;
+                    echo "<tr>
+                            <td>{$item['INV_MODEL_NAME']} ({$item['INV_BRAND']})</td>
+                            <td>{$item['POL_QUANTITY']}</td>
+                            <td>₱" . number_format($item['POL_PRICE'], 2) . "</td>
+                            <td>₱" . number_format($total, 2) . "</td>
+                          </tr>";
+                }
+                
+                echo "<tr>
+                        <td colspan='3' class='text-end'><strong>Grand Total:</strong></td>
+                        <td><strong>₱" . number_format($grandTotal, 2) . "</strong></td>
+                      </tr>
+                      </tbody>
+                      </table>
+                      </div>";
+            } else {
+                echo "<h3>Purchase request not found.</h3>";
+            }
+        } else {
+            include('admin/get_pr_history.php');
+            
+            echo "<h3>Purchase Request History</h3>
+                  <div class='card rounded-4 p-4'>
+                      <table class='table table-striped'>
+                          <thead>
+                              <tr>
+                                  <th>PR ID</th>
+                                  <th>Supplier</th>
+                                  <th>Order Date</th>
+                                  <th>Status</th>
+                                  <th>Action</th>
+                              </tr>
+                          </thead>
+                          <tbody>";
+        
+            if (!empty($purchase_requests)) {
+                foreach ($purchase_requests as $pr) {
+                    echo "<tr>
+                            <td>#{$pr['PO_ID']}</td>
+                            <td>{$pr['SP_NAME']}</td>
+                            <td>{$pr['PO_ORDER_DATE']}</td>
+                            <td>{$pr['PO_STATUS']}</td>
+                            <td>
+                                <a href='#' 
+                                class='btn btn-sm btn-primary view-purchase-request'
+                                data-content='purchase_request_history'
+                                data-id='" . $pr['PO_ID'] . "'>
+                                    <i class='fas fa-eye'></i> View
+                                </a>
+                            </td>
+                          </tr>";
+                }
+            } else {
+                echo "<tr><td colspan='5' class='text-center'>No purchase requests found</td></tr>";
+            }
+            
+            echo "</tbody>
+                  </table>";
+
+            // Pagination
+            if (isset($pagination) && $pagination['total_pages'] > 1) {
+                echo "<nav aria-label='Page navigation' class='mt-4'>
+                        <ul class='pagination justify-content-center'>";
+                
+                // Previous button
+                $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+                echo "<li class='page-item{$prevDisabled}'>
+                        <a class='page-link' href='?content=purchase_request_history&page=" . 
+                        ($pagination['current_page'] - 1) . "'" . 
+                        ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                        ">Previous</a>
+                      </li>";
+                
+                // Page numbers
+                for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+                    $active = $pagination['current_page'] == $i ? ' active' : '';
+                    echo "<li class='page-item{$active}'>
+                            <a class='page-link' href='?content=purchase_request_history&page={$i}'>
+                                {$i}
+                            </a>
+                          </li>";
+                }
+                
+                // Next button
+                $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+                echo "<li class='page-item{$nextDisabled}'>
+                        <a class='page-link' href='?content=purchase_request_history&page=" . 
+                        ($pagination['current_page'] + 1) . "'" .
+                        ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                        ">Next</a>
+                      </li>";
+                
+                echo "</ul>
+                    </nav>";
+            }
+            
+            echo "</div>";
+        }
     } elseif($content === 'purchase_order_history'){
         echo "<h3>Purchase Order History</h3>";
     } else {
