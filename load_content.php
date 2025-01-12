@@ -1446,10 +1446,11 @@ if ($content === 'purchase_order') {
                             <td>" . htmlspecialchars($req['employee_name']) . "</td>
                             <td>" . htmlspecialchars($req['submitted_date']) . "</td>
                             <td>
-                                <a href='#' class='btn btn-sm btn-primary view-requisition' 
+                                <a href='#' 
+                                    class='btn btn-sm btn-primary view-requisition' 
                                     data-content='approved_requisitions' 
                                     data-id='" . $req['requisition_id'] . "'>
-                                    <i class='fas fa-eye'></i> View
+                                        <i class='fas fa-eye'></i> View
                                 </a>
                             </td>
                         </tr>";
@@ -2252,7 +2253,7 @@ elseif ($content === 'account_settings') {
                 </button>
             </div>
             <div class='table-responsive'>
-                <table class='table' id='employeesTable'>
+                <table class='table table-striped' id='employeesTable'>
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -2639,7 +2640,139 @@ elseif ($content === 'account_settings') {
           "; // Rest of the modal HTML
 
     }elseif($content === 'requisition_form_history'){
-        echo "<h3>Requisition Form History</h3>";
+        if (isset($_GET['req_id'])) {
+            // Show detailed view for specific requisition
+            include('admin/get_rf_details.php'); // You'll need to create this file
+            
+            if ($requisitionDetails) {
+                echo "<div class='d-flex justify-content-between align-items-center mb-3'>
+                        <h3>Requisition Details #{$_GET['req_id']}</h3>
+                        <a href='#' class='btn btn-secondary back-to-list' data-content='requisition_form_history'>
+                            <i class='fas fa-arrow-left'></i> Back
+                        </a>
+                      </div>
+                      <div class='card rounded-4 p-4'>
+                          <div class='row'>
+                              <div class='col-md-6'>
+                                  <p><strong>Requester:</strong> {$requisitionDetails['FULL_NAME']}</p>
+                                  <p><strong>Department:</strong> {$requisitionDetails['DEPT_NAME']}</p>
+                              </div>
+                              <div class='col-md-6'>
+                                  <p><strong>Date:</strong> {$requisitionDetails['PRF_DATE']}</p>
+                                  <p><strong>Status:</strong> {$requisitionDetails['PRF_STATUS']}</p>
+                              </div>
+                          </div>
+                          
+                          <h4>Requested Items</h4>
+                          <table class='table'>
+                              <thead>
+                                  <tr>
+                                      <th>Item</th>
+                                      <th>Quantity</th>
+                                      <th>Description</th>
+                                  </tr>
+                              </thead>
+                              <tbody>";
+                          
+                foreach ($requisitionDetails['items'] as $item) {
+                    echo "<tr>
+                            <td>{$item['item_name']}</td>
+                            <td>{$item['quantity']}</td>
+                            <td>{$item['description']}</td>
+                          </tr>";
+                }
+                
+                echo "</tbody>
+                      </table>
+                      </div>";
+            } else {
+                echo "<h3>Requisition not found.</h3>";
+            }
+            
+        } else {
+            // Show list view
+            include('admin/get_rf_history.php');
+            
+            echo "<h3>Requisition Form History</h3>
+                <div class='card rounded-4 p-4'>
+                    <table class='table table-striped'>
+                        <thead>
+                            <tr>
+                                <th>Requisition ID</th>
+                                <th>Requester</th>
+                                <th>Department</th>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+            
+            if (!empty($requisitions)) {
+                foreach ($requisitions as $req) {
+                    echo "<tr>
+                            <td>#{$req['PRF_ID']}</td>
+                            <td>{$req['FULL_NAME']}</td>
+                            <td>{$req['DEPT_NAME']}</td>
+                            <td>{$req['PRF_DATE']}</td>
+                            <td>{$req['PRF_STATUS']}</td>
+                            <td>
+                                <a href='#' 
+                                class='btn btn-sm btn-primary view-requisition'
+                                data-content='requisition_form_history'
+                                data-id='" . $req['PRF_ID'] . "'>
+                                    <i class='fas fa-eye'></i> View
+                                </a>
+                            </td>
+                        </tr>";
+                }
+            } else {
+                echo "<tr><td colspan='6' class='text-center'>No requisitions found</td></tr>";
+            }
+            
+            echo "</tbody>
+                </table>
+                </div>";
+
+            // Add pagination navigation
+            if (isset($pagination) && $pagination['total_pages'] > 1) {
+                echo "<nav aria-label='Page navigation' class='mt-4'>
+                        <ul class='pagination justify-content-center'>";
+                
+                // Previous button
+                $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+                echo "<li class='page-item{$prevDisabled}'>
+                        <a class='page-link' href='?content=requisition_form_history&page=" . 
+                        ($pagination['current_page'] - 1) . "'" . 
+                        ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                        ">Previous</a>
+                      </li>";
+                
+                // Page numbers
+                for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+                    $active = $pagination['current_page'] == $i ? ' active' : '';
+                    echo "<li class='page-item{$active}'>
+                            <a class='page-link' href='?content=requisition_form_history&page={$i}'>
+                                {$i}
+                            </a>
+                          </li>";
+                }
+                
+                // Next button
+                $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+                echo "<li class='page-item{$nextDisabled}'>
+                        <a class='page-link' href='?content=requisition_form_history&page=" . 
+                        ($pagination['current_page'] + 1) . "'" .
+                        ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                        ">Next</a>
+                      </li>";
+                
+                echo "</ul>
+                    </nav>";
+            }
+            
+            echo "</div>";
+        }
     } elseif($content === 'purchase_request_history'){
         echo "<h3>Purchase Request History</h3>";
     } elseif($content === 'purchase_order_history'){

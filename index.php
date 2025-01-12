@@ -362,6 +362,9 @@ $department = $_SESSION['department'];
                     }else if (content === 'inventory-task') {
                         params.req_id = id;
                         url += `&req_id=${id}`;
+                    }else if (content === 'requisition_form_history') {
+                        params.req_id = id;
+                        url += `&req_id=${id}`;
                     }
                 }
 
@@ -486,6 +489,13 @@ $department = $_SESSION['department'];
                 const contentType = $(this).data('content');
                 console.log("")
                 loadContent(contentType, id);
+            });
+
+            // Add this with your other document.ready event handlers
+            $(document).on('click', '.back-to-list', function(e) {
+                e.preventDefault();
+                const contentType = $(this).data('content');
+                loadContent(contentType);
             });
 
             // Add this to your existing JavaScript
