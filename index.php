@@ -353,7 +353,7 @@ $department = $_SESSION['department'];
                     } else if (content === 'pending_pr') {
                         params.pending_pr = id;
                         url += `&pending_pr=${id}`;
-                    } else if (content === 'purchase_order') {
+                    } else if (content === 'purchase_order' || content === 'purchase_order_history') {
                         params.po_id = id;
                         url += `&po_id=${id}`;
                     } else if (content === 'requisition_approval' || content === 'approved_requisitions') {
@@ -484,6 +484,13 @@ $department = $_SESSION['department'];
             });
 
             $(document).on('click', '.view-purchase-request', function(e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+                const contentType = $(this).data('content');
+                loadContent(contentType, id);
+            });
+            
+            $(document).on('click', '.view-purchase-order', function(e) {
                 e.preventDefault();
                 const id = $(this).data('id');
                 const contentType = $(this).data('content');
