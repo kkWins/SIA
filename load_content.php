@@ -651,15 +651,16 @@ if ($content === 'purchase_order') {
                     </thead>
                     <tbody>";
                     
-            foreach ($response['items'] as $item) {
-                echo "<tr>
-                        <td>" . htmlspecialchars($item['item_name']) . "</td>
-                        <td>" . htmlspecialchars($item['description']) . "</td>
-                        <td>" . htmlspecialchars($item['quantity']) . "</td>
-                    </tr>";
-            }
+                        foreach ($response['items'] as $item) {
+                            echo "<tr>
+                                    <td>" . htmlspecialchars($item['item_name']) . "</td>
+                                    <td>" . htmlspecialchars($item['description']) . "</td>
+                                    <td>" . htmlspecialchars($item['quantity']) . "</td>
+                                </tr>";
+                        }
                     
-            echo "</tbody>
+                        echo "
+                    </tbody>
                 </table>
                 
                 <div class='mt-3'>
@@ -673,14 +674,59 @@ if ($content === 'purchase_order') {
             $(document).ready(function() {
                 // Approve button click event
                 $('.approve-btn').on('click', function() {
-                    alert('Requisition approved successfully!');
-                    window.location.href = '?content=requisition_approval'; // Redirect without req_id
+                    const reqId = $(this).data('id');
+                    
+                    // Confirm before approving
+                    if (confirm('Are you sure you want to approve this requisition?')) {
+                        $.ajax({
+                            url: 'all/approve_requisition.php',
+                            type: 'POST',
+                            data: { req_id: reqId },
+                            dataType: 'json',
+                            success: function(response) {
+                                if (response.success) {
+                                    alert('Requisition approved successfully!');
+                                    window.location.href = '?content=requisition_approval';
+                                } else {
+                                    alert('Error: ' + (response.message || 'Failed to approve requisition'));
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                console.error(xhr, status, error);
+                                alert('Error processing request');
+                            }
+                        });
+                    }
                 });
 
                 // Reject button click event
                 $('.reject-btn').on('click', function() {
-                    alert('Requisition rejected successfully!');
-                    window.location.href = '?content=requisition_approval'; // Redirect without req_id
+                    const reqId = $(this).data('id');
+                    
+                    // Show rejection reason modal
+                    const reason = prompt('Please enter rejection reason:');
+                    if (reason !== null) {  // Only proceed if user didn't cancel
+                        $.ajax({
+                            url: 'all/reject_requisition.php',
+                            type: 'POST',
+                            data: { 
+                                req_id: reqId,
+                                reason: reason
+                            },
+                            dataType: 'json',
+                            success: function(response) {
+                                if (response.success) {
+                                    alert('Requisition rejected successfully!');
+                                    window.location.href = '?content=requisition_approval';
+                                } else {
+                                    alert('Error: ' + (response.message || 'Failed to reject requisition'));
+                                }
+                            },
+                            error: function() {
+                                alert('Error processing request');
+                            }
+                        });
+                    }
                 });
             });
             </script>";
