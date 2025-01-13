@@ -1406,6 +1406,42 @@ if ($content === 'purchase_order') {
                 
                     echo"<script>
                         $(document).ready(function() {
+                            $('#endBtn').on('click', function(event) {
+                                event.preventDefault(); // Prevent default button behavior
+
+                                // Get the PRF_ID from the data attribute
+                                const prfId = $(this).data('id');
+
+                                if (prfId) {
+                                    // Confirm the user's action before proceeding
+                                    if (confirm('Are you sure you want to close this requisition? This action cannot be undone.')) {
+                                        // Send an AJAX request to the server
+                                        $.ajax({
+                                            url: 'update_status.php', // Replace with your PHP script path
+                                            method: 'POST',
+                                            data: { PRF_ID: prfId }, // Send the PRF_ID to the server
+                                            success: function(response) {
+                                                if (response.trim() === \"Status updated to 'closed' successfully.\") {
+                                                    alert('Requisition successfully closed.');
+                                                    location.reload(); // Reload the page to reflect changes
+                                                } else if (response.trim() === \"Cannot close PRF. There are records in rf_withdrawal with dates populated.\") {
+                                                    alert('Requisition cannot be closed. Some withdrawal records are still active.');
+                                                } else {
+                                                    alert(response); // Display any other server response
+                                                }
+                                            },
+                                            error: function(xhr, status, error) {
+                                                alert('An error occurred: ' + error);
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    alert('PRF_ID is missing. Please check your setup.');
+                                }
+                            });
+
+
+
                             // Handle Withdraw Button Click
                             $('.withdraw-btn').on('click', function(event) {
                                 event.preventDefault(); // Prevent default form submission
@@ -1619,83 +1655,125 @@ elseif ($content === 'requisition_history') {
         }
     
         echo "</tbody></table>";
-    
+        // Add an End button
+        echo "
+        <div class='mt-3'>
+            <button class='btn btn-danger endBtn' data-req-id='" . htmlspecialchars($response['requisition_id'], ENT_QUOTES, 'UTF-8') . "'>
+                End
+            </button>
+        </div>";
+        
         // Fetch withdrawal history using .get() AJAX request
         echo "<h3>Withdrawal History</h3>";
-echo "<table class='table'>
-        <thead>
-            <tr>
-                <th>Item Name</th>
-                <th>Quantity Withdrawn</th>
-                <th>Withdrawn By</th>
-                <th>Date Withdrawn</th>
-                <th>Date Delivered</th>
-                <th>Date Received</th>
-                <th>Acknowledge</th> <!-- New column for Delivered button -->
-            </tr>
-        </thead>
-        <tbody id='withdrawal-history'></tbody>
-      </table>";
-
-// Add JavaScript for AJAX request to fetch withdrawal data
-echo "
-<script>
-    $(document).ready(function() {
-        var reqId = '" . htmlspecialchars($response['requisition_id']) . "';
+        echo "<table class='table'>
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Quantity Withdrawn</th>
+                        <th>Withdrawn By</th>
+                        <th>Date Withdrawn</th>
+                        <th>Date Delivered</th>
+                        <th>Date Received</th>
+                        <th>Acknowledge</th> <!-- New column for Delivered button -->
+                    </tr>
+                </thead>
+                <tbody id='withdrawal-history'></tbody>
+            </table>";
         
-        $.get('get_rw_staff.php', { req_id: reqId }, function(data) {
-            var withdrawalData = JSON.parse(data);
-            var html = '';
-            
-            if (Array.isArray(withdrawalData) && withdrawalData.length > 0) {
-                withdrawalData.forEach(function(withdrawal) {
-                    html += '<tr>';
-                    html += '<td>' + withdrawal.item_name + '</td>';
-                    html += '<td>' + withdrawal.quantity + '</td>';
-                    html += '<td>' + withdrawal.withdrawn_by + '</td>';
-                    html += '<td>' + (withdrawal.date_withdrawn || '') + '</td>';
-                    html += '<td>' + (withdrawal.date_delivered || '') + '</td>';
-                    html += '<td>' + (withdrawal.received_date  || '') + '</td>';
-                    
-                    // If the date delivered is null, add a \"Delivered\" button
-                    if (withdrawal.date_delivered && !withdrawal.received_date) {
-                        html += '<td><button class=\"btn btn-success btn-sm\" onclick=\"markDelivered(' + withdrawal.withdrawal_id + ')\">Mark as Delivered</button></td>';
-                    }else if(!withdrawal.received_date){
-                        html += '<td></td>'; // Empty cell if already delivered
+        // Add JavaScript for AJAX request to fetch withdrawal data
+        echo "
+        <script>
+            $(document).ready(function() {
+                var reqId = '" . htmlspecialchars($response['requisition_id']) . "';
+
+                $('.endBtn').on('click', function(event) {
+                    event.preventDefault(); // Prevent default button behavior
+
+                    // Get the PRF_ID from the data attribute
+                    const prfId = $(this).data('req-id');
+
+                    if (prfId) {
+                        // Confirm the user's action before proceeding
+                        if (confirm('Are you sure you want to close this requisition? This action cannot be undone.')) {
+                            // Send an AJAX request to the server
+                            $.ajax({
+                                url: 'update_status.php', // Replace with your PHP script path
+                                method: 'POST',
+                                data: { PRF_ID: prfId }, // Send the PRF_ID to the server
+                                success: function(response) {
+                                    if (response.trim() === \"Status updated to 'closed' successfully.\") {
+                                        alert('Requisition successfully closed.');
+                                        location.reload(); // Reload the page to reflect changes
+                                    } else if (response.trim() === \"Cannot close PRF. There are records in rf_withdrawal with dates populated.\") {
+                                        alert('Requisition cannot be closed. Some withdrawal records are still active.');
+                                    } else {
+                                        alert(response); // Display any other server response
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    alert('An error occurred: ' + error);
+                                }
+                            });
+                        }
                     } else {
-                        html += '<td>Delivered</td>'; // Empty cell if already delivered
+                        alert('PRF_ID is missing. Please check your setup.');
                     }
-
-                    html += '</tr>';
                 });
-            } else {
-                html = '<tr><td colspan=\"6\">No withdrawal information available.</td></tr>';
-            }
-            
-            $('#withdrawal-history').html(html);
-        });
-    });
 
-    // Function to mark the item as delivered (for future implementation)
-    function markDelivered(withdrawalId) {
-        $.ajax({
-            url: 'mark_received.php',  // PHP file to process the request
-            type: 'POST',
-            data: { wd_id: withdrawalId },
-            success: function(response) {
-                if (response === 'success') {
-                    alert('Item marked as delivered');
-                    location.reload();  // Reload the page to update the table
-                } else {
-                    alert('Error updating delivered date');
-                }
-            },
-            error: function() {
-                alert('An error occurred while marking as delivered');
+                
+                $.get('get_rw_staff.php', { req_id: reqId }, function(data) {
+                    var withdrawalData = JSON.parse(data);
+                    var html = '';
+                    
+                    if (Array.isArray(withdrawalData) && withdrawalData.length > 0) {
+                        withdrawalData.forEach(function(withdrawal) {
+                            html += '<tr>';
+                            html += '<td>' + withdrawal.item_name + '</td>';
+                            html += '<td>' + withdrawal.quantity + '</td>';
+                            html += '<td>' + withdrawal.withdrawn_by + '</td>';
+                            html += '<td>' + (withdrawal.date_withdrawn || '') + '</td>';
+                            html += '<td>' + (withdrawal.date_delivered || '') + '</td>';
+                            html += '<td>' + (withdrawal.received_date  || '') + '</td>';
+                            
+                            // If the date delivered is null, add a \"Delivered\" button
+                            if (withdrawal.date_delivered && !withdrawal.received_date) {
+                                html += '<td><button class=\"btn btn-success btn-sm\" onclick=\"markDelivered(' + withdrawal.withdrawal_id + ')\">Mark as Delivered</button></td>';
+                            }else if(!withdrawal.received_date){
+                                html += '<td></td>'; // Empty cell if already delivered
+                            } else {
+                                html += '<td>Delivered</td>'; // Empty cell if already delivered
+                            }
+
+                            html += '</tr>';
+                        });
+                    } else {
+                        html = '<tr><td colspan=\"6\">No withdrawal information available.</td></tr>';
+                    }
+                    
+                    $('#withdrawal-history').html(html);
+                });
+            });
+
+            // Function to mark the item as delivered (for future implementation)
+            function markDelivered(withdrawalId) {
+                $.ajax({
+                    url: 'mark_received.php',  // PHP file to process the request
+                    type: 'POST',
+                    data: { wd_id: withdrawalId },
+                    success: function(response) {
+                        if (response === 'success') {
+                            alert('Item marked as delivered');
+                            location.reload();  // Reload the page to update the table
+                        } else {
+                            alert('Error updating delivered date');
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while marking as delivered');
+                    }
+                });
             }
-        });
-    }
-</script>";
+        </script>";
 
     } elseif (isset($response['prf_status']) && $response['prf_status'] == 'pending') {
         // If there's a pending request, display it
@@ -1728,7 +1806,7 @@ echo "
 
         echo "</tbody></table>
         </div>";  // Close card div
-        echo '<button class="deleteBtn" data-prf-id="' . $response['prf_id'] . '">Delete</button>';
+        echo '<button class="btn btn-danger deleteBtn" data-prf-id="' . $response['prf_id'] . '">Delete</button>';
         echo"
             <script>
             $(document).ready(function(){
@@ -2112,66 +2190,89 @@ echo "
         
             // Script for handling save action
             echo "<script>
-                $(document).ready(function() {
-                    // Attach the click event to each Save button
-                    var reqId = {$reqId};
-                    $('.save-btn').click(function() {
-                        var withdrawalId = $(this).data('id');  // Get the withdrawal ID from the button
-                        var wdate = $(this).data('wdate'); 
-                        // Get the values of the input fields
-                        var wdDateWithdrawn = $('input[name=\"WD_DATE_WITHDRAWN[' + withdrawalId + ']\"]').val();
-                        var wdDateDelivered = $('input[name=\"WD_DATE_DELIVERED[' + withdrawalId + ']\"]').val();
+            $(document).ready(function() {
+                // Attach the click event to each Save button
+                var reqId = {$reqId};
+                $('.save-btn').click(function() {
+                    var withdrawalId = $(this).data('id'); // Get the withdrawal ID from the button
+                    var wdate = $(this).data('wdate'); 
         
-                        // Prepare data object, but only include the fields that have values
-                        var data = { withdrawal_id: withdrawalId };
+                    // Get the values of the input fields
+                    var wdDateWithdrawn = $('input[name=\"WD_DATE_WITHDRAWN[' + withdrawalId + ']\"]').val();
+                    var wdDateDelivered = $('input[name=\"WD_DATE_DELIVERED[' + withdrawalId + ']\"]').val();
         
-                        if (wdDateWithdrawn) {
-                            data.wd_date_withdrawn = wdDateWithdrawn;
+                    // Prepare data object, but only include the fields that have values
+                    var data = { withdrawal_id: withdrawalId };
+        
+                    if (wdDateWithdrawn) {
+                        // Validate the withdrawal date
+                        var withdrawnDate = new Date(wdDateWithdrawn);
+                        if (!validateDate(withdrawnDate)) {
+                            alert(\"Withdrawal date must not be older than now or more than 1 hour in the future.\");
+                            return;
                         }
+                        data.wd_date_withdrawn = wdDateWithdrawn;
+                    }
         
                     if (wdDateDelivered) {
-                        data.wd_date_delivered = wdDateDelivered;
-
-                        // Normalize both wdate (from HTML input) and wdDateDelivered (from SQL) to ensure proper comparison.
+                        // Validate the delivery date
+                        var deliveredDate = new Date(wdDateDelivered);
+                        if (!validateDate(deliveredDate)) {
+                            alert(\"Delivery date must not be older than now or more than 1 hour in the future.\");
+                            return;
+                        }
+        
+                        // Normalize both wdate and wdDateDelivered to ensure proper comparison
                         var wdateNormalized = new Date(wdate);
                         var wdDateDeliveredNormalized = new Date(data.wd_date_delivered);
-
-                        // If wdate is '12:00' (representing midnight in HTML), convert it to '00:00' for comparison.
+        
                         if (wdateNormalized.getHours() === 12 && wdateNormalized.getMinutes() === 0) {
-                            wdateNormalized.setHours(0);  // Convert 12:00 AM to 00:00 for comparison
+                            wdateNormalized.setHours(0); // Convert 12:00 AM to 00:00 for comparison
                         }
-
-                        // Compare the normalized dates
+        
                         if (wdDateDeliveredNormalized < wdateNormalized) {
                             alert(\"Delivery date can't be earlier than withdrawal date\");
                             return;
                         }
-                    }
-
         
-                        // Send the data to the server using AJAX
-                        $.ajax({
-                            url: 'save_withdrawal.php', // PHP script to handle saving
-                            type: 'POST',
-                            data: data,
-                            success: function(response) {
-                                // Process the response from the server (echoed response)
-                                var result = JSON.parse(response);
-                                if (result.success) {
-                                    alert('Record saved successfully!');
-                                    // Optionally, update the UI or feedback
-                                    $(document).trigger('loadContentEvent', ['inventory-task', reqId]);
-                                } else {
-                                    alert('Error saving record.');
-                                }
-                            },
-                            error: function() {
-                                alert('There was an error with the request.');
+                        data.wd_date_delivered = wdDateDelivered;
+                    }
+        
+                    // Send the data to the server using AJAX
+                    $.ajax({
+                        url: 'save_withdrawal.php', // PHP script to handle saving
+                        type: 'POST',
+                        data: data,
+                        success: function(response) {
+                            // Process the response from the server (echoed response)
+                            var result = JSON.parse(response);
+                            if (result.success) {
+                                alert('Record saved successfully!');
+                                // Optionally, update the UI or feedback
+                                $(document).trigger('loadContentEvent', ['inventory-task', reqId]);
+                            } else {
+                                alert('Error saving record.');
                             }
-                        });
+                        },
+                        error: function() {
+                            alert('There was an error with the request.');
+                        }
                     });
                 });
-            </script>";
+        
+                // Function to validate a date (not older than now and not more than 1 hour ahead)
+                function validateDate(inputDate) {
+                    var now = new Date();
+                    var oneHourLater = new Date();
+                    oneHourLater.setHours(now.getHours() + 1);  // Set to one hour after the current time
+        
+                    // Ensure the date is not in the past and is not more than 1 hour in the future
+                    return inputDate <= oneHourLater && inputDate >= now;
+                }
+            });
+        </script>";
+        
+
         } else {
             echo "<p>No withdrawal records found for this requisition.</p>";
         }
