@@ -80,7 +80,7 @@ if (isset($_GET['req_id'])) {
     JOIN 
         department d ON e.DEPT_ID = d.DEPT_ID
     WHERE 
-        prf.PRF_STATUS IN ('pending', 'approved') 
+        prf.PRF_STATUS IN ('pending') 
         AND e.DEPT_ID = $dept_id
     GROUP BY 
         prf.PRF_ID;";

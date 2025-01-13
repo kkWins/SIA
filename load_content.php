@@ -651,15 +651,16 @@ if ($content === 'purchase_order') {
                     </thead>
                     <tbody>";
                     
-            foreach ($response['items'] as $item) {
-                echo "<tr>
-                        <td>" . htmlspecialchars($item['item_name']) . "</td>
-                        <td>" . htmlspecialchars($item['description']) . "</td>
-                        <td>" . htmlspecialchars($item['quantity']) . "</td>
-                    </tr>";
-            }
+                        foreach ($response['items'] as $item) {
+                            echo "<tr>
+                                    <td>" . htmlspecialchars($item['item_name']) . "</td>
+                                    <td>" . htmlspecialchars($item['description']) . "</td>
+                                    <td>" . htmlspecialchars($item['quantity']) . "</td>
+                                </tr>";
+                        }
                     
-            echo "</tbody>
+                        echo "
+                    </tbody>
                 </table>
                 
                 <div class='mt-3'>
@@ -673,14 +674,59 @@ if ($content === 'purchase_order') {
             $(document).ready(function() {
                 // Approve button click event
                 $('.approve-btn').on('click', function() {
-                    alert('Requisition approved successfully!');
-                    window.location.href = '?content=requisition_approval'; // Redirect without req_id
+                    const reqId = $(this).data('id');
+                    
+                    // Confirm before approving
+                    if (confirm('Are you sure you want to approve this requisition?')) {
+                        $.ajax({
+                            url: 'all/approve_requisition.php',
+                            type: 'POST',
+                            data: { req_id: reqId },
+                            dataType: 'json',
+                            success: function(response) {
+                                if (response.success) {
+                                    alert('Requisition approved successfully!');
+                                    window.location.href = '?content=requisition_approval';
+                                } else {
+                                    alert('Error: ' + (response.message || 'Failed to approve requisition'));
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                console.error(xhr, status, error);
+                                alert('Error processing request');
+                            }
+                        });
+                    }
                 });
 
                 // Reject button click event
                 $('.reject-btn').on('click', function() {
-                    alert('Requisition rejected successfully!');
-                    window.location.href = '?content=requisition_approval'; // Redirect without req_id
+                    const reqId = $(this).data('id');
+                    
+                    // Show rejection reason modal
+                    const reason = prompt('Please enter rejection reason:');
+                    if (reason !== null) {  // Only proceed if user didn't cancel
+                        $.ajax({
+                            url: 'all/reject_requisition.php',
+                            type: 'POST',
+                            data: { 
+                                req_id: reqId,
+                                reason: reason
+                            },
+                            dataType: 'json',
+                            success: function(response) {
+                                if (response.success) {
+                                    alert('Requisition rejected successfully!');
+                                    window.location.href = '?content=requisition_approval';
+                                } else {
+                                    alert('Error: ' + (response.message || 'Failed to reject requisition'));
+                                }
+                            },
+                            error: function() {
+                                alert('Error processing request');
+                            }
+                        });
+                    }
                 });
             });
             </script>";
@@ -804,17 +850,13 @@ if ($content === 'purchase_order') {
                               echo 'Purchase Order not found';
                     }
                 }else{
-                    if(!empty($pos)){
-                        echo "
-
-                            <button type='button' class='btn btn-primary mb-3' data-bs-toggle='modal' data-bs-target='#purchaseRequestModal'>
-                                Create Purchase Request
-                            </button>
-                
-                            
-
-                            
-                            <!-- Purchase Request Modal -->
+                    // Always show the Create Purchase Request button
+                    echo "
+                        <button type='button' class='btn btn-primary mb-3' data-bs-toggle='modal' data-bs-target='#purchaseRequestModal'>
+                            Create Purchase Request
+                        </button>
+                        
+                        <!-- Purchase Request Modal -->
                             <div class='modal fade' id='purchaseRequestModal' tabindex='-1' aria-labelledby='purchaseRequestModalLabel' aria-hidden='true'>
                                 <div class='modal-dialog modal-lg'>
                                     <div class='modal-content'>
@@ -886,9 +928,8 @@ if ($content === 'purchase_order') {
                                     </div>
                                 </div>
                             </div>
-
-
-                            <script>
+                          
+                        <script>
                             $(document).ready(function() {
                                 // Load vendors
                                 $.ajax({
@@ -1061,7 +1102,23 @@ if ($content === 'purchase_order') {
                                     }
                                 });
                             });
-                            </script>
+                            </script> 
+                            
+
+                          ";
+
+                    if(!empty($pos)){
+                        echo "
+
+                            
+                
+                            
+
+                            
+                            
+
+
+                            
 
                             <div class='card rounded-4 p-4'>
                                 <table class='table' id='requisitions-table'>
@@ -1137,7 +1194,7 @@ if ($content === 'purchase_order') {
                         }else{
                         echo "
                         <div>
-                            <h5>No Purchase order yet.</h5>
+                            <h5>No Purchase request yet.</h5>
                         </div>
                         ";
                       }
@@ -1400,10 +1457,11 @@ if ($content === 'purchase_order') {
                             <td>" . htmlspecialchars($req['employee_name']) . "</td>
                             <td>" . htmlspecialchars($req['submitted_date']) . "</td>
                             <td>
-                                <a href='#' class='btn btn-sm btn-primary view-requisition' 
+                                <a href='#' 
+                                    class='btn btn-sm btn-primary view-requisition' 
                                     data-content='approved_requisitions' 
                                     data-id='" . $req['requisition_id'] . "'>
-                                    <i class='fas fa-eye'></i> View
+                                        <i class='fas fa-eye'></i> View
                                 </a>
                             </td>
                         </tr>";
@@ -2193,7 +2251,827 @@ elseif ($content === 'account_settings') {
             });
             });
             </script>";
-}else {
+} elseif ($role === 'Admin') {
+    if ($content === 'manage_employees') {
+        // Get employees data with pagination
+        $page = isset($_GET['page']) ? $_GET['page'] : 1;
+        require_once 'admin/get_employees.php';
+        $result = get_employees(); // Add this line to call the function
+
+        echo "<h2>Manage Employees</h2>
+
+              <p>Add and manage employee accounts here.</p>
+              
+          <div class='card rounded-4 p-4'>
+            <div class='d-flex justify-content-between align-items-center mb-3'>
+                <h4>Employee List</h4>
+                <button type='button' class='btn btn-primary' data-bs-toggle='modal' data-bs-target='#addEmployeeModal'>
+                    Add Employee
+                </button>
+            </div>
+            <div class='table-responsive'>
+                <table class='table table-striped' id='employeesTable'>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Contact</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>";
+                    
+                    if (!empty($result['employees'])) {
+                        foreach ($result['employees'] as $row) {
+                            // Determine button class and text based on status
+                            $statusBtnClass = $row['EMP_STATUS'] == 1 ? 'btn-danger' : 'btn-success';
+                            $statusBtnText = $row['EMP_STATUS'] == 1 ? 'Deactivate' : 'Activate';
+                            $statusBtnIcon = $row['EMP_STATUS'] == 1 ? 'fa-user-slash' : 'fa-user-check';
+                            
+                            echo "<tr>
+                                    <td>" . htmlspecialchars($row['FULL_NAME']) . "</td>
+                                    <td>" . htmlspecialchars($row['EMP_EMAIL']) . "</td>
+                                    <td>" . htmlspecialchars($row['DEPT_NAME']) . "</td>
+                                    <td>" . htmlspecialchars($row['EMP_POSITION']) . "</td>
+                                    <td>" . htmlspecialchars($row['EMP_NUMBER']) . "</td>
+                                    <td>
+                                        <button class='btn btn-sm btn-primary edit-employee' data-bs-toggle='modal' data-bs-target='#editEmployeeModal' data-id='" . $row['EMP_ID'] . "'>
+                                            <i class='fas fa-edit'></i> Edit
+                                        </button>
+                                        <button class='btn btn-sm " . $statusBtnClass . " toggle-status' 
+                                                data-id='" . $row['EMP_ID'] . "'
+                                                data-status='" . $row['EMP_STATUS'] . "'>
+                                            <i class='fas " . $statusBtnIcon . "'></i> " . $statusBtnText . "
+                                        </button>
+                                    </td>
+                                </tr>";
+                        }
+                    } else {
+                        echo "<tr><td colspan='6' class='text-center'>No employees found</td></tr>";
+                    }
+
+                    echo "</tbody>
+                </table>";
+
+                // Pagination
+                if (isset($result['pagination']) && $result['pagination']['total_pages'] > 1) {
+                    $pagination = $result['pagination'];
+                    echo "<nav aria-label='Page navigation' class='mt-4'>
+                            <ul class='pagination justify-content-center'>";
+                    
+                    // Previous button
+                    $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+                    echo "<li class='page-item{$prevDisabled}'>
+                            <a class='page-link' href='?content=manage_employees&page=" . ($pagination['current_page'] - 1) . "'>Previous</a>
+                          </li>";
+
+                    // Page numbers
+                    for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+                        $active = $pagination['current_page'] == $i ? ' active' : '';
+                        echo "<li class='page-item{$active}'>
+                                <a class='page-link' href='?content=manage_employees&page={$i}'>{$i}</a>
+                              </li>";
+                    }
+
+                    // Next button
+                    $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+                    echo "<li class='page-item{$nextDisabled}'>
+                            <a class='page-link' href='?content=manage_employees&page=" . ($pagination['current_page'] + 1) . "'>Next</a>
+                          </li>";
+
+                    echo "</ul>
+                        </nav>";
+                }
+
+            echo "</div>
+        </div>";
+
+        // Add Employee Modal HTML remains the same
+        echo "<!-- Add Employee Modal -->
+            <div class='modal fade' id='addEmployeeModal' tabindex='-1' aria-labelledby='addEmployeeModalLabel' aria-hidden='true'>
+                <div class='modal-dialog modal-lg'>
+                    <div class='modal-content'>
+                        <div class='modal-header'>
+                            <h5 class='modal-title' id='addEmployeeModalLabel'>Add New Employee</h5>
+                            <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                        </div>
+                        <div class='modal-body'>
+                            <form id='addEmployeeForm'>
+                                <div class='row'>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='emp_fname' class='form-label'>First Name</label>
+                                        <input type='text' class='form-control' id='emp_fname' name='emp_fname' required>
+                                    </div>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='emp_lname' class='form-label'>Last Name</label>
+                                        <input type='text' class='form-control' id='emp_lname' name='emp_lname' required>
+                                    </div>
+                                </div>
+                                <div class='row'>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='emp_email' class='form-label'>Email</label>
+                                        <input type='email' class='form-control' id='emp_email' name='emp_email' required>
+                                    </div>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='emp_password' class='form-label'>Password</label>
+                                        <input type='password' class='form-control' id='emp_password' name='emp_password' required>
+                                    </div>
+                                </div>
+                                <div class='row'>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='department' class='form-label'>Department</label>
+                                        <select class='form-select' id='department' name='department' required>
+                                            <option value=''>Select Department</option>
+                                            <option value='Finance'>Finance</option>
+                                            <option value='Inventory'>Inventory</option>
+                                            <option value='Labor'>Labor</option>
+                                        </select>
+                                    </div>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='position' class='form-label'>Position</label>
+                                        <select class='form-select' id='position' name='position' required>
+                                            <option value=''>Select Position</option>
+                                            <option value='Manager'>Manager</option>
+                                            <option value='Staff'>Staff</option>
+                                        </select>
+                                    </div>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='contact_no' class='form-label'>Contact Number</label>
+                                        <input type='text' class='form-control' id='contact_no' name='contact_no' required>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class='modal-footer'>
+                            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                            <button type='button' class='btn btn-primary' id='submitEmployee'>Add Employee</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deactivate Confirmation Modal -->
+            <div class='modal fade' id='toggleStatusModal' tabindex='-1' aria-labelledby='toggleStatusModalLabel' aria-hidden='true'>
+            <div class='modal-dialog'>
+                <div class='modal-content'>
+                    <div class='modal-header'>
+                        <h5 class='modal-title' id='toggleStatusModalLabel'>Confirm Status Change</h5>
+                        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                    </div>
+                    <div class='modal-body'>
+                        <p id='toggleStatusMessage'></p>
+                        <input type='hidden' id='toggle_emp_id'>
+                        <input type='hidden' id='toggle_status'>
+                    </div>
+                    <div class='modal-footer'>
+                        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Cancel</button>
+                        <button type='button' class='btn btn-primary' id='confirmToggleStatus'>Confirm</button>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Edit Employee Modal -->
+            <div class='modal fade' id='editEmployeeModal' tabindex='-1' aria-labelledby='editEmployeeModalLabel' aria-hidden='true'>
+                <div class='modal-dialog modal-lg'>
+                    <div class='modal-content'>
+                        <div class='modal-header'>
+                            <h5 class='modal-title' id='editEmployeeModalLabel'>Edit Employee</h5>
+                            <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                        </div>
+                        <div class='modal-body'>
+                            <form id='editEmployeeForm'>
+                                <input type='hidden' id='edit_emp_id' name='emp_id'>
+                                <div class='row'>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='edit_emp_fname' class='form-label'>First Name</label>
+                                        <input type='text' class='form-control' id='edit_emp_fname' name='emp_fname' required>
+                                    </div>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='edit_emp_lname' class='form-label'>Last Name</label>
+                                        <input type='text' class='form-control' id='edit_emp_lname' name='emp_lname' required>
+                                    </div>
+                                </div>
+                                <div class='row'>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='edit_emp_email' class='form-label'>Email</label>
+                                        <input type='email' class='form-control' id='edit_emp_email' name='emp_email' required>
+                                    </div>
+                                    <div class='col-md-6 mb-3'>
+                                        <label for='edit_emp_password' class='form-label'>Password (leave blank if unchanged)</label>
+                                        <input type='password' class='form-control' id='edit_emp_password' name='emp_password'>
+                                    </div>
+                                </div>
+                                <div class='row'>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='edit_department' class='form-label'>Department</label>
+                                        <select class='form-select' id='edit_department' name='department' required>
+                                            <option value=''>Select Department</option>
+                                            <option value='Finance'>Finance</option>
+                                            <option value='Inventory'>Inventory</option>
+                                            <option value='Labor'>Labor</option>
+                                        </select>
+                                    </div>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='edit_position' class='form-label'>Position</label>
+                                        <select class='form-select' id='edit_position' name='position' required>
+                                            <option value=''>Select Position</option>
+                                            <option value='Manager'>Manager</option>
+                                            <option value='Staff'>Staff</option>
+                                        </select>
+                                    </div>
+                                    <div class='col-md-4 mb-3'>
+                                        <label for='edit_contact_no' class='form-label'>Contact Number</label>
+                                        <input type='text' class='form-control' id='edit_contact_no' name='contact_no' required>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class='modal-footer'>
+                            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                            <button type='button' class='btn btn-primary' id='updateEmployee'>Update Employee</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          
+          <script>
+            $(document).ready(function() {
+                
+                $('.toggle-status').click(function() {
+                    const empId = $(this).data('id');
+                    const currentStatus = $(this).data('status');
+                    const newStatus = currentStatus == 1 ? 0 : 1;
+                    const actionText = currentStatus == 1 ? 'deactivate' : 'activate';
+                    
+                    // Set both values when opening the modal
+                    $('#toggle_emp_id').val(empId);
+                    $('#toggle_status').val(newStatus);  // Add this line
+                    $('#toggleStatusMessage').text('Are you sure you want to ' + actionText + ' this employee?');
+                    $('#toggleStatusModal').modal('show');
+                });
+
+                // Confirm status toggle
+                $('#confirmToggleStatus').click(function() {
+                    const empId = $('#toggle_emp_id').val();
+                    const newStatus = $('#toggle_status').val();
+                    
+                    $.ajax({
+                        url: 'admin/toggle_employee_status.php',
+                        type: 'POST',
+                        data: { 
+                            emp_id: empId,
+                            status: newStatus
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                alert(response.message);
+                                $('#toggleStatusModal').modal('hide');
+                                window.location.href = 'index.php?content=manage_employees';
+                            } else {
+                                alert('Error: ' + response.message);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('Server Response:', xhr.responseText); // Add this for debugging
+                            alert('Error changing employee status: ' + error);
+                        }
+                    });
+                });
+
+
+               
+                $('.edit-employee').click(function() {
+                const empId = $(this).data('id');
+                
+                // Fetch employee details
+                $.ajax({
+                    url: 'admin/get_employee_details.php',
+                    type: 'GET',
+                    data: { emp_id: empId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            const emp = response.data;
+                            // Populate the edit form
+                            $('#edit_emp_id').val(emp.EMP_ID);
+                            $('#edit_emp_fname').val(emp.EMP_FNAME);
+                            $('#edit_emp_lname').val(emp.EMP_LNAME);
+                            $('#edit_emp_email').val(emp.EMP_EMAIL);
+                            $('#edit_department').val(emp.DEPT_NAME);
+                            $('#edit_position').val(emp.EMP_POSITION);
+                            $('#edit_contact_no').val(emp.EMP_NUMBER);
+                            
+                            // Show the modal
+                            $('#editEmployeeModal').modal('show');
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error fetching employee details: ' + error);
+                    }
+                    });
+                });
+
+                $('#updateEmployee').click(function(e) {
+                e.preventDefault();
+                
+                // Form validation
+                if (!$('#editEmployeeForm')[0].checkValidity()) {
+                    $('#editEmployeeForm')[0].reportValidity();
+                    return;
+                }
+
+                $.ajax({
+                    url: 'admin/update_employee.php',
+                    type: 'POST',
+                    data: $('#editEmployeeForm').serialize(),
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            alert(response.message);
+                            $('#editEmployeeModal').modal('hide');
+                            window.location.href = 'index.php?content=manage_employees';
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error updating employee: ' + error);
+                    }
+                    });
+                });
+
+
+
+                // Form submission
+                $('#submitEmployee').click(function(e) {
+                    e.preventDefault();
+                    
+                    // Form validation
+                    if (!$('#addEmployeeForm')[0].checkValidity()) {
+                        $('#addEmployeeForm')[0].reportValidity();
+                        return;
+                    }
+
+                    $.ajax({
+                        url: 'admin/add_employee.php',
+                        type: 'POST',
+                        data: $('#addEmployeeForm').serialize(),
+                        dataType: 'json',
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                $('#addEmployeeForm')[0].reset();
+                                $('#addEmployeeModal').modal('hide');
+                                alert(response.message);
+                                // Reload the employee list without refreshing the page
+                                window.location.href = '?content=manage_employees';
+                            } else {
+                                alert('Error: ' + response.message);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('Response:', xhr.responseText); // Add this for debugging
+                            try {
+                                const response = JSON.parse(xhr.responseText);
+                                alert('Error: ' + response.message);
+                            } catch(e) {
+                                alert('Error adding employee: ' + error);
+                            }
+                        }
+                    });
+                });
+
+                // Clear form when modal is closed
+                $('#addEmployeeModal').on('hidden.bs.modal', function () {
+                    $('#addEmployeeForm')[0].reset();
+                });
+            });
+          </script>
+          
+          
+          "; // Rest of the modal HTML
+
+    }elseif($content === 'requisition_form_history'){
+        if (isset($_GET['req_id'])) {
+            // Show detailed view for specific requisition
+            include('admin/get_rf_details.php'); // You'll need to create this file
+            
+            if ($requisitionDetails) {
+                echo "<div class='d-flex justify-content-between align-items-center mb-3'>
+                        <h3>Requisition Details #{$_GET['req_id']}</h3>
+                        <a href='#' class='btn btn-secondary back-to-list' data-content='requisition_form_history'>
+                            <i class='fas fa-arrow-left'></i> Back
+                        </a>
+                      </div>
+                      <div class='card rounded-4 p-4'>
+                          <div class='row'>
+                              <div class='col-md-6'>
+                                  <p><strong>Requester:</strong> {$requisitionDetails['FULL_NAME']}</p>
+                                  <p><strong>Department:</strong> {$requisitionDetails['DEPT_NAME']}</p>
+                              </div>
+                              <div class='col-md-6'>
+                                  <p><strong>Date:</strong> {$requisitionDetails['PRF_DATE']}</p>
+                                  <p><strong>Status:</strong> {$requisitionDetails['PRF_STATUS']}</p>
+                              </div>
+                          </div>
+                          
+                          <h4>Requested Items</h4>
+                          <table class='table'>
+                              <thead>
+                                  <tr>
+                                      <th>Item</th>
+                                      <th>Quantity</th>
+                                      <th>Description</th>
+                                  </tr>
+                              </thead>
+                              <tbody>";
+                          
+                foreach ($requisitionDetails['items'] as $item) {
+                    echo "<tr>
+                            <td>{$item['item_name']}</td>
+                            <td>{$item['quantity']}</td>
+                            <td>{$item['description']}</td>
+                          </tr>";
+                }
+                
+                echo "</tbody>
+                      </table>
+                      </div>";
+            } else {
+                echo "<h3>Requisition not found.</h3>";
+            }
+            
+        } else {
+            // Show list view
+            include('admin/get_rf_history.php');
+            
+            echo "<h3>Requisition Form History</h3>
+                <div class='card rounded-4 p-4'>
+                    <table class='table table-striped'>
+                        <thead>
+                            <tr>
+                                <th>Requisition ID</th>
+                                <th>Requester</th>
+                                <th>Department</th>
+                                <th>Date & Time</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+            
+            if (!empty($requisitions)) {
+                foreach ($requisitions as $req) {
+                    echo "<tr>
+                            <td>#{$req['PRF_ID']}</td>
+                            <td>{$req['FULL_NAME']}</td>
+                            <td>{$req['DEPT_NAME']}</td>
+                            <td>{$req['PRF_DATE']}</td>
+                            <td>{$req['PRF_STATUS']}</td>
+                            <td>
+                                <a href='#' 
+                                class='btn btn-sm btn-primary view-requisition'
+                                data-content='requisition_form_history'
+                                data-id='" . $req['PRF_ID'] . "'>
+                                    <i class='fas fa-eye'></i> View
+                                </a>
+                            </td>
+                        </tr>";
+                }
+            } else {
+                echo "<tr><td colspan='6' class='text-center'>No requisitions found</td></tr>";
+            }
+            
+            echo "</tbody>
+                </table>
+                </div>";
+
+            // Add pagination navigation
+            if (isset($pagination) && $pagination['total_pages'] > 1) {
+                echo "<nav aria-label='Page navigation' class='mt-4'>
+                        <ul class='pagination justify-content-center'>";
+                
+                // Previous button
+                $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+                echo "<li class='page-item{$prevDisabled}'>
+                        <a class='page-link' href='?content=requisition_form_history&page=" . 
+                        ($pagination['current_page'] - 1) . "'" . 
+                        ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                        ">Previous</a>
+                      </li>";
+                
+                // Page numbers
+                for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+                    $active = $pagination['current_page'] == $i ? ' active' : '';
+                    echo "<li class='page-item{$active}'>
+                            <a class='page-link' href='?content=requisition_form_history&page={$i}'>
+                                {$i}
+                            </a>
+                          </li>";
+                }
+                
+                // Next button
+                $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+                echo "<li class='page-item{$nextDisabled}'>
+                        <a class='page-link' href='?content=requisition_form_history&page=" . 
+                        ($pagination['current_page'] + 1) . "'" .
+                        ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                        ">Next</a>
+                      </li>";
+                
+                echo "</ul>
+                    </nav>";
+            }
+            
+            echo "</div>";
+        }
+    } elseif($content === 'purchase_request_history'){
+        if(isset($_GET['pr_id'])){
+            include('admin/get_po_details.php');
+            
+            if ($poDetails) {
+                echo "<div class='d-flex justify-content-between align-items-center mb-3'>
+                        <h3>Purchase Request Details #{$poDetails['PO_ID']}</h3>
+                        <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_request_history'>
+                            <i class='fas fa-arrow-left'></i> Back
+                        </a>
+                      </div>
+                      <div class='card rounded-4 p-4'>
+                          <div class='row'>
+                              <div class='col-md-6'>
+                                  <p><strong>Supplier:</strong> {$poDetails['SP_NAME']}</p>
+                                  <p><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
+                                  <p><strong>Contact:</strong> {$poDetails['SP_NUMBER']}</p>
+                              </div>
+                              <div class='col-md-6'>
+                                  <p><strong>Order Date:</strong> {$poDetails['PO_ORDER_DATE']}</p>
+                                  <p><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
+                                  <p><strong>Approval Status:</strong> {$poDetails['ap_desc']}</p>
+                              </div>
+                          </div>
+                          
+                          <h4>Items</h4>
+                          <table class='table'>
+                              <thead>
+                                  <tr>
+                                      <th>Item</th>
+                                      <th>Quantity</th>
+                                      <th>Price</th>
+                                      <th>Total</th>
+                                  </tr>
+                              </thead>
+                              <tbody>";
+                      
+                $grandTotal = 0;
+                foreach ($poDetails['items'] as $item) {
+                    $total = $item['POL_QUANTITY'] * $item['POL_PRICE'];
+                    $grandTotal += $total;
+                    echo "<tr>
+                            <td>{$item['INV_MODEL_NAME']} ({$item['INV_BRAND']})</td>
+                            <td>{$item['POL_QUANTITY']}</td>
+                            <td>₱" . number_format($item['POL_PRICE'], 2) . "</td>
+                            <td>₱" . number_format($total, 2) . "</td>
+                          </tr>";
+                }
+                
+                echo "<tr>
+                        <td colspan='3' class='text-end'><strong>Grand Total:</strong></td>
+                        <td><strong>₱" . number_format($grandTotal, 2) . "</strong></td>
+                      </tr>
+                      </tbody>
+                      </table>
+                      </div>";
+            } else {
+                echo "<h3>Purchase request not found.</h3>";
+            }
+        } else {
+            include('admin/get_pr_history.php');
+            
+            echo "<h3>Purchase Request History</h3>
+                  <div class='card rounded-4 p-4'>
+                      <table class='table table-striped'>
+                          <thead>
+                              <tr>
+                                  <th>PR ID</th>
+                                  <th>Supplier</th>
+                                  <th>Order Date</th>
+                                  <th>Status</th>
+                                  <th>Action</th>
+                              </tr>
+                          </thead>
+                          <tbody>";
+        
+            if (!empty($purchase_requests)) {
+                foreach ($purchase_requests as $pr) {
+                    echo "<tr>
+                            <td>#{$pr['PO_ID']}</td>
+                            <td>{$pr['SP_NAME']}</td>
+                            <td>{$pr['PO_ORDER_DATE']}</td>
+                            <td>{$pr['PO_STATUS']}</td>
+                            <td>
+                                <a href='#' 
+                                class='btn btn-sm btn-primary view-purchase-request'
+                                data-content='purchase_request_history'
+                                data-id='" . $pr['PO_ID'] . "'>
+                                    <i class='fas fa-eye'></i> View
+                                </a>
+                            </td>
+                          </tr>";
+                }
+            } else {
+                echo "<tr><td colspan='5' class='text-center'>No purchase requests found</td></tr>";
+            }
+            
+            echo "</tbody>
+                  </table>";
+
+            // Pagination
+            if (isset($pagination) && $pagination['total_pages'] > 1) {
+                echo "<nav aria-label='Page navigation' class='mt-4'>
+                        <ul class='pagination justify-content-center'>";
+                
+                // Previous button
+                $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+                echo "<li class='page-item{$prevDisabled}'>
+                        <a class='page-link' href='?content=purchase_request_history&page=" . 
+                        ($pagination['current_page'] - 1) . "'" . 
+                        ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                        ">Previous</a>
+                      </li>";
+                
+                // Page numbers
+                for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+                    $active = $pagination['current_page'] == $i ? ' active' : '';
+                    echo "<li class='page-item{$active}'>
+                            <a class='page-link' href='?content=purchase_request_history&page={$i}'>
+                                {$i}
+                            </a>
+                          </li>";
+                }
+                
+                // Next button
+                $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+                echo "<li class='page-item{$nextDisabled}'>
+                        <a class='page-link' href='?content=purchase_request_history&page=" . 
+                        ($pagination['current_page'] + 1) . "'" .
+                        ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                        ">Next</a>
+                      </li>";
+                
+                echo "</ul>
+                    </nav>";
+            }
+            
+            echo "</div>";
+        }
+    } elseif($content === 'purchase_order_history'){
+        if(isset($_GET['po_id'])) {
+            // Show detailed view for specific PO
+            include('admin/get_po_order_details.php');
+            
+            if ($poDetails) {
+                echo "<div class='d-flex justify-content-between align-items-center mb-3'>
+                        <h3>Purchase Order Details #{$poDetails['PO_ID']}</h3>
+                        <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_order_history'>
+                            <i class='fas fa-arrow-left'></i> Back
+                        </a>
+                      </div>
+                      <div class='card rounded-4 p-4'>
+                          <div class='row'>
+                              <div class='col-md-6'>
+                                  <p><strong>Supplier:</strong> {$poDetails['SP_NAME']}</p>
+                                  <p><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
+                                  <p><strong>Contact:</strong> {$poDetails['SP_NUMBER']}</p>
+                              </div>
+                              <div class='col-md-6'>
+                                  <p><strong>Order Date:</strong> {$poDetails['PO_ORDER_DATE']}</p>
+                                  <p><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
+                              </div>
+                          </div>
+                          
+                          <h4>Items</h4>
+                          <table class='table'>
+                              <thead>
+                                  <tr>
+                                      <th>Item</th>
+                                      <th>Quantity</th>
+                                      <th>Price</th>
+                                      <th>Total</th>
+                                  </tr>
+                              </thead>
+                              <tbody>";
+                  
+            $grandTotal = 0;
+            foreach ($poDetails['items'] as $item) {
+                $total = $item['POL_QUANTITY'] * $item['POL_PRICE'];
+                $grandTotal += $total;
+                echo "<tr>
+                        <td>{$item['INV_MODEL_NAME']} ({$item['INV_BRAND']})</td>
+                        <td>{$item['POL_QUANTITY']}</td>
+                        <td>₱" . number_format($item['POL_PRICE'], 2) . "</td>
+                        <td>₱" . number_format($total, 2) . "</td>
+                      </tr>";
+            }
+            
+            echo "<tr>
+                    <td colspan='3' class='text-end'><strong>Grand Total:</strong></td>
+                    <td><strong>₱" . number_format($grandTotal, 2) . "</strong></td>
+                  </tr>
+                  </tbody>
+                  </table>
+                  </div>";
+            } else {
+                echo "<h3>Purchase order not found.</h3>";
+            }
+        } else {
+            // Show list view
+            include('admin/get_po_history.php');
+            
+            echo "<h3>Purchase Order History</h3>
+                  <div class='card rounded-4 p-4'>
+                      <table class='table table-striped'>
+                          <thead>
+                              <tr>
+                                  <th>PO ID</th>
+                                  <th>Supplier</th>
+                                  <th>Order Date</th>
+                                  <th>Action</th>
+                              </tr>
+                          </thead>
+                          <tbody>";
+    
+            if (!empty($purchase_orders)) {
+                foreach ($purchase_orders as $po) {
+                    echo "<tr>
+                            <td>#{$po['PO_ID']}</td>
+                            <td>{$po['SP_NAME']}</td>
+                            <td>{$po['PO_ORDER_DATE']}</td>
+                            <td>
+                                <a href='#' 
+                                class='btn btn-sm btn-primary view-purchase-order'
+                                data-content='purchase_order_history'
+                                data-id='" . $po['PO_ID'] . "'>
+                                    <i class='fas fa-eye'></i> View
+                                </a>
+                            </td>
+                          </tr>";
+                }
+            } else {
+                echo "<tr><td colspan='5' class='text-center'>No approved purchase orders found</td></tr>";
+            }
+            
+            echo "</tbody>
+                  </table>";
+
+            // Pagination
+            if (isset($pagination) && $pagination['total_pages'] > 1) {
+                echo "<nav aria-label='Page navigation' class='mt-4'>
+                        <ul class='pagination justify-content-center'>";
+                
+                // Previous button
+                $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+                echo "<li class='page-item{$prevDisabled}'>
+                        <a class='page-link' href='?content=purchase_order_history&page=" . 
+                        ($pagination['current_page'] - 1) . "'" . 
+                        ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                        ">Previous</a>
+                      </li>";
+                
+                // Page numbers
+                for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+                    $active = $pagination['current_page'] == $i ? ' active' : '';
+                    echo "<li class='page-item{$active}'>
+                            <a class='page-link' href='?content=purchase_order_history&page={$i}'>
+                                {$i}
+                            </a>
+                          </li>";
+                }
+                
+                // Next button
+                $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+                echo "<li class='page-item{$nextDisabled}'>
+                        <a class='page-link' href='?content=purchase_order_history&page=" . 
+                        ($pagination['current_page'] + 1) . "'" .
+                        ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                        ">Next</a>
+                      </li>";
+                
+                echo "</ul>
+                    </nav>";
+            }
+            
+            echo "</div>";
+        }
+    } else {
+        echo "<h3>You do not have access to this content.</h3>";
+    }
+}
+else {
     echo "<h3>Content not found.</h3>";
 }
 ?>

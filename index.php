@@ -295,6 +295,15 @@ $department = $_SESSION['department'];
 
                 <?php endif; ?>
             <?php endif; ?>
+
+            <!-- Role-based sidebar links -->
+            <?php if ($role == 'Admin'): ?>
+                <a href="#" class="sidebar-link" id="manage-employees-link">Manage Employees</a>
+                <a href="#" class="sidebar-link" id="requisition-form-history-link">Requisition Form History</a>
+                <a href="#" class="sidebar-link" id="purchase-request-history-link">Purchase Request History</a>
+                <a href="#" class="sidebar-link" id="purchase-order-history-link">Purchase Order History</a>
+            <?php endif; ?>
+            
         </div>
 
         <div class="user-dropdown">
@@ -340,19 +349,22 @@ $department = $_SESSION['department'];
                 
                 // Only add ID parameters if they're provided
                 if (id) {
-                    if (content === 'purchase_request') {
+                    if (content === 'purchase_request' || content === 'purchase_request_history') {
                         params.pr_id = id;
                         url += `&pr_id=${id}`;
                     } else if (content === 'pending_pr') {
                         params.pending_pr = id;
                         url += `&pending_pr=${id}`;
-                    } else if (content === 'purchase_order') {
+                    } else if (content === 'purchase_order' || content === 'purchase_order_history') {
                         params.po_id = id;
                         url += `&po_id=${id}`;
                     } else if (content === 'requisition_approval' || content === 'approved_requisitions') {
                         params.req_id = id;
                         url += `&req_id=${id}`;
                     }else if (content === 'inventory-task') {
+                        params.req_id = id;
+                        url += `&req_id=${id}`;
+                    }else if (content === 'requisition_form_history') {
                         params.req_id = id;
                         url += `&req_id=${id}`;
                     }
@@ -445,6 +457,27 @@ $department = $_SESSION['department'];
                 loadContent('account_settings');
             });
 
+            // Add this with the other sidebar link handlers
+            $('#manage-employees-link').click(function (e) {
+                e.preventDefault();
+                loadContent('manage_employees');
+            });
+
+            $('#requisition-form-history-link').click(function (e) {
+                e.preventDefault();
+                loadContent('requisition_form_history');
+            });
+
+            $('#purchase-request-history-link').click(function (e) {
+                e.preventDefault();
+                loadContent('purchase_request_history');
+            });
+
+            $('#purchase-order-history-link').click(function (e) {
+                e.preventDefault();
+                loadContent('purchase_order_history');
+            });
+
             $(document).on('loadContentEvent', function(e, content, id, page) {
                 loadContent(content, id, page);
             });
@@ -456,13 +489,33 @@ $department = $_SESSION['department'];
                 const contentType = $(this).data('content');
                 loadContent(contentType, id);
             });
+
+            $(document).on('click', '.view-purchase-request', function(e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+                const contentType = $(this).data('content');
+                loadContent(contentType, id);
+            });
+            
+            $(document).on('click', '.view-purchase-order', function(e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+                const contentType = $(this).data('content');
+                loadContent(contentType, id);
+            });
             
             $(document).on('click', '.view-wd', function(e) {
                 e.preventDefault();
                 const id = $(this).data('id');
                 const contentType = $(this).data('content');
-                console.log("")
                 loadContent(contentType, id);
+            });
+
+            // Add this with your other document.ready event handlers
+            $(document).on('click', '.back-to-list', function(e) {
+                e.preventDefault();
+                const contentType = $(this).data('content');
+                loadContent(contentType);
             });
 
             // Add this to your existing JavaScript
@@ -512,6 +565,7 @@ $department = $_SESSION['department'];
             });
 
             
+
         });
     </script>
 </body>

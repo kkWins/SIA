@@ -32,9 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         D.DEPT_ID,
                                         E.EMP_EMAIL
                                     FROM EMPLOYEE E
-                                    JOIN DEPARTMENT D
-                                    ON E.DEPT_ID = D.DEPT_ID
-                                        WHERE CONCAT(E.EMP_FNAME, ' ', E.EMP_LNAME) = ? AND EMP_PASSWORD = ?");
+                                    LEFT JOIN DEPARTMENT D ON E.DEPT_ID = D.DEPT_ID
+                                    WHERE CONCAT(E.EMP_FNAME, ' ', E.EMP_LNAME) = ? 
+                                    AND EMP_PASSWORD = ?
+                                    AND (D.DEPT_ID IS NOT NULL OR E.EMP_POSITION = 'Admin')");
     $stmt->bind_param("ss", $username, $password);
     $stmt->execute();
     $result = $stmt->get_result();
