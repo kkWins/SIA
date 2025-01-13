@@ -10,19 +10,24 @@ $pr_id = mysqli_real_escape_string($db, $_GET['pr_id']);
 // Get purchase order details
 $sql = "SELECT 
     po.PO_ID,
-    po.PO_ORDER_DATE,
-    po.PO_ARRIVAL_DATE,
     po.PO_STATUS,
+    po.PO_PR_DATE_CREATED,
     supplier.SP_NAME,
     supplier.SP_ADDRESS,
     supplier.SP_NUMBER,
-    approval.ap_desc
+    approval.ap_desc,
+    approval.ap_date,
+    CONCAT(emp.EMP_FNAME, ' ', emp.EMP_LNAME) AS fullname,
+    emp.EMP_NUMBER,
+    CONCAT(appr_pr.EMP_FNAME, ' ', appr_pr.EMP_LNAME) AS approvedby
 FROM 
     purchase_order po
 LEFT JOIN 
     supplier ON po.SP_ID = supplier.SP_ID
 LEFT JOIN
     approval ON po.ap_id = approval.ap_id
+LEFT JOIN employee emp ON emp.EMP_ID = po.EMP_ID
+LEFT JOIN employee appr_pr ON appr_pr.emp_id = approval.EMP_ID
 WHERE 
     po.PO_ID = ?";
 

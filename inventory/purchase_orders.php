@@ -8,6 +8,8 @@ if(isset($_GET['po_id'])){
     // First query to get PO details, supplier info, and approval info
     $sql = "SELECT 
         po.PO_ID,
+        CONCAT(emp.EMP_FNAME, ' ', emp.EMP_LNAME) AS deliverTo,
+        emp.EMP_NUMBER,
         po.PO_ORDER_DATE,
         po.PO_ARRIVAL_DATE,
         po.PO_STATUS,
@@ -15,6 +17,7 @@ if(isset($_GET['po_id'])){
         supplier.SP_ADDRESS,
         supplier.SP_NUMBER,
         approval.ap_desc,
+        approval.ap_date,
         pd.PD_PAYMENT_TYPE,
         pd.PD_CHANGE,
         pd.PD_AMMOUNT
@@ -26,6 +29,8 @@ if(isset($_GET['po_id'])){
         approval ON po.ap_id = approval.ap_id
     LEFT JOIN
         payment_details pd ON po.PO_ID = pd.PO_ID
+    LEFT JOIN 
+    	employee emp ON emp.EMP_ID = po.EMP_ID
     WHERE 
         po.PO_ID = ?";
 
@@ -69,9 +74,11 @@ if(isset($_GET['po_id'])){
     po.PO_ARRIVAL_DATE, 
     po.PO_STATUS, 
     po.SP_ID, 
+    ap.ap_date,
     sp.SP_NAME 
     FROM purchase_order po 
     JOIN supplier sp ON sp.SP_ID = po.SP_ID
+    JOIN approval ap ON ap.ap_id = po.ap_id
     WHERE po.PO_STATUS = 'approved'";
 
     $result = $db->query($sql);

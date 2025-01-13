@@ -8,15 +8,16 @@ if(isset($_GET['pr_id'])){
     // First query to get PO details, supplier info, and approval info
     $sql = "SELECT 
         po.PO_ID,
-        po.PO_ORDER_DATE,
-        po.PO_ARRIVAL_DATE,
+        po.PO_PR_DATE_CREATED,
         po.PO_STATUS,
         supplier.SP_NAME,
         supplier.SP_ADDRESS,
         supplier.SP_NUMBER,
-        approval.ap_desc
+        approval.ap_desc,
+        CONCAT(emp.EMP_FNAME, ' ', emp.EMP_LNAME) AS fullname
     FROM 
         purchase_order po
+    JOIN employee emp ON emp.EMP_ID = po.EMP_ID
     LEFT JOIN 
         supplier ON po.SP_ID = supplier.SP_ID
     LEFT JOIN
@@ -55,12 +56,14 @@ if(isset($_GET['pr_id'])){
     ];
 } else {
     $sql = "SELECT po.PO_ID, 
-    po.PO_ORDER_DATE, 
+    po.PO_PR_DATE_CREATED,
     po.PO_STATUS, 
     po.SP_ID, 
-    sp.SP_NAME 
+    sp.SP_NAME,
+    CONCAT(emp.EMP_FNAME , ' ', emp.EMP_LNAME) AS fullname
     FROM purchase_order po 
     JOIN supplier sp ON sp.SP_ID = po.SP_ID
+    JOIN employee emp ON emp.emp_id = po.EMP_ID
     WHERE po.PO_STATUS IN ('pending', 'rejected')";
     
     $result = $db->query($sql);

@@ -17,9 +17,11 @@ $total_rows = $count_result->fetch_assoc()['total'];
 $total_pages = ceil($total_rows / $items_per_page);
 
 // Get purchase orders for current page
-$query = "SELECT po.*, sp.SP_NAME 
+$query = "SELECT po.*, sp.SP_NAME,
+		approval.ap_date
           FROM purchase_order po
           JOIN supplier sp ON po.SP_ID = sp.SP_ID
+          LEFT JOIN approval ON approval.ap_id = po.ap_id
           WHERE po.PO_STATUS = 'approved'
           ORDER BY po.PO_ORDER_DATE DESC
           LIMIT ?, ?";
