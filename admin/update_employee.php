@@ -55,7 +55,7 @@ try {
     // Update query
     if (!empty($_POST['emp_password'])) {
         // Update with new password
-        $password = password_hash($_POST['emp_password'], PASSWORD_DEFAULT);
+        $password = $_POST['emp_password'];
         $query = "UPDATE EMPLOYEE SET 
                     EMP_FNAME = ?, 
                     EMP_LNAME = ?, 

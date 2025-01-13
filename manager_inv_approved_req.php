@@ -126,7 +126,7 @@ $itemsSql = "SELECT
 } else {
     // Query for list view - modified to use GROUP BY
     $sql = "SELECT 
-        CONCAT(e.EMP_FNAME, ' ', e.EMP_MNAME, ' ', e.EMP_LNAME) AS Employee_Name,
+        CONCAT(e.EMP_FNAME, ' ', e.EMP_LNAME) AS Employee_Name,
         e.DEPT_ID AS Department_ID,
         prf.PRF_ID AS Requisition_ID,
         prf.PRF_DATE AS Submitted_Date,
