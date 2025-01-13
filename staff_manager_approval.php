@@ -14,7 +14,7 @@ if ($connection->connect_error) {
 if (isset($_GET['req_id'])) {
     // Query for detailed view
     $sql = "SELECT 
-        CONCAT(e.EMP_FNAME, ' ', e.EMP_MNAME, ' ', e.EMP_LNAME) AS Employee_Name,
+        CONCAT(e.EMP_FNAME, ' ', e.EMP_LNAME) AS Employee_Name,
         e.EMP_NUMBER AS Contact_No,
         d.DEPT_NAME AS Department,
         prf.PRF_ID AS Requisition_ID,
@@ -68,7 +68,7 @@ if (isset($_GET['req_id'])) {
 } else {
     // Query for list view - modified to use GROUP BY
     $sql = "SELECT 
-        CONCAT(e.EMP_FNAME, ' ', e.EMP_MNAME, ' ', e.EMP_LNAME) AS Employee_Name,
+        CONCAT(e.EMP_FNAME, ' ', e.EMP_LNAME) AS Employee_Name,
         e.DEPT_ID AS Department_ID,
         prf.PRF_ID AS Requisition_ID,
         prf.PRF_DATE AS Submitted_Date,

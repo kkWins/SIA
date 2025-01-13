@@ -636,7 +636,7 @@ if ($content === 'purchase_order') {
                         <p><strong>Contact no:</strong> " . htmlspecialchars($response['contact_no']) . "</p>
                     </div>
                     <div class='col-md-6'>
-                        <p><strong>Date of Request:</strong> " . htmlspecialchars($response['date']) . "</p>
+                        <p><strong>Date of Request:</strong> " . date('F j, Y h:i A', strtotime($response['date'])) . "</p>
                         <p><strong>Department:</strong> " . htmlspecialchars($response['department']) . "</p>
                     </div>
                 </div>
@@ -756,7 +756,7 @@ if ($content === 'purchase_order') {
                         echo "<tr>
                                 <td>" . htmlspecialchars($req['requisition_id']) . "</td>
                                 <td>" . htmlspecialchars($req['employee_name']) . "</td>
-                                <td>" . htmlspecialchars($req['submitted_date']) . "</td>
+                                <td>" . date('F j, Y h:i A', strtotime($req['submitted_date'])) . "</td>
                                 <td>" . htmlspecialchars($req['requisition_status']) . "</td>
                                 <td>
                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
@@ -2664,17 +2664,36 @@ elseif ($content === 'account_settings') {
                       </div>
                       <div class='card rounded-4 p-4'>
                           <div class='row'>
-                              <div class='col-md-6'>
+                              <div class='col-md-4'>
                                   <p><strong>Requester:</strong> {$requisitionDetails['FULL_NAME']}</p>
                                   <p><strong>Department:</strong> {$requisitionDetails['DEPT_NAME']}</p>
                               </div>
-                              <div class='col-md-6'>
-                                  <p><strong>Date:</strong> {$requisitionDetails['PRF_DATE']}</p>
+                              <div class='col-md-4'>
+                                  <p><strong>Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['PRF_DATE'])); echo "</p>
                                   <p><strong>Status:</strong> {$requisitionDetails['PRF_STATUS']}</p>
-                              </div>
-                          </div>
+                              </div>";
+
+                              if($requisitionDetails['PRF_STATUS'] === 'rejected'){
+                                echo "<div class='col-md-4'>
+                                        <p><strong>Rejected Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['ap_date'])); echo "</p>
+                                        <p><strong>Rejected By:</strong> {$requisitionDetails['APPROVER_NAME']}</p>
+                                      </div>";
+                              }elseif($requisitionDetails['PRF_STATUS'] === 'approved'){
+                                echo "<div class='col-md-4'>
+                                        <p><strong>Approved Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['ap_date'])); echo "</p>
+                                        <p><strong>Approved By:</strong> {$requisitionDetails['APPROVER_NAME']}</p>
+                                      </div>";
+                              }
+                              
+                          echo "</div>";
+
+                          if($requisitionDetails['PRF_STATUS'] === 'rejected'){
+                            echo "<div class='alert alert-danger'>
+                                    <strong>Rejection Reason:</strong> " . htmlspecialchars($requisitionDetails['ap_desc']) . "
+                                  </div>";
+                          }
                           
-                          <h4>Requested Items</h4>
+                          echo "<h4>Requested Items</h4>
                           <table class='table'>
                               <thead>
                                   <tr>
@@ -2725,7 +2744,7 @@ elseif ($content === 'account_settings') {
                             <td>#{$req['PRF_ID']}</td>
                             <td>{$req['FULL_NAME']}</td>
                             <td>{$req['DEPT_NAME']}</td>
-                            <td>{$req['PRF_DATE']}</td>
+                            <td>"; echo date('F j, Y h:i A', strtotime($req['PRF_DATE'])); echo "</td>
                             <td>{$req['PRF_STATUS']}</td>
                             <td>
                                 <a href='#' 
