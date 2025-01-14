@@ -29,30 +29,31 @@ if ($content === 'purchase_order') {
             if($response['po_details']) {
                 echo "
                     <div class='card rounded-4 p-4'>
-                    <h3>Purchase Request # {$_GET['po_id']}</h3>
-                    <div class='row mb-3'>
+                    <div class='row'>
                         <div class='col-md-6'>
-                            <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
-                            <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                            <h3>MOONLIGHT</h3>
+                            <p class='mb-0'>Address: Logarta St 6014 Mandaue City, Philippines</p>
+                            <p class='mb-0'>Contact No: 09123456789</p>
                         </div>
                         <div class='col-md-6'>
-                            <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
+                            <h3>PURCHASE ORDER</h3>
+                            <p class='mb-0'>Date: "; echo date('F j, Y', strtotime($response['po_details']['ap_date'])); echo "</p>
+                            <p class='mb-0'>PO-{$response['po_details']['PO_ID']}</p>
                         </div>
                     </div>
-                    
-                    <!-- Add new date/time inputs with pre-filled values -->
-                    <div class='row mb-3'>
+                    <div class='row mb-3 mt-3'>
                         <div class='col-md-6'>
-                            <label for='order_datetime' class='form-label'><strong>Order Date & Time:</strong></label>
-                            <input type='datetime-local' class='form-control' id='order_datetime' 
-                                value='" . (!empty($response['po_details']['PO_ORDER_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ORDER_DATE'])) : '') . "' 
-                                required>
+                            <h4>Supplier Details</h4>
+                            <p class='mb-0'><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
+                            <p class='mb-0'><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                             <p class='mb-0'><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
                         </div>
                         <div class='col-md-6'>
-                            <label for='arrival_datetime' class='form-label'><strong>Expected Arrival Date & Time:</strong></label>
-                            <input type='datetime-local' class='form-control' id='arrival_datetime' 
-                                value='" . (!empty($response['po_details']['PO_ARRIVAL_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ARRIVAL_DATE'])) : '') . "' 
-                                required>
+                           <h4>SHIP TO</h4>
+                           <p class='mb-0'><strong>Name:</strong> {$response['po_details']['deliverTo']}</p>
+                           <p class='mb-0'><strong>Company:</strong> Moonlight</p>
+                           <p class='mb-0'><strong>Address:</strong> Logarta St 6014 Mandaue City, Philippines</p>
+                           <p class='mb-0'><strong>Contact No:</strong> {$response['po_details']['EMP_NUMBER']}</p>
                         </div>
                     </div>";
     
@@ -62,7 +63,7 @@ if ($content === 'purchase_order') {
                               </div>";
                     }
     
-                    echo "<table class='table'>
+                    echo "<table class='table table-striped mt-3'>
                         <thead>
                             <tr>
                                 <th>Item Name</th>
@@ -95,9 +96,27 @@ if ($content === 'purchase_order') {
                                 </tr>
                             </tfoot>
                         </table>
+
+                        <!-- Add new date/time inputs with pre-filled values -->
+                        <div class='row mb-3 mt-3'>
+                            <div class='col-md-6'>
+                                <label for='order_datetime' class='form-label'><strong>Order Date & Time:</strong></label>
+                                <input type='datetime-local' class='form-control' id='order_datetime' 
+                                    value='" . (!empty($response['po_details']['PO_ORDER_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ORDER_DATE'])) : '') . "' 
+                                    required>
+                            </div>
+                            <div class='col-md-6'>
+                                <label for='arrival_datetime' class='form-label'><strong>Expected Arrival Date & Time:</strong></label>
+                                <input type='datetime-local' class='form-control' id='arrival_datetime' 
+                                    value='" . (!empty($response['po_details']['PO_ARRIVAL_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ARRIVAL_DATE'])) : '') . "' 
+                                    required>
+                            </div>
+                        </div>
     
                         <div class='mt-3'>
-                            <button class='btn btn-secondary cancel-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Cancel</button>
+                            <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_order'>
+                                <i class='fas fa-arrow-left'></i> Back
+                            </a>
                             <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
                         </div>
                     </div>
@@ -148,13 +167,12 @@ if ($content === 'purchase_order') {
             if(!empty($pos)){
                 echo "
                 <div class='card rounded-4 p-4'>
-                    <table class='table' id='requisitions-table'>
+                    <table class='table table-striped' id='requisitions-table'>
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Supplier</th>
-                                <th>Order Date</th>
-                                <th>Arrival Date</th>
+                                <th>Date of Issue</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -163,10 +181,9 @@ if ($content === 'purchase_order') {
                         
                         foreach ($pos as $po) {
                             echo "<tr>
-                                    <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                    <td>" . "PO-".htmlspecialchars($po['PO_ID']) . "</td>
                                     <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
-                                    <td>" . htmlspecialchars($po['PO_ORDER_DATE']) . "</td>
-                                    <td>" . htmlspecialchars($po['PO_ARRIVAL_DATE']) . "</td>
+                                    <td>" . date('F d, Y', strtotime($po['ap_date'])) . "</td>
                                     <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
                                     <td>
                                         <a href='#' class='btn btn-sm btn-primary view-requisition' 
@@ -199,48 +216,41 @@ if ($content === 'purchase_order') {
             if($response['po_details']) {
                 echo "
                     <div class='card rounded-4 p-4'>
-                    <h3>Purchase Request # {$_GET['po_id']}</h3>
-                    <div class='row mb-3'>
+                    <div class='row'>
                         <div class='col-md-6'>
-                            <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
-                            <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                            <h3>MOONLIGHT</h3>
+                            <p class='mb-0'>Address: Logarta St 6014 Mandaue City, Philippines</p>
+                            <p class='mb-0'>Contact No: 09123456789</p>
                         </div>
                         <div class='col-md-6'>
-                            <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
+                            <h3>PURCHASE ORDER</h3>
+                            <p class='mb-0'>Date: "; echo date('F j, Y', strtotime($response['po_details']['ap_date'])); echo "</p>
+                            <p class='mb-0'>PO-{$response['po_details']['PO_ID']}</p>
                         </div>
                     </div>
-                    
-                    <!-- Replace datetime inputs with payment details -->
-                    <div class='row mb-3'>
-                        <div class='col-md-4'>
-                            <label for='payment_type' class='form-label'><strong>Payment Type:</strong></label>
-                            <select class='form-select' id='payment_type' required>
-                                <option value=''>Select payment type</option>
-                                <option value='cash' " . ($response['payment_details']['PD_PAYMENT_TYPE'] === 'cash' ? 'selected' : '') . ">Cash</option>
-                                <option value='check' " . ($response['payment_details']['PD_PAYMENT_TYPE'] === 'check' ? 'selected' : '') . ">Check</option>
-                            </select>
+                    <div class='row mb-3 mt-3'>
+                        <div class='col-md-6'>
+                            <h4>Supplier Details</h4>
+                            <p class='mb-0'><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
+                            <p class='mb-0'><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                             <p class='mb-0'><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
                         </div>
-                        <div class='col-md-4'>
-                            <label for='payment_amount' class='form-label'><strong>Payment Amount:</strong></label>
-                            <input type='number' class='form-control' id='payment_amount' 
-                                value='" . (!empty($response['payment_details']['PD_AMMOUNT']) ? $response['payment_details']['PD_AMMOUNT'] : '') . "'
-                                min='0' step='0.01' required>
-                        </div>
-                        <div class='col-md-4'>
-                            <label for='payment_change' class='form-label'><strong>Change:</strong></label>
-                            <input type='number' class='form-control' id='payment_change' 
-                                value='" . (!empty($response['payment_details']['PD_CHANGE']) ? $response['payment_details']['PD_CHANGE'] : '') . "'
-                                min='0' step='0.01' required>
+                        <div class='col-md-6'>
+                           <h4>SHIP TO</h4>
+                           <p class='mb-0'><strong>Name:</strong> {$response['po_details']['deliverTo']}</p>
+                           <p class='mb-0'><strong>Company:</strong> Moonlight</p>
+                           <p class='mb-0'><strong>Address:</strong> Logarta St 6014 Mandaue City, Philippines</p>
+                           <p class='mb-0'><strong>Contact No:</strong> {$response['po_details']['EMP_NUMBER']}</p>
                         </div>
                     </div>";
 
-                if($response['po_details']['PO_STATUS'] === 'rejected') {
-                    echo "<div class='alert alert-danger'>
-                            <strong>Rejection Reason:</strong> " . htmlspecialchars($response['po_details']['ap_desc']) . "
-                          </div>";
-                }
+                    if($response['po_details']['PO_STATUS'] === 'rejected') {
+                        echo "<div class='alert alert-danger'>
+                                <strong>Rejection Reason:</strong> " . htmlspecialchars($response['po_details']['ap_desc']) . "
+                            </div>";
+                    }
 
-                echo "<table class='table'>
+                echo "<table class='table table-striped mt-3'>
                     <thead>
                         <tr>
                             <th>Item Name</th>
@@ -273,12 +283,39 @@ if ($content === 'purchase_order') {
                             </tr>
                         </tfoot>
                     </table>
+
+                    <!-- Replace datetime inputs with payment details -->
+                    <div class='row mb-3 mt-3'>
+                        <div class='col-md-4'>
+                            <label for='payment_type' class='form-label'><strong>Payment Type:</strong></label>
+                            <select class='form-select' id='payment_type' required>
+                                <option value=''>Select payment type</option>
+                                <option value='cash' " . ($response['payment_details']['PD_PAYMENT_TYPE'] === 'cash' ? 'selected' : '') . ">Cash</option>
+                                <option value='check' " . ($response['payment_details']['PD_PAYMENT_TYPE'] === 'check' ? 'selected' : '') . ">Check</option>
+                            </select>
+                        </div>
+                        <div class='col-md-4'>
+                            <label for='payment_amount' class='form-label'><strong>Payment Amount:</strong></label>
+                            <input type='number' class='form-control' id='payment_amount' 
+                                value='" . (!empty($response['payment_details']['PD_AMMOUNT']) ? $response['payment_details']['PD_AMMOUNT'] : '') . "'
+                                min='0' step='0.01' required>
+                        </div>
+                        <div class='col-md-4'>
+                            <label for='payment_change' class='form-label'><strong>Change:</strong></label>
+                            <input type='number' class='form-control' id='payment_change' 
+                                value='" . (!empty($response['payment_details']['PD_CHANGE']) ? $response['payment_details']['PD_CHANGE'] : '') . "'
+                                min='0' step='0.01' required>
+                        </div>
+                    </div>
     
                     <div class='mt-3'>
-                        <button class='btn btn-secondary cancel-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Cancel</button>
+                        <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_order'>
+                            <i class='fas fa-arrow-left'></i> Back
+                        </a>
                         <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
                     </div>
                 </div>
+
                 <script>
                     $(document).ready(function() {
                         $('.submit1-btn').on('click', function() {
@@ -332,11 +369,12 @@ if ($content === 'purchase_order') {
             if(!empty($pos)){
                 echo "
                 <div class='card rounded-4 p-4'>
-                    <table class='table' id='requisitions-table'>
+                    <table class='table table-striped' id='requisitions-table'>
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Supplier</th>
+                                <th>Date of Issue</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -345,8 +383,9 @@ if ($content === 'purchase_order') {
                         
                         foreach ($pos as $po) {
                             echo "<tr>
-                                    <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                    <td>" . "PO-".htmlspecialchars($po['PO_ID']) . "</td>
                                     <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
+                                    <td>" . date('F d, Y', strtotime($po['ap_date'])) . "</td>
                                     <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
                                     <td>
                                         <a href='#' class='btn btn-sm btn-primary view-requisition' 
@@ -383,10 +422,13 @@ if ($content === 'purchase_order') {
                 <h3>Purchase Request # {$_GET['pending_pr']}</h3>
                 <div class='row mb-3'>
                     <div class='col-md-6'>
-                        <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
-                        <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                        <p><strong>Requester:</strong> {$response['po_details']['fullname']}</p>
+                        <p><strong>Date of Request:</strong> {$response['po_details']['PO_PR_DATE_CREATED']}</p>
+                        
                     </div>
                     <div class='col-md-6'>
+                        <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
+                        <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
                         <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
                     </div>
                 </div>";
@@ -429,13 +471,21 @@ if ($content === 'purchase_order') {
                                 <td><strong>₱" . number_format($grandTotal, 2) . "</strong></td>
                             </tr>
                         </tfoot>
-                    </table>
-
-                    <div class='mt-3'>
-                        <button class='btn btn-danger reject-btn' data-id='" . htmlspecialchars($_GET['pending_pr']) . "'>Reject</button>
-                        <button class='btn btn-success approve-btn' data-id='" . htmlspecialchars($_GET['pending_pr']) . "'>Approve</button>
-                    </div>
-                </div>";
+                    </table>";
+                    if($response['po_details']['PO_STATUS'] === 'pending'){
+                        echo "<div class='mt-3'>
+                                <button class='btn btn-danger reject-btn' data-id='" . htmlspecialchars($_GET['pending_pr']) . "'>Reject</button>
+                                <button class='btn btn-success approve-btn' data-id='" . htmlspecialchars($_GET['pending_pr']) . "'>Approve</button>
+                            </div>";
+                    }else{
+                        echo "<div class='mt-3'>
+                                <a href='#' class='btn btn-secondary back-to-list' data-content='pending_pr'>
+                                    <i class='fas fa-arrow-left'></i> Back
+                                </a>
+                            </div>";
+                    }
+                    
+                echo "</div>";
 
                 // Rejection Modal
                 echo "
@@ -585,7 +635,9 @@ if ($content === 'purchase_order') {
                     <thead>
                         <tr>
                             <th>ID</th>
+                            <th>Requester</th>
                             <th>Supplier</th>
+                            <th>Date of Request</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -595,7 +647,9 @@ if ($content === 'purchase_order') {
                     foreach ($pos as $po) {
                         echo "<tr>
                                 <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                <td>" . htmlspecialchars($po['fullname']) . "</td>
                                 <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
+                                <td>" . date('F d, Y', strtotime($po['PO_PR_DATE_CREATED'])) . "</td>
                                 <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
                                 <td>
                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
@@ -636,7 +690,7 @@ if ($content === 'purchase_order') {
                         <p><strong>Contact no:</strong> " . htmlspecialchars($response['contact_no']) . "</p>
                     </div>
                     <div class='col-md-6'>
-                        <p><strong>Date of Request:</strong> " . htmlspecialchars($response['date']) . "</p>
+                        <p><strong>Date of Request:</strong> " . date('F j, Y h:i A', strtotime($response['date'])) . "</p>
                         <p><strong>Department:</strong> " . htmlspecialchars($response['department']) . "</p>
                     </div>
                 </div>
@@ -752,21 +806,21 @@ if ($content === 'purchase_order') {
                     </thead>
                     <tbody>";
             
-            foreach ($response as $req) {
-                echo "<tr>
-                        <td>" . htmlspecialchars($req['requisition_id']) . "</td>
-                        <td>" . htmlspecialchars($req['employee_name']) . "</td>
-                        <td>" . htmlspecialchars($req['submitted_date']) . "</td>
-                        <td>" . htmlspecialchars($req['requisition_status']) . "</td>
-                        <td>
-                            <a href='#' class='btn btn-sm btn-primary view-requisition' 
-                                data-content='requisition_approval' 
-                                data-id='" . $req['requisition_id'] . "'>
-                                <i class='fas fa-eye'></i> View
-                            </a>
-                        </td>
-                    </tr>";
-                }
+                    foreach ($response as $req) {
+                        echo "<tr>
+                                <td>" . htmlspecialchars($req['requisition_id']) . "</td>
+                                <td>" . htmlspecialchars($req['employee_name']) . "</td>
+                                <td>" . date('F j, Y h:i A', strtotime($req['submitted_date'])) . "</td>
+                                <td>" . htmlspecialchars($req['requisition_status']) . "</td>
+                                <td>
+                                    <a href='#' class='btn btn-sm btn-primary view-requisition' 
+                                        data-content='requisition_approval' 
+                                        data-id='" . $req['requisition_id'] . "'>
+                                        <i class='fas fa-eye'></i> View
+                                    </a>
+                                </td>
+                            </tr>";
+                        }
             
             echo "</tbody>
                 </table>
@@ -794,13 +848,17 @@ if ($content === 'purchase_order') {
                   if($response['po_details']) {
                       echo "
                       <div class='card rounded-4 p-4'>
-                          <h3> ID #{$_GET['pr_id']}</h3>
+                          <h3> PR ID #{$_GET['pr_id']}</h3>
                           <div class='row mb-3'>
+                              <div class='col-md-6'>
+                                  <p><strong>Requester:</strong> {$response['po_details']['fullname']}</p>
+                                  <p><strong>Date of Request:</strong> {$response['po_details']['PO_PR_DATE_CREATED']}</p>
+                                  
+                                  
+                              </div>
                               <div class='col-md-6'>
                                   <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
                                   <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
-                              </div>
-                              <div class='col-md-6'>
                                   <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
                               </div>
                           </div>";
@@ -845,7 +903,12 @@ if ($content === 'purchase_order') {
                                   </tfoot>
                                   </table>";
                               
-                              echo "</div>";
+                              echo "
+                                  <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_request'>
+                                    <i class='fas fa-arrow-left'></i> Back
+                                  </a>
+                              
+                              </div>";
                           } else {
                               echo 'Purchase Order not found';
                     }
@@ -1109,23 +1172,14 @@ if ($content === 'purchase_order') {
 
                     if(!empty($pos)){
                         echo "
-
-                            
-                
-                            
-
-                            
-                            
-
-
-                            
-
                             <div class='card rounded-4 p-4'>
                                 <table class='table' id='requisitions-table'>
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+                                            <th>PR ID</th>
+                                            <th>Requester</th>
                                             <th>Supplier</th>
+                                            <th>Date of Request</th>
                                             <th>Status</th>
                                             <th>Action</th>
                                         </tr>
@@ -1143,8 +1197,10 @@ if ($content === 'purchase_order') {
 
                                     foreach ($current_items as $po) {
                                         echo "<tr>
-                                                <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                                <td>" . htmlspecialchars('#' . $po['PO_ID']) . "</td>
+                                                <td>" . htmlspecialchars($po['fullname']) . "</td>
                                                 <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
+                                                <td>" . date('F d, Y', strtotime($po['PO_PR_DATE_CREATED'])) . "</td>
                                                 <td>" . htmlspecialchars($po['PO_STATUS']) . "</td>
                                                 <td>
                                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
@@ -2663,24 +2719,43 @@ elseif ($content === 'account_settings') {
             
             if ($requisitionDetails) {
                 echo "<div class='d-flex justify-content-between align-items-center mb-3'>
-                        <h3>Requisition Details #{$_GET['req_id']}</h3>
+                        <h3>Requisition Details RF-{$_GET['req_id']}</h3>
                         <a href='#' class='btn btn-secondary back-to-list' data-content='requisition_form_history'>
                             <i class='fas fa-arrow-left'></i> Back
                         </a>
                       </div>
                       <div class='card rounded-4 p-4'>
                           <div class='row'>
-                              <div class='col-md-6'>
+                              <div class='col-md-4'>
                                   <p><strong>Requester:</strong> {$requisitionDetails['FULL_NAME']}</p>
                                   <p><strong>Department:</strong> {$requisitionDetails['DEPT_NAME']}</p>
                               </div>
-                              <div class='col-md-6'>
-                                  <p><strong>Date:</strong> {$requisitionDetails['PRF_DATE']}</p>
+                              <div class='col-md-4'>
+                                  <p><strong>Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['PRF_DATE'])); echo "</p>
                                   <p><strong>Status:</strong> {$requisitionDetails['PRF_STATUS']}</p>
-                              </div>
-                          </div>
+                              </div>";
+
+                              if($requisitionDetails['PRF_STATUS'] === 'rejected'){
+                                echo "<div class='col-md-4'>
+                                        <p><strong>Rejected Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['ap_date'])); echo "</p>
+                                        <p><strong>Rejected By:</strong> {$requisitionDetails['APPROVER_NAME']}</p>
+                                      </div>";
+                              }elseif($requisitionDetails['PRF_STATUS'] === 'approved'){
+                                echo "<div class='col-md-4'>
+                                        <p><strong>Approved Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['ap_date'])); echo "</p>
+                                        <p><strong>Approved By:</strong> {$requisitionDetails['APPROVER_NAME']}</p>
+                                      </div>";
+                              }
+                              
+                          echo "</div>";
+
+                          if($requisitionDetails['PRF_STATUS'] === 'rejected'){
+                            echo "<div class='alert alert-danger'>
+                                    <strong>Rejection Reason:</strong> " . htmlspecialchars($requisitionDetails['ap_desc']) . "
+                                  </div>";
+                          }
                           
-                          <h4>Requested Items</h4>
+                          echo "<h4>Requested Items</h4>
                           <table class='table'>
                               <thead>
                                   <tr>
@@ -2715,7 +2790,7 @@ elseif ($content === 'account_settings') {
                     <table class='table table-striped'>
                         <thead>
                             <tr>
-                                <th>Requisition ID</th>
+                                <th>ID</th>
                                 <th>Requester</th>
                                 <th>Department</th>
                                 <th>Date & Time</th>
@@ -2728,10 +2803,10 @@ elseif ($content === 'account_settings') {
             if (!empty($requisitions)) {
                 foreach ($requisitions as $req) {
                     echo "<tr>
-                            <td>#{$req['PRF_ID']}</td>
+                            <td>RF-{$req['PRF_ID']}</td>
                             <td>{$req['FULL_NAME']}</td>
                             <td>{$req['DEPT_NAME']}</td>
-                            <td>{$req['PRF_DATE']}</td>
+                            <td>"; echo date('F j, Y h:i A', strtotime($req['PRF_DATE'])); echo "</td>
                             <td>{$req['PRF_STATUS']}</td>
                             <td>
                                 <a href='#' 
@@ -2792,30 +2867,58 @@ elseif ($content === 'account_settings') {
         }
     } elseif($content === 'purchase_request_history'){
         if(isset($_GET['pr_id'])){
-            include('admin/get_po_details.php');
+            include('admin/get_pr_details.php');
             
             if ($poDetails) {
                 echo "<div class='d-flex justify-content-between align-items-center mb-3'>
-                        <h3>Purchase Request Details #{$poDetails['PO_ID']}</h3>
+                        <h3>Purchase Request Details PR-{$poDetails['PO_ID']}</h3>
                         <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_request_history'>
                             <i class='fas fa-arrow-left'></i> Back
                         </a>
                       </div>
                       <div class='card rounded-4 p-4'>
                           <div class='row'>
-                              <div class='col-md-6'>
+                              <div class='col-md-4'>
+                                  <p><strong>Requestor:</strong> {$poDetails['fullname']}</p>
+                                  <p><strong>Date of Request:</strong> {$poDetails['PO_PR_DATE_CREATED']}</p>
+                                  <p><strong>Contact No. :</strong> {$poDetails['EMP_NUMBER']}</p>
+                              </div>
+                              <div class='col-md-4'>
                                   <p><strong>Supplier:</strong> {$poDetails['SP_NAME']}</p>
                                   <p><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
                                   <p><strong>Contact:</strong> {$poDetails['SP_NUMBER']}</p>
-                              </div>
-                              <div class='col-md-6'>
-                                  <p><strong>Order Date:</strong> {$poDetails['PO_ORDER_DATE']}</p>
-                                  <p><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
-                                  <p><strong>Approval Status:</strong> {$poDetails['ap_desc']}</p>
-                              </div>
-                          </div>
+                              </div>";
+                              
+                              if($poDetails['PO_STATUS'] === 'rejected'){
+                                echo "<div class='col-md-4'>
+                                        <p><strong>Rejected Date:</strong> "; echo date('F j, Y h:i A', strtotime($poDetails['ap_date'])); echo "</p>
+                                        <p><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
+                                        <p><strong>Rejected By:</strong> {$poDetails['approvedby']}</p>
+                                      </div>";
+                              }elseif($poDetails['PO_STATUS'] === 'approved'){
+                                echo "<div class='col-md-4'>
+                                        <p><strong>Approved Date:</strong> "; echo date('F j, Y h:i A', strtotime($poDetails['ap_date'])); echo "</p>
+                                        <p><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
+                                        <p><strong>Approved By:</strong> {$poDetails['approvedby']}</p>
+                                      </div>";
+                              }else{
+                                echo "<div class='col-md-4'>
+                                        <p><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
+                                      </div>";
+                              }
+
+                          echo "
                           
-                          <h4>Items</h4>
+                          
+                          </div>";
+
+                          if($poDetails['PO_STATUS'] === 'rejected'){
+                            echo "<div class='alert alert-danger'>
+                                    <strong>Rejection Reason:</strong> " . htmlspecialchars($poDetails['ap_desc']) . "
+                                  </div>";
+                          }
+                          
+                          echo "<h4>Items</h4>
                           <table class='table'>
                               <thead>
                                   <tr>
@@ -2857,9 +2960,10 @@ elseif ($content === 'account_settings') {
                       <table class='table table-striped'>
                           <thead>
                               <tr>
-                                  <th>PR ID</th>
+                                  <th>ID</th>
+                                  <th>Requester</th>
                                   <th>Supplier</th>
-                                  <th>Order Date</th>
+                                  <th>Date of Request</th>
                                   <th>Status</th>
                                   <th>Action</th>
                               </tr>
@@ -2869,9 +2973,10 @@ elseif ($content === 'account_settings') {
             if (!empty($purchase_requests)) {
                 foreach ($purchase_requests as $pr) {
                     echo "<tr>
-                            <td>#{$pr['PO_ID']}</td>
+                            <td>PR-{$pr['PO_ID']}</td>
+                            <td>{$pr['fullname']}</td>
                             <td>{$pr['SP_NAME']}</td>
-                            <td>{$pr['PO_ORDER_DATE']}</td>
+                            <td>" . date('F d, Y', strtotime($pr['PO_PR_DATE_CREATED'])) . "</td>
                             <td>{$pr['PO_STATUS']}</td>
                             <td>
                                 <a href='#' 
@@ -2936,25 +3041,50 @@ elseif ($content === 'account_settings') {
             
             if ($poDetails) {
                 echo "<div class='d-flex justify-content-between align-items-center mb-3'>
-                        <h3>Purchase Order Details #{$poDetails['PO_ID']}</h3>
+                        <h3>Purchase Order Details PO-{$poDetails['PO_ID']}</h3>
                         <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_order_history'>
                             <i class='fas fa-arrow-left'></i> Back
                         </a>
                       </div>
                       <div class='card rounded-4 p-4'>
                           <div class='row'>
-                              <div class='col-md-6'>
-                                  <p><strong>Supplier:</strong> {$poDetails['SP_NAME']}</p>
-                                  <p><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
-                                  <p><strong>Contact:</strong> {$poDetails['SP_NUMBER']}</p>
-                              </div>
-                              <div class='col-md-6'>
-                                  <p><strong>Order Date:</strong> {$poDetails['PO_ORDER_DATE']}</p>
-                                  <p><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
-                              </div>
-                          </div>
+                            <div class='col-md-6'>
+                                <h3>MOONLIGHT</h3>
+                                <p class='mb-0'>Address: Logarta St 6014 Mandaue City, Philippines</p>
+                                <p class='mb-0'>Contact No: 09123456789</p>
+                            </div>
+                            <div class='col-md-6'>
+                                <h3>PURCHASE ORDER</h3>
+                                <p class='mb-0'>Date: "; echo date('F j, Y', strtotime($poDetails['ap_date'])); echo "</p>
+                                <p class='mb-0'>PO-{$poDetails['PO_ID']}</p>
+                            </div>
+                        </div>
+                        <div class='row mb-3 mt-3'>
+                            <div class='col-md-6'>
+                                <h4>Supplier Details</h4>
+                                <p class='mb-0'><strong>Supplier Name:</strong> {$poDetails['SP_NAME']}</p>
+                                <p class='mb-0'><strong>Contact no:</strong> {$poDetails['SP_NUMBER']}</p>
+                                <p class='mb-0'><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
+                            </div>
+                            <div class='col-md-6'>
+                            <h4>SHIP TO</h4>
+                            <p class='mb-0'><strong>Name:</strong> {$poDetails['deliverTo']}</p>
+                            <p class='mb-0'><strong>Company:</strong> Moonlight</p>
+                            <p class='mb-0'><strong>Address:</strong> Logarta St 6014 Mandaue City, Philippines</p>
+                            <p class='mb-0'><strong>Contact No:</strong> {$poDetails['EMP_NUMBER']}</p>
+                            </div>
+                        </div>
+                        
+                        <div class='order-details'>";
+                            if($poDetails['PO_ORDER_DATE']){
+                                echo "<p class='mb-0'><strong>Order Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ORDER_DATE'])) . "</p>";
+                            }
+                            if($poDetails['PO_ARRIVAL_DATE']){
+                                echo "<p class='mb-0'><strong>Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
+                            }
+                        echo "</div>";
                           
-                          <h4>Items</h4>
+                        echo "<h4 class='mt-3'>Items</h4>
                           <table class='table'>
                               <thead>
                                   <tr>
@@ -2997,9 +3127,9 @@ elseif ($content === 'account_settings') {
                       <table class='table table-striped'>
                           <thead>
                               <tr>
-                                  <th>PO ID</th>
+                                  <th>ID</th>
                                   <th>Supplier</th>
-                                  <th>Order Date</th>
+                                  <th>Date of Issue</th>
                                   <th>Action</th>
                               </tr>
                           </thead>
@@ -3008,9 +3138,9 @@ elseif ($content === 'account_settings') {
             if (!empty($purchase_orders)) {
                 foreach ($purchase_orders as $po) {
                     echo "<tr>
-                            <td>#{$po['PO_ID']}</td>
+                            <td>PO-{$po['PO_ID']}</td>
                             <td>{$po['SP_NAME']}</td>
-                            <td>{$po['PO_ORDER_DATE']}</td>
+                            <td>{$po['ap_date']}</td>
                             <td>
                                 <a href='#' 
                                 class='btn btn-sm btn-primary view-purchase-order'

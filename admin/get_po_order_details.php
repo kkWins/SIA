@@ -5,10 +5,16 @@ if (isset($_GET['po_id'])) {
     $po_id = $_GET['po_id'];
     
     // Get purchase order details
-    $query = "SELECT po.*, sp.* 
-              FROM purchase_order po
-              JOIN supplier sp ON po.SP_ID = sp.SP_ID
-              WHERE po.PO_ID = ? AND po.PO_STATUS = 'approved'";
+    $query = "SELECT po.*, sp.*,
+		approval.ap_date,
+        CONCAT(emp.EMP_FNAME, ' ', emp.EMP_LNAME) AS deliverTo,
+        emp.EMP_NUMBER
+FROM purchase_order po
+LEFT JOIN supplier sp ON po.SP_ID = sp.SP_ID
+LEFT JOIN approval ON approval.ap_id = po.ap_id
+LEFT JOIN 
+    	employee emp ON emp.EMP_ID = po.EMP_ID
+WHERE po.PO_ID = ? AND po.PO_STATUS = 'approved'";
     
     $stmt = $db->prepare($query);
     $stmt->bind_param("i", $po_id);

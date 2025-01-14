@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['po_id']) && isset($_P
         $db->begin_transaction();
 
         // Insert into APPROVAL table
-        $stmt = $db->prepare("INSERT INTO APPROVAL (ap_desc, emp_id) VALUES (?, ?)");
+        $stmt = $db->prepare("INSERT INTO APPROVAL (ap_desc, ap_date, emp_id) VALUES (?, NOW(), ?)");
         $stmt->bind_param("si", $reject_reason, $emp_id);
         $stmt->execute();
         $ap_id = $db->insert_id;

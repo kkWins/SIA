@@ -15,12 +15,13 @@ $total_pages = ceil($total_items / $items_per_page);
 // Fetch purchase requests
 $query = "SELECT 
     po.PO_ID,
-    po.PO_ORDER_DATE,
     po.PO_STATUS,
-    supplier.SP_NAME
+    po.PO_PR_DATE_CREATED,
+    supplier.SP_NAME,
+    CONCAT(emp.EMP_FNAME, ' ', emp.EMP_LNAME) AS fullname
 FROM purchase_order po
 JOIN supplier ON po.SP_ID = supplier.SP_ID
-WHERE po.PO_STATUS IN ('pending', 'rejected')
+JOIN employee emp ON emp.EMP_ID = po.emp_id
 ORDER BY po.PO_ORDER_DATE DESC
 LIMIT $items_per_page OFFSET $offset";
 

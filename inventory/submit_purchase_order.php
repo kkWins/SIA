@@ -10,9 +10,14 @@ if (!isset($_SESSION['loggedIn']) || $_SESSION['department'] . " " . $_SESSION['
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $po_id = $_POST['po_id'] ?? '';
-    $order_datetime = $_POST['order_datetime'] ?? '';
-    $arrival_datetime = $_POST['arrival_datetime'] ?? '';
+    $order_datetime = $_POST['order_datetime'] ?? null;
+    $arrival_datetime = $_POST['arrival_datetime'] ?? null;
     
+    // Only proceed with non-empty dates
+    if (empty($order_datetime)) {
+        echo json_encode(['success' => false, 'message' => 'Order date is required']);
+        exit;
+    }
     
     try {
         // First check if dates already exist
@@ -23,31 +28,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $existing_data = $result->fetch_assoc();
         $check_stmt->close();
 
-        // Only update if dates are empty or different
-        if (!$existing_data || 
-            $existing_data['PO_ORDER_DATE'] != $order_datetime || 
-            $existing_data['PO_ARRIVAL_DATE'] != $arrival_datetime) {
-            
-            // Update the purchase order
-            $stmt = $db->prepare("UPDATE purchase_order 
-                                  SET PO_ORDER_DATE = ?, 
-                                      PO_ARRIVAL_DATE = ?,
-                                      PO_STATUS = 'approved'
-                                  WHERE PO_ID = ?");
-                                  
+        // Prepare the SQL query based on which dates are provided
+        if (!empty($arrival_datetime)) {
+            $sql = "UPDATE purchase_order 
+                   SET PO_ORDER_DATE = ?, 
+                       PO_ARRIVAL_DATE = ?,
+                       PO_STATUS = 'approved'
+                   WHERE PO_ID = ?";
+            $stmt = $db->prepare($sql);
             $stmt->bind_param("ssi", $order_datetime, $arrival_datetime, $po_id);
-            
-            if ($stmt->execute()) {
-                echo json_encode(['success' => true]);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Database error']);
-            }
-            
-            $stmt->close();
         } else {
-            // Dates are the same, just return success
-            echo json_encode(['success' => true, 'message' => 'No changes needed']);
+            // Only update order date if arrival date is empty
+            $sql = "UPDATE purchase_order 
+                   SET PO_ORDER_DATE = ?,
+                       PO_STATUS = 'approved'
+                   WHERE PO_ID = ?";
+            $stmt = $db->prepare($sql);
+            $stmt->bind_param("si", $order_datetime, $po_id);
         }
+        
+        if ($stmt->execute()) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Database error']);
+        }
+        
+        $stmt->close();
         
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
