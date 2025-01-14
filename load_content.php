@@ -118,14 +118,66 @@ if ($content === 'purchase_order') {
                             </div>
                         </div>
     
-                        <div class='mt-3'>
-                            <div class='text-end'>
-                                <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
-                            </div>
+                        <div class='mt-3'>";
+
+                        if($response['po_details']['PO_STATUS'] === 'completed'){
+                            echo "<p class='text-success'>Purchase order is already completed.</p>";
+                        } else {
+                            // Check if payment details exist
+                            $hasPaymentDetails = $response['po_details']['PD_PAYMENT_TYPE'] && 
+                                                $response['po_details']['PD_CHANGE'] && 
+                                                $response['po_details']['PD_AMMOUNT'];
+                            
+                            if(!$hasPaymentDetails) {
+                                echo "<p class='text-danger'>Payment details are missing.</p>";
+                            } else if(!$response['po_details']['PO_ARRIVAL_DATE']) {
+                                echo "<div class='text-end'>
+                                        <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                                      </div>";
+                            } else {
+                                echo "<div class='text-end'>
+                                        <button class='btn btn-success complete-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Complete</button>
+                                      </div>";
+                            }
+                        }
+                        echo "
                         </div>
                     </div>
                     <script>
                         $(document).ready(function() {
+
+                            // Add complete button click handler
+                            $('.complete-btn').on('click', function() {
+                                const poId = $(this).data('id');
+                                
+                                if (confirm('Are you sure you want to mark this purchase order as completed?')) {
+                                    $.ajax({
+                                        url: 'inventory/complete_purchase_order.php',
+                                        type: 'POST',
+                                        data: {
+                                            po_id: poId
+                                        },
+                                        success: function(response) {
+                                            try {
+                                                if (response.success) {
+                                                    alert('Purchase order completed successfully');
+                                                    window.location.href = '?content=purchase_order';
+                                                } else {
+                                                    alert('Error: ' + (response.message || 'Unknown error'));
+                                                }
+                                            } catch (e) {
+                                                console.error('Error parsing response:', e);
+                                                alert('Error processing response');
+                                            }
+                                        },
+                                        error: function() {
+                                            alert('Error completing purchase order');
+                                        }
+                                    });
+                                }
+                            });
+
+                            
                             $('.submit-btn').on('click', function() {
                                 const poId = $(this).data('id');
                                 const orderDateTime = $('#order_datetime').val();
@@ -317,11 +369,20 @@ if ($content === 'purchase_order') {
                         </div>
                     </div>
     
-                    <div class='mt-3'>
-                        <div class='text-end'>
-                            <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
-                        </div>
-                    </div>
+                    <div class='mt-3'>";
+                        
+                        if($response['po_details']['PO_STATUS'] === 'completed'){
+                            echo "
+                            <p class='text-success'>Purchase order is already completed.</p>
+                            ";
+                        }else{
+                            echo "
+                            <div class='text-end'>
+                                <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                            </div>
+                            ";
+                        }
+                    echo "</div>
                 </div>
 
                 <script>

@@ -22,7 +22,7 @@ $query = "SELECT po.*, sp.SP_NAME,
           FROM purchase_order po
           JOIN supplier sp ON po.SP_ID = sp.SP_ID
           LEFT JOIN approval ON approval.ap_id = po.ap_id
-          WHERE po.PO_STATUS = 'approved'
+          WHERE po.PO_STATUS IN ('approved', 'completed')
           ORDER BY po.PO_ID DESC
           LIMIT ?, ?";
 

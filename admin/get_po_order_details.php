@@ -16,7 +16,7 @@ LEFT JOIN
     	employee emp ON emp.EMP_ID = po.EMP_ID
 LEFT JOIN 
 		payment_details pd ON pd.PO_ID = po.PO_ID
-WHERE po.PO_ID = ? AND po.PO_STATUS = 'approved'";
+WHERE po.PO_ID = ? AND po.PO_STATUS IN ('approved', 'completed')";
     
     $stmt = $db->prepare($query);
     $stmt->bind_param("i", $po_id);
