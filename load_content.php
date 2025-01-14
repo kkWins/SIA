@@ -912,6 +912,14 @@ if ($content === 'purchase_order') {
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
+} elseif ($content === 'manage_suppliers') {
+    if ($conca === 'Inventory Manager') {
+        echo "<h2>Manage Suppliers</h2>";
+        include('inventory/manage_suppliers.php');
+    } else {
+        echo "<h3>You do not have access to this content.</h3>";
+    }
+
 } elseif ($content === 'purchase_request') {
     include('manager_inv_pr.php');
     

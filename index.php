@@ -276,6 +276,7 @@ $department = $_SESSION['department'];
                     <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a> 
                     <a href="#" class="sidebar-link" id="requisition-withdrawal-link">Requisition Withdrawal</a>
                     <a href="#" class="sidebar-link" id="inventory-task-link">Requisition Withdrawal/Delivery Task</a>   
+                    <a href="#" class="sidebar-link" id="manage-suppliers-link">Manage Suppliers</a>
                 <?php elseif ($role == 'Staff'): ?>
                     <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
                     <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
@@ -470,6 +471,11 @@ $department = $_SESSION['department'];
             $('#purchase-order-history-link').click(function (e) {
                 e.preventDefault();
                 loadContent('purchase_order_history');
+            });
+
+            $('#manage-suppliers-link').click(function (e) {
+                e.preventDefault();
+                loadContent('manage_suppliers');
             });
 
             $(document).on('loadContentEvent', function(e, content, id, page) {
