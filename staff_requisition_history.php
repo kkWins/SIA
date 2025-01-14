@@ -18,8 +18,10 @@ $emp_id = $_SESSION['ID'];
 $query = "SELECT 
             prf.PRF_ID, 
             prf.PRF_DATE, 
-            prf.PRF_STATUS
+            prf.PRF_STATUS,
+            a.ap_desc as rejection_reason
           FROM purchase_or_requisition_form prf
+          LEFT JOIN approval a ON prf.AP_ID = a.ap_id
           WHERE prf.EMP_ID = ?
           ORDER BY prf.PRF_DATE DESC";
 
@@ -101,12 +103,16 @@ echo <<<HTML
 $(document).ready(function() {
     $('.view-details').click(function() {
         const prfId = $(this).data('prf-id');
+        const status = $(this).closest('tr').find('td:eq(2) .badge').text().toLowerCase();
         
         // Fetch items for this PRF
         $.ajax({
             url: 'get_requisition_items.php',
             type: 'POST',
-            data: { prf_id: prfId },
+            data: { 
+                prf_id: prfId,
+                status: status
+            },
             success: function(response) {
                 $('#itemsList').html(response);
             },

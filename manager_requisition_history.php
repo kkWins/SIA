@@ -104,12 +104,16 @@ echo <<<HTML
 $(document).ready(function() {
     $('.view-details').click(function() {
         const prfId = $(this).data('prf-id');
+        const status = $(this).closest('tr').find('td:eq(4) .badge').text().toLowerCase();
         
         // Fetch items for this PRF
         $.ajax({
             url: 'get_requisition_items.php',
             type: 'POST',
-            data: { prf_id: prfId },
+            data: { 
+                prf_id: prfId,
+                status: status
+            },
             success: function(response) {
                 $('#itemsList').html(response);
             },
