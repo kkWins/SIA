@@ -119,29 +119,36 @@ if ($content === 'purchase_order') {
                         </div>
     
                         <div class='mt-3'>";
-
-                        if($response['po_details']['PO_STATUS'] === 'completed'){
-                            echo "<p class='text-success'>Purchase order is already completed.</p>";
-                        } else {
-                            // Check if payment details exist
-                            $hasPaymentDetails = $response['po_details']['PD_PAYMENT_TYPE'] && 
-                                                $response['po_details']['PD_CHANGE'] && 
-                                                $response['po_details']['PD_AMMOUNT'];
-                            
-                            if(!$hasPaymentDetails) {
-                                echo "<p class='text-danger'>Payment details are missing.</p>";
-                            } else if(!$response['po_details']['PO_ARRIVAL_DATE']) {
-                                echo "<div class='text-end'>
-                                        <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
-                                      </div>";
-                            } else {
-                                echo "<div class='text-end'>
-                                        <button class='btn btn-success complete-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Complete</button>
-                                      </div>";
-                            }
-                        }
-                        echo "
-                        </div>
+    if($response['po_details']['PO_STATUS'] === 'completed') {
+        echo "<p class='text-success'>Purchase order is already completed.</p>";
+    } else {
+        // Check if payment details exist
+        $hasPaymentDetails = $response['po_details']['PD_PAYMENT_TYPE'] && 
+                            $response['po_details']['PD_CHANGE'] && 
+                            $response['po_details']['PD_AMMOUNT'];
+        
+        if(!$response['po_details']['PO_ORDER_DATE']) {
+            // If order date is empty, show submit button
+            echo "<div class='text-end'>
+                    <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                </div>";
+        } else if($response['po_details']['PO_ORDER_DATE'] && !$hasPaymentDetails) {
+            // If order date exists but no payment details
+            echo "<p class='text-danger'>Payment details are missing.</p>";
+        } else if($hasPaymentDetails && !$response['po_details']['PO_ARRIVAL_DATE']) {
+            // If payment details exist but no arrival date
+            echo "<div class='text-end'>
+                    <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                </div>";
+        } else if($response['po_details']['PO_ARRIVAL_DATE']) {
+            // If arrival date exists
+            echo "<div class='text-end'>
+                    <button class='btn btn-success complete-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Complete</button>
+                </div>";
+        }
+    }
+    echo "
+</div>
                     </div>
                     <script>
                         $(document).ready(function() {
