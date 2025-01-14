@@ -29,6 +29,11 @@ if ($content === 'purchase_order') {
             if($response['po_details']) {
                 echo "
                     <div class='card rounded-4 p-4'>
+                    <div class='text-start'>
+                        <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_order'>
+                            <i class='fas fa-arrow-left'></i> Back
+                        </a>
+                    </div>
                     <div class='row'>
                         <div class='col-md-6'>
                             <h3>MOONLIGHT</h3>
@@ -114,10 +119,9 @@ if ($content === 'purchase_order') {
                         </div>
     
                         <div class='mt-3'>
-                            <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_order'>
-                                <i class='fas fa-arrow-left'></i> Back
-                            </a>
-                            <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                            <div class='text-end'>
+                                <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                            </div>
                         </div>
                     </div>
                     <script>
@@ -189,7 +193,7 @@ if ($content === 'purchase_order') {
                                         <a href='#' class='btn btn-sm btn-primary view-requisition' 
                                             data-content='purchase_order' 
                                             data-id='" . $po['PO_ID'] . "'>
-                                            <i class='fas fa-eye'></i> View
+                                            <i class='fas fa-eye'></i>
                                         </a>
                                     </td>
                                 </tr>";
@@ -216,6 +220,11 @@ if ($content === 'purchase_order') {
             if($response['po_details']) {
                 echo "
                     <div class='card rounded-4 p-4'>
+                    <div class='text-start'>
+                        <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_order'>
+                            <i class='fas fa-arrow-left'></i> Back
+                        </a>
+                    </div>
                     <div class='row'>
                         <div class='col-md-6'>
                             <h3>MOONLIGHT</h3>
@@ -309,10 +318,9 @@ if ($content === 'purchase_order') {
                     </div>
     
                     <div class='mt-3'>
-                        <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_order'>
-                            <i class='fas fa-arrow-left'></i> Back
-                        </a>
-                        <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                        <div class='text-end'>
+                            <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                        </div>
                     </div>
                 </div>
 
@@ -391,7 +399,7 @@ if ($content === 'purchase_order') {
                                         <a href='#' class='btn btn-sm btn-primary view-requisition' 
                                             data-content='purchase_order' 
                                             data-id='" . $po['PO_ID'] . "'>
-                                            <i class='fas fa-eye'></i> View
+                                            <i class='fas fa-eye'></i>
                                         </a>
                                     </td>
                                 </tr>";
@@ -419,6 +427,11 @@ if ($content === 'purchase_order') {
         if($response['po_details']) {
             echo "
                 <div class='card rounded-4 p-4'>
+                <div class='text-start'>
+                    <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='pending_pr'>
+                        <i class='fas fa-arrow-left'></i> Back
+                    </a>
+                </div>
                 <h3>Purchase Request # {$_GET['pending_pr']}</h3>
                 <div class='row mb-3'>
                     <div class='col-md-6'>
@@ -477,12 +490,6 @@ if ($content === 'purchase_order') {
                                 <button class='btn btn-danger reject-btn' data-id='" . htmlspecialchars($_GET['pending_pr']) . "'>Reject</button>
                                 <button class='btn btn-success approve-btn' data-id='" . htmlspecialchars($_GET['pending_pr']) . "'>Approve</button>
                             </div>";
-                    }else{
-                        echo "<div class='mt-3'>
-                                <a href='#' class='btn btn-secondary back-to-list' data-content='pending_pr'>
-                                    <i class='fas fa-arrow-left'></i> Back
-                                </a>
-                            </div>";
                     }
                     
                 echo "</div>";
@@ -509,6 +516,7 @@ if ($content === 'purchase_order') {
                                 <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
                                 <button type='button' class='btn btn-danger' id='confirmReject'>Confirm Rejection</button>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -529,6 +537,7 @@ if ($content === 'purchase_order') {
                                 <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
                                 <button type='button' class='btn btn-success' id='confirmApprove'>Confirm Approval</button>
                             </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -655,7 +664,7 @@ if ($content === 'purchase_order') {
                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
                                         data-content='pending_pr' 
                                         data-id='" . $po['PO_ID'] . "'>
-                                        <i class='fas fa-eye'></i> View
+                                        <i class='fas fa-eye'></i>
                                     </a>
                                 </td>
                             </tr>";
@@ -683,6 +692,11 @@ if ($content === 'purchase_order') {
         if (isset($response['items'])) {
             echo "
             <div class='card rounded-4 p-4'>
+                <div class='text-start'>
+                    <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='requisition_approval'>
+                        <i class='fas fa-arrow-left'></i> Back
+                    </a>
+                </div>
                 <h3>Requisition ID: " . htmlspecialchars($_GET['req_id']) . "</h3>
                 <div class='row mb-3'>
                     <div class='col-md-6'>
@@ -816,7 +830,7 @@ if ($content === 'purchase_order') {
                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
                                         data-content='requisition_approval' 
                                         data-id='" . $req['requisition_id'] . "'>
-                                        <i class='fas fa-eye'></i> View
+                                        <i class='fas fa-eye'></i>
                                     </a>
                                 </td>
                             </tr>";
@@ -848,6 +862,11 @@ if ($content === 'purchase_order') {
                   if($response['po_details']) {
                       echo "
                       <div class='card rounded-4 p-4'>
+                          <div class='text-start'>
+                              <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_request'>
+                                  <i class='fas fa-arrow-left'></i> Back
+                              </a>
+                          </div>
                           <h3> PR ID #{$_GET['pr_id']}</h3>
                           <div class='row mb-3'>
                               <div class='col-md-6'>
@@ -902,13 +921,6 @@ if ($content === 'purchase_order') {
                                       </tr>
                                   </tfoot>
                                   </table>";
-                              
-                              echo "
-                                  <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_request'>
-                                    <i class='fas fa-arrow-left'></i> Back
-                                  </a>
-                              
-                              </div>";
                           } else {
                               echo 'Purchase Order not found';
                     }
@@ -1226,12 +1238,12 @@ if ($content === 'purchase_order') {
                                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
                                                         data-content='purchase_request' 
                                                         data-id='" . $po['PO_ID'] . "'>
-                                                        <i class='fas fa-eye'></i> View
+                                                        <i class='fas fa-eye'></i>
                                                     </a>
                                                     <a href='#' class='btn btn-sm btn-danger delete-po' 
                                                         data-content='purchase_request' 
                                                         data-id='" . $po['PO_ID'] . "'>
-                                                        <i class='fas fa-eye'></i> Delete
+                                                        <i class='fas fa-trash'></i>
                                                     </a>
                                                 </td>
                                             </tr>";
@@ -1290,6 +1302,11 @@ if ($content === 'purchase_order') {
             if ($response['items']) {
                 echo "
                     <div class='card rounded-4 p-4'>
+                        <div class='text-start'>
+                            <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='approved_requisitions'>
+                                <i class='fas fa-arrow-left'></i> Back
+                            </a>
+                        </div>
                         <h3>Requisition ID {$_GET['req_id']}</h3>
                         <div class='row mb-3'>
                             <div class='col-md-6'>
@@ -1573,7 +1590,7 @@ if ($content === 'purchase_order') {
                                     class='btn btn-sm btn-primary view-requisition' 
                                     data-content='approved_requisitions' 
                                     data-id='" . $req['requisition_id'] . "'>
-                                        <i class='fas fa-eye'></i> View
+                                        <i class='fas fa-eye'></i> 
                                 </a>
                             </td>
                         </tr>";
@@ -2469,7 +2486,7 @@ elseif ($content === 'account_settings') {
                                     <td>" . htmlspecialchars($row['EMP_NUMBER']) . "</td>
                                     <td>
                                         <button class='btn btn-sm btn-primary edit-employee' data-bs-toggle='modal' data-bs-target='#editEmployeeModal' data-id='" . $row['EMP_ID'] . "'>
-                                            <i class='fas fa-edit'></i> Edit
+                                            <i class='fas fa-edit'></i>
                                         </button>
                                         <button class='btn btn-sm " . $statusBtnClass . " toggle-status' 
                                                 data-id='" . $row['EMP_ID'] . "'
@@ -2835,11 +2852,13 @@ elseif ($content === 'account_settings') {
             if ($requisitionDetails) {
                 echo "<div class='d-flex justify-content-between align-items-center mb-3'>
                         <h3>Requisition Details RF-{$_GET['req_id']}</h3>
-                        <a href='#' class='btn btn-secondary back-to-list' data-content='requisition_form_history'>
-                            <i class='fas fa-arrow-left'></i> Back
-                        </a>
                       </div>
                       <div class='card rounded-4 p-4'>
+                        <div class='text-start'>
+                            <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='requisition_form_history'>
+                                <i class='fas fa-arrow-left'></i> Back
+                            </a>
+                        </div>
                           <div class='row'>
                               <div class='col-md-4'>
                                   <p><strong>Requester:</strong> {$requisitionDetails['FULL_NAME']}</p>
@@ -2928,7 +2947,7 @@ elseif ($content === 'account_settings') {
                                 class='btn btn-sm btn-primary view-requisition'
                                 data-content='requisition_form_history'
                                 data-id='" . $req['PRF_ID'] . "'>
-                                    <i class='fas fa-eye'></i> View
+                                    <i class='fas fa-eye'></i>
                                 </a>
                             </td>
                         </tr>";
@@ -2986,12 +3005,15 @@ elseif ($content === 'account_settings') {
             
             if ($poDetails) {
                 echo "<div class='d-flex justify-content-between align-items-center mb-3'>
+                        
                         <h3>Purchase Request Details PR-{$poDetails['PO_ID']}</h3>
-                        <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_request_history'>
-                            <i class='fas fa-arrow-left'></i> Back
-                        </a>
                       </div>
                       <div class='card rounded-4 p-4'>
+                          <div class='text-start'>
+                            <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_request_history'>
+                                <i class='fas fa-arrow-left'></i> Back
+                                </a>
+                            </div>
                           <div class='row'>
                               <div class='col-md-4'>
                                   <p><strong>Requestor:</strong> {$poDetails['fullname']}</p>
@@ -3098,7 +3120,7 @@ elseif ($content === 'account_settings') {
                                 class='btn btn-sm btn-primary view-purchase-request'
                                 data-content='purchase_request_history'
                                 data-id='" . $pr['PO_ID'] . "'>
-                                    <i class='fas fa-eye'></i> View
+                                    <i class='fas fa-eye'></i>
                                 </a>
                             </td>
                           </tr>";
@@ -3157,11 +3179,13 @@ elseif ($content === 'account_settings') {
             if ($poDetails) {
                 echo "<div class='d-flex justify-content-between align-items-center mb-3'>
                         <h3>Purchase Order Details PO-{$poDetails['PO_ID']}</h3>
-                        <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_order_history'>
-                            <i class='fas fa-arrow-left'></i> Back
-                        </a>
                       </div>
                       <div class='card rounded-4 p-4'>
+                          <div class='text-start'>
+                                <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_order_history'>
+                                    <i class='fas fa-arrow-left'></i> Back
+                                </a>
+                            </div>
                           <div class='row'>
                             <div class='col-md-6'>
                                 <h3>MOONLIGHT</h3>
@@ -3278,7 +3302,7 @@ elseif ($content === 'account_settings') {
                                 class='btn btn-sm btn-primary view-purchase-order'
                                 data-content='purchase_order_history'
                                 data-id='" . $po['PO_ID'] . "'>
-                                    <i class='fas fa-eye'></i> View
+                                    <i class='fas fa-eye'></i>
                                 </a>
                             </td>
                           </tr>";
