@@ -911,11 +911,355 @@ if ($content === 'purchase_order') {
             echo "<p>No pending requisitions found.</p>";
         }
     }
-
+} elseif ($content === 'withdrawal_deposit_history') {
+    include('deposit_withdrawal_history.php');
+        if ($content === 'withdrawal_deposit_history') {
+            echo "<h3>Deposit History</h3>";
+            if (!empty($depositData)) {
+                // Generate deposit history table
+                echo "<table class='table table-bordered table-striped'>
+                        <thead class='thead-dark'>
+                            <tr>
+                                <th>Quantity</th>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Employee ID</th>
+                                <th>Inventory ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+                foreach ($depositData as $row) {
+                    echo "<tr>
+                            <td>{$row['DP_QUANTITY']}</td>
+                            <td>{$row['DP_DATE']}</td>
+                            <td>{$row['DP_DESCRIPTION']}</td>
+                            <td>{$row['EMP_ID']}</td>
+                            <td>{$row['INV_ID']}</td>
+                        </tr>";
+                }
+                echo "</tbody></table>";
+            } else {
+                echo "<p>No deposit history records found.</p>";
+            }
+        
+            echo "<h3>Withdrawal History</h3>";
+            if (!empty($withdrawalData)) {
+                // Generate withdrawal history table
+                echo "<table class='table table-bordered table-striped'>
+                        <thead class='thead-dark'>
+                            <tr>
+                                <th>Quantity</th>
+                                <th>Date</th>
+                                <th>Reason</th>
+                                <th>Employee ID</th>
+                                <th>Inventory ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+                foreach ($withdrawalData as $row) {
+                    echo "<tr>
+                            <td>{$row['WDL_QUANTITY']}</td>
+                            <td>{$row['WDL_DATE']}</td>
+                            <td>{$row['WDL_REASON']}</td>
+                            <td>{$row['EMP_ID']}</td>
+                            <td>{$row['INV_ID']}</td>
+                        </tr>";
+                }
+                echo "</tbody></table>";
+            } else {
+                echo "<p>No withdrawal history records found.</p>";
+            }
+        }
 } elseif ($content === 'withdrawal_deposit') {
+    include('get_inventory_manager.php');
+
     if ($conca === 'Inventory Manager') {
         echo "<h2>Withdrawal & Deposit</h2>
               <p>Manage withdrawals and deposits here.</p>";
+
+        if (!empty($response) && isset($response[0]['id'])) {
+            // Generate table
+            echo "<table class='table table-bordered table-striped'>
+                    <thead class='thead-dark'>
+                        <tr>
+                            <th>ID</th>
+                            <th>Quantity</th>
+                            <th>Model Name</th>
+                            <th>Brand</th>
+                            <th>Location</th>
+                            <th>Date Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>";
+                    foreach ($response as $item) {
+                        echo "<tr>
+                                <td>{$item['id']}</td> <!-- This corresponds to 'id' in the response array -->
+                                <td>{$item['quantity']}</td> <!-- This corresponds to 'quantity' in the response array -->
+                                <td>{$item['model_name']}</td> <!-- This corresponds to 'model_name' in the response array -->
+                                <td>{$item['brand']}</td> <!-- This corresponds to 'brand' in the response array -->
+                                <td>{$item['location']}</td> <!-- This corresponds to 'location' in the response array -->
+                                <td>{$item['date_created']}</td> <!-- This corresponds to 'date_created' in the response array -->
+                                <td>
+                                    <button class='btn btn-success action-btn' data-id='{$item['id']}' data-action='deposit' data-name='{$item['model_name']}' data-stock='{$item['quantity']}'>Deposit</button>
+                                    <button class='btn btn-danger action-btn' data-id='{$item['id']}' data-action='withdraw' data-name='{$item['model_name']}' data-stock='{$item['quantity']}'>Withdraw</button>
+                                    <button class='btn btn-warning edit-btn' data-id='{$item['id']}' data-model='{$item['model_name']}' data-brand='{$item['brand']}' data-location='{$item['location']}'>Edit</button>
+                                </td>
+                              </tr>";
+                    }
+
+            echo "</tbody></table>";
+
+            // Add modal structure and jQuery script
+            echo "
+            <!-- Modal -->
+            <div class=\"modal fade\" id=\"actionModal\" tabindex=\"-1\" aria-labelledby=\"modalTitle\" aria-hidden=\"true\">
+                <div class=\"modal-dialog\">
+                    <div class=\"modal-content\">
+                        <div class=\"modal-header\">
+                            <h5 class=\"modal-title\" id=\"modalTitle\"></h5>
+                            <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"Close\"></button>
+                        </div>
+                        <div class=\"modal-body\">
+                            <p id=\"modalDetails\"></p>
+                            <p><strong>Current Stock:</strong> <span id=\"modalStock\"></span></p>
+
+                            <!-- Staff Selection Dropdown -->
+                            <div class=\"mb-3\">
+                                <label for=\"modalStaff\" class=\"form-label\">Select Staff:</label>
+                                <select class=\"form-control\" id=\"modalStaff\" required>
+                                    <option value=\"\">Select Staff</option>
+                                </select>
+                            </div>
+
+                            <div class=\"mb-3\">
+                                <label for=\"modalQuantity\" class=\"form-label\">Enter Quantity:</label>
+                                <input type=\"number\" class=\"form-control\" id=\"modalQuantity\" min=\"1\" required />
+                            </div>
+                            <div class=\"mb-3\" id=\"descriptionGroup\" style=\"display:none;\">
+                                <label for=\"modalDescription\" class=\"form-label\">Description (for Deposit):</label>
+                                <input type=\"text\" class=\"form-control\" id=\"modalDescription\" required />
+                            </div>
+                            <div class=\"mb-3\" id=\"reasonGroup\" style=\"display:none;\">
+                                <label for=\"modalReason\" class=\"form-label\">Reason (for Withdrawal):</label>
+                                <input type=\"text\" class=\"form-control\" id=\"modalReason\" required />
+                            </div>
+                        </div>
+                        <div class=\"modal-footer\">
+                            <button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button>
+                            <button type=\"button\" class=\"btn btn-primary\" id=\"modalSubmit\">Submit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal for Edit Item -->
+            <div class=\"modal fade\" id=\"editModal\" tabindex=\"-1\" aria-labelledby=\"editModalTitle\" aria-hidden=\"true\">
+                <div class=\"modal-dialog\">
+                    <div class=\"modal-content\">
+                        <div class=\"modal-header\">
+                            <h5 class=\"modal-title\" id=\"editModalTitle\">Edit Item</h5>
+                            <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"Close\"></button>
+                        </div>
+                        <div class=\"modal-body\">
+                            <!-- Edit Form -->
+                            <form id=\"editForm\">
+                                <input type=\"hidden\" id=\"editItemId\" />
+
+                                <div class=\"mb-3\">
+                                    <label for=\"editModelName\" class=\"form-label\">Model Name:</label>
+                                    <input type=\"text\" class=\"form-control\" id=\"editModelName\" value=\"\" readonly required />
+                                </div>
+
+                                <div class=\"mb-3\">
+                                    <label for=\"editBrand\" class=\"form-label\">Brand:</label>
+                                    <input type=\"text\" class=\"form-control\" id=\"editBrand\" readonly required />
+                                </div>
+
+                                <div class=\"mb-3\">
+                                    <label for=\"editLocation\" class=\"form-label\">Location:</label>
+                                    <input type=\"text\" class=\"form-control\" id=\"editLocation\" required />
+                                </div>
+                            </form>
+                        </div>
+                        <div class=\"modal-footer\">
+                            <button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button>
+                            <button type=\"button\" class=\"btn btn-primary\" id=\"saveEditBtn\">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <script>
+            $(document).ready(function() {
+                // Edit button functionality
+                $('.edit-btn').on('click', function() {
+                    let itemId = $(this).data('id');
+                    let modelName = $(this).data('model');
+                    let brand = $(this).data('brand');
+                    let location = $(this).data('location');
+
+                    // Populate the modal with the current item data
+                    $('#editItemId').val(itemId);
+                    $('#editModelName').val(modelName);
+                    $('#editBrand').val(brand);
+                    $('#editLocation').val(location);
+
+                    // Show the edit modal
+                    $('#editModal').modal('show');
+                });
+
+                // Save the changes to the item
+                $('#saveEditBtn').on('click', function() {
+                    let itemId = $('#editItemId').val();
+                    let location = $('#editLocation').val();
+
+                    // Validate the fields
+                    if (!location) {
+                        alert('Please fill in the location.');
+                        return;
+                    }
+
+                    // AJAX request to save the changes
+                    $.ajax({
+                        url: 'edit_inventory_item.php',  // The PHP file to handle the edit action
+                        type: 'POST',
+                        data: {
+                            item_id: itemId,
+                            location: location
+                        },
+                        success: function(response) {
+                            alert(response);
+                            $('#editModal').modal('hide');  // Close the modal
+                        },
+                        error: function(xhr, status, error) {
+                            alert('An error occurred: ' + error);
+                        }
+                    });
+                });
+
+                // Use the hidden.bs.modal event to reload the page after the modal closes
+                $('#editModal').on('hidden.bs.modal', function () {
+                    location.reload();  // Reload page after modal is fully closed
+                });
+
+                // Fetch staff for inventory department when modal is shown
+                $('.action-btn').on('click', function() {
+                    let itemId = $(this).data('id');
+                    let action = $(this).data('action');
+                    let itemName = $(this).data('name');
+                    let stock = $(this).data('stock');
+
+                    $('#modalTitle').text(action.charAt(0).toUpperCase() + action.slice(1) + ' Item');
+                    $('#modalDetails').text('Item: ' + itemName + ' (ID: ' + itemId + ')');
+                    $('#modalStock').text(stock);
+                    $('#modalQuantity').val('');  // Reset quantity field
+                    $('#modalDescription').val('');  // Reset description field
+                    $('#modalReason').val('');  // Reset reason field
+
+                    // Show the appropriate field based on action (Deposit or Withdraw)
+                    if (action === 'deposit') {
+                        $('#descriptionGroup').show(); // Show Description field for Deposit
+                        $('#reasonGroup').hide();      // Hide Reason field for Deposit
+                    } else if (action === 'withdraw') {
+                        $('#descriptionGroup').hide(); // Hide Description field for Withdraw
+                        $('#reasonGroup').show();      // Show Reason field for Withdraw
+                    }
+
+                    $('#actionModal').modal('show');
+
+                    // AJAX request to fetch inventory staff
+                    $.ajax({
+                        url: 'get_staff_inv.php',  // The PHP file to fetch staff data
+                        type: 'GET',
+                        success: function(response) {
+                            let staffData = JSON.parse(response);
+                            let staffDropdown = $('#modalStaff');
+                            staffDropdown.empty(); // Clear existing options
+                            staffDropdown.append('<option value=\"\">Select Staff</option>'); // Default option
+
+                            // Append staff options to the dropdown
+                            staffData.forEach(function(staff) {
+                                staffDropdown.append('<option value=\"' + staff.EMP_ID + '\">' + staff.EMP_NAME + '</option>');
+                            });
+                        },
+                        error: function(xhr, status, error) {
+                            alert('Failed to load staff data: ' + error);
+                        }
+                    });
+
+                    // Handle Submit button click in the modal
+                    $('#modalSubmit').off('click').on('click', function() {
+                        let quantity = $('#modalQuantity').val();
+                        let description = $('#modalDescription').val();
+                        let reason = $('#modalReason').val();
+                        let selectedStaff = $('#modalStaff').val();
+
+                        // Check if all required fields are filled
+                        if (!selectedStaff || !quantity || (action === 'deposit' && !description) || (action === 'withdraw' && !reason)) {
+                            alert('Please fill in all required fields.');
+                            return;
+                        }
+
+                        // Ensure staff selection is made
+                        if (!selectedStaff) {
+                            alert('Please select a staff member.');
+                            return;
+                        }
+
+                        // Check if the quantity entered for withdrawal is greater than the available stock
+                        if (action === 'withdraw' && quantity > stock) {
+                            alert('Error: Withdrawal quantity cannot be greater than available stock.');
+                            return;
+                        }
+
+                        // Confirmation message
+                        let confirmationMessage = '';
+                        if (action === 'deposit') {
+                            confirmationMessage = 'Are you sure you want to deposit ' + quantity + ' of ' + itemName + '?';
+                        } else if (action === 'withdraw') {
+                            confirmationMessage = 'Are you sure you want to withdraw ' + quantity + ' of ' + itemName + '?';
+                        }
+
+                        if (confirmationMessage && confirm(confirmationMessage)) {
+                            // Proceed with the AJAX request after confirmation
+                            if (quantity && quantity > 0) {
+                                $.ajax({
+                                    url: 'deposit_or_withdrawal.php',
+                                    type: 'POST',
+                                    data: {
+                                        action: action,
+                                        item_id: itemId,
+                                        quantity: quantity,
+                                        staff_id: selectedStaff,  // Include the selected staff ID
+                                        description: description,  // Only for deposit
+                                        reason: reason             // Only for withdraw
+                                    },
+                                    success: function(response) {
+                                        alert(response);
+                                        $('#actionModal').modal('hide');
+                                        location.reload();  // Reload page after action
+                                    },
+                                    error: function(xhr, status, error) {
+                                        alert('An error occurred: ' + error);
+                                    }
+                                });
+                            } else {
+                                alert('Please enter a valid quantity.');
+                            }
+                        }
+                    });
+                });
+            });
+        </script>
+
+
+
+            ";
+        } else {
+            echo "<p>No inventory items found.</p>";
+        }
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
