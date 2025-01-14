@@ -22,7 +22,7 @@ $query = "SELECT
 FROM purchase_order po
 JOIN supplier ON po.SP_ID = supplier.SP_ID
 JOIN employee emp ON emp.EMP_ID = po.emp_id
-ORDER BY po.PO_ORDER_DATE DESC
+ORDER BY po.po_id DESC
 LIMIT $items_per_page OFFSET $offset";
 
 $result = mysqli_query($db, $query);

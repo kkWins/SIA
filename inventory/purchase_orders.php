@@ -79,7 +79,8 @@ if(isset($_GET['po_id'])){
     FROM purchase_order po 
     JOIN supplier sp ON sp.SP_ID = po.SP_ID
     JOIN approval ap ON ap.ap_id = po.ap_id
-    WHERE po.PO_STATUS = 'approved'";
+    WHERE po.PO_STATUS = 'approved'
+    ORDER BY po.PO_ID DESC";
 
     $result = $db->query($sql);
     $pos = [];

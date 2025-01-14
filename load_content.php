@@ -201,7 +201,7 @@ if ($content === 'purchase_order') {
             }else{
                 echo "
                 <div>
-                    <h5>No Pending Purchase Request Found!</h5>
+                    <p>No Pending Purchase Order Found!</p>
                 </div>
                 ";
             }
@@ -403,7 +403,7 @@ if ($content === 'purchase_order') {
             }else{
                 echo "
                 <div>
-                    <h5>No Pending Purchase Request Found!</h5>
+                    <p>No Pending Purchase Order Found!</p>
                 </div>
                 ";
             }
@@ -667,7 +667,7 @@ if ($content === 'purchase_order') {
         }else{
             echo "
             <div>
-                <h5>No Pending Purchase Request Found!</h5>
+                <p>No Pending Purchase Request Found!</p>
             </div>
             ";
         }
@@ -826,7 +826,7 @@ if ($content === 'purchase_order') {
                 </table>
             </div>";
         } else {
-            echo "<h3>No pending requisitions found.</h3>";
+            echo "<p>No pending requisitions found.</p>";
         }
     }
 
@@ -1117,20 +1117,40 @@ if ($content === 'purchase_order') {
                                 $('#submitPR').click(function() {
                                     const vendor = $('#vendor').val();
                                     const items = [];
+                                    let hasInvalidInput = false;
                                     
                                     $('#prItems tbody tr').each(function() {
                                         const item = $(this).find('.item-select').val();
+                                        const quantity = $(this).find('.quantity').val();
+                                        const price = $(this).find('.price').val();
+                                        
+                                        // Check if this row has an item selected
                                         if (item) {
+                                            // Validate quantity
+                                            if (!quantity || quantity <= 0 || !Number.isInteger(Number(quantity))) {
+                                                alert('Please enter a valid whole number for quantity');
+                                                hasInvalidInput = true;
+                                                return false; // Break the loop
+                                            }
+                                            
+                                            // Validate price
+                                            if (!price || price <= 0 || isNaN(Number(price))) {
+                                                alert('Please enter a valid number for unit price');
+                                                hasInvalidInput = true;
+                                                return false; // Break the loop
+                                            }
+                                            
                                             items.push({
                                                 item_id: item,
-                                                quantity: $(this).find('.quantity').val(),
-                                                price: $(this).find('.price').val(),
+                                                quantity: quantity,
+                                                price: price,
                                                 total: $(this).find('.total').text()
                                             });
                                         }
                                     });
 
-                                    if (vendor && items.length > 0) {
+                                    // Only proceed if all inputs are valid and we have items
+                                    if (!hasInvalidInput && vendor && items.length > 0) {
                                         $.ajax({
                                             url: 'submit_purchase_request.php',
                                             type: 'POST',
@@ -1160,7 +1180,7 @@ if ($content === 'purchase_order') {
                                                 alert('Error processing request. Please try again.');
                                             }
                                         });
-                                    } else {
+                                    } else if (!hasInvalidInput) {
                                         alert('Please fill in all required fields.');
                                     }
                                 });
@@ -1250,7 +1270,7 @@ if ($content === 'purchase_order') {
                         }else{
                         echo "
                         <div>
-                            <h5>No Purchase request yet.</h5>
+                            <p>No Purchase request yet.</p>
                         </div>
                         ";
                       }
@@ -3170,14 +3190,31 @@ elseif ($content === 'account_settings') {
                             </div>
                         </div>
                         
-                        <div class='order-details'>";
-                            if($poDetails['PO_ORDER_DATE']){
-                                echo "<p class='mb-0'><strong>Order Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ORDER_DATE'])) . "</p>";
-                            }
-                            if($poDetails['PO_ARRIVAL_DATE']){
-                                echo "<p class='mb-0'><strong>Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
-                            }
-                        echo "</div>";
+                        <div class='order-details'>
+                            <div class='row'>
+                                <div class='col-md-6'>";
+                                    if($poDetails['PO_ORDER_DATE']){
+                                        echo "<p class='mb-0'><strong>Order Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ORDER_DATE'])) . "</p>";
+                                    }
+                                    if($poDetails['PO_ARRIVAL_DATE']){
+                                        echo "<p class='mb-0'><strong>Expected Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
+                                    }
+                                echo "
+                                </div>
+                                <div class='col-md-6'>";
+                                    if($poDetails['PD_PAYMENT_TYPE']){
+                                        echo "<p class='mb-0'><strong>Payment Check:</strong> {$poDetails['PD_PAYMENT_TYPE']}</p>";
+                                    }
+                                    if($poDetails['PD_AMMOUNT']){
+                                        echo "<p class='mb-0'><strong>Amount:</strong> ₱" . number_format($poDetails['PD_AMMOUNT'], 2) . "</p>";
+                                    }
+                                    if($poDetails['PD_CHANGE']){
+                                        echo "<p class='mb-0'><strong>Amount:</strong> ₱" . number_format($poDetails['PD_CHANGE'], 2) . "</p>";
+                                    }
+                                echo "</div>";                              
+                        echo "
+                            </div>
+                        </div>";
                           
                         echo "<h4 class='mt-3'>Items</h4>
                           <table class='table'>
