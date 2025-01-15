@@ -979,7 +979,52 @@ if ($content === 'purchase_order') {
 
         if (!empty($response) && isset($response[0]['id'])) {
             // Generate table
-            echo "<table class='table table-bordered table-striped'>
+            echo "
+                <!-- Create Inventory Item Button -->
+                <div class=\"d-flex justify-content-end\">
+                    <button class=\"btn btn-primary\" data-bs-toggle=\"modal\" data-bs-target=\"#createModal\">Add Inventory Item</button>
+                </div>
+
+                <!-- Create Modal -->
+                <div class=\"modal fade\" id=\"createModal\" tabindex=\"-1\" aria-labelledby=\"createModalLabel\" aria-hidden=\"true\">
+                    <div class=\"modal-dialog\">
+                        <div class=\"modal-content\">
+                            <div class=\"modal-header\">
+                                <h5 class=\"modal-title\" id=\"createModalLabel\">Add Inventory Item</h5>
+                                <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"Close\"></button>
+                            </div>
+                            <div class=\"modal-body\">
+                                <form id=\"createInventoryForm\">
+                                    <div class=\"mb-3\">
+                                        <label for=\"invQuantity\" class=\"form-label\">Intitial Quantity:</label>
+                                        <input type=\"number\" class=\"form-control\" id=\"invQuantity\" name=\"quantity\" required>
+                                    </div>
+                                    <div class=\"mb-3\">
+                                        <label for=\"invModelName\" class=\"form-label\">Model Name:</label>
+                                        <input type=\"text\" class=\"form-control\" id=\"invModelName\" name=\"model_name\" required>
+                                    </div>
+                                    <div class=\"mb-3\">
+                                        <label for=\"invBrand\" class=\"form-label\">Brand:</label>
+                                        <input type=\"text\" class=\"form-control\" id=\"invBrand\" name=\"brand\" required>
+                                    </div>
+                                    <div class=\"mb-3\">
+                                        <label for=\"invLocation\" class=\"form-label\">Location:</label>
+                                        <input type=\"text\" class=\"form-control\" id=\"invLocation\" name=\"location\" required>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class=\"modal-footer\">
+                                <button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button>
+                                <button type=\"button\" class=\"btn btn-primary\" id=\"submitCreateForm\">Save Item</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                   
+            
+            
+                <table class='table table-bordered table-striped'>
                     <thead class='thead-dark'>
                         <tr>
                             <th>ID</th>
@@ -1093,6 +1138,39 @@ if ($content === 'purchase_order') {
 
             <script>
             $(document).ready(function() {
+                $('#submitCreateForm').on('click', function() {
+                let formData = {
+                    quantity: $('#invQuantity').val(),
+                    model_name: $('#invModelName').val(),
+                    brand: $('#invBrand').val(),
+                    location: $('#invLocation').val()
+                };
+
+                // Validate the form
+                if (!formData.quantity || !formData.model_name || !formData.brand || !formData.location) {
+                    alert('Please fill in all fields.');
+                    return;
+                }
+
+                // Send the form data via AJAX
+                $.ajax({
+                    url: 'add_item.php',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        alert(response); // Notify the user
+                        $('#createModal').modal('hide'); // Hide the modal
+                        location.reload(); // Reload the page
+                    },
+                    error: function(xhr, status, error) {
+                        alert('An error occurred: ' + error);
+                    }
+                });
+            });
+
+
+
+
                 // Edit button functionality
                 $('.edit-btn').on('click', function() {
                     let itemId = $(this).data('id');
