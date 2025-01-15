@@ -111,7 +111,7 @@ if ($content === 'purchase_order') {
                                     required>
                             </div>
                             <div class='col-md-6'>
-                                <label for='arrival_datetime' class='form-label'><strong>Expected Arrival Date & Time:</strong></label>
+                                <label for='arrival_datetime' class='form-label'><strong>Arrival Date & Time:</strong></label>
                                 <input type='datetime-local' class='form-control' id='arrival_datetime' 
                                     value='" . (!empty($response['po_details']['PO_ARRIVAL_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ARRIVAL_DATE'])) : '') . "' 
                                     required>
