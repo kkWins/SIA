@@ -59,7 +59,9 @@ $count_stmt = $db->prepare($count_query);
 if (!empty($params)) {
     $temp_params = array_slice($params, 0, -2); // Remove limit and offset
     $temp_types = substr($types, 0, -2); // Remove last two type indicators
-    $count_stmt->bind_param($temp_types, ...$temp_params);
+    if (!empty($temp_types)) {
+        $count_stmt->bind_param($temp_types, ...$temp_params);
+    }
 }
 $count_stmt->execute();
 $total_records = $count_stmt->get_result()->fetch_assoc()['total'];
@@ -68,7 +70,9 @@ $total_pages = ceil($total_records / $records_per_page);
 // Prepare and execute main query
 $stmt = $db->prepare($base_query);
 if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
+    if (!empty($types)) {
+        $stmt->bind_param($types, ...$params);
+    }
 }
 $stmt->execute();
 $result = $stmt->get_result();
