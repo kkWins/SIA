@@ -343,11 +343,19 @@ $department = $_SESSION['department'];
                 loadContent(content, null, page);
             }
 
-            function loadContent(content, id = null, page = null) {
-                const params = { content: content };
-                let url = `?content=${content}`;
+            function loadContent(content, id = null, page = null, additionalParams = {}) {
+                // Remove any existing page parameter from additionalParams to avoid duplication
+                const { page: _, ...filteredParams } = additionalParams;
                 
-                // Only add ID parameters if they're provided
+                const params = { content: content, ...filteredParams };
+                
+                // Add page parameter only if it exists
+                if (page) {
+                    params.page = page;
+                }
+                
+                let url = `?${new URLSearchParams(params).toString()}`;
+                
                 if (id) {
                     if (content === 'purchase_request' || content === 'purchase_request_history') {
                         params.pr_id = id;
@@ -361,24 +369,18 @@ $department = $_SESSION['department'];
                     } else if (content === 'requisition_approval' || content === 'approved_requisitions') {
                         params.req_id = id;
                         url += `&req_id=${id}`;
-                    }else if (content === 'inventory-task') {
+                    } else if (content === 'inventory-task') {
                         params.req_id = id;
                         url += `&req_id=${id}`;
-                    }else if (content === 'requisition_form_history') {
+                    } else if (content === 'requisition_form_history') {
                         params.req_id = id;
                         url += `&req_id=${id}`;
                     }
                 }
 
-                // Add page parameter if provided
-                if (page) {
-                    params.page = page;
-                    url += `&page=${page}`;
-                }
-
                 // Update URL and load content
                 history.pushState({}, '', url);
-                $.get('load_content.php', params, function (response) {
+                $.get('load_content.php', params, function(response) {
                     $('#content').html(response);
                 });
             }
@@ -388,9 +390,15 @@ $department = $_SESSION['department'];
                 e.preventDefault();
                 const href = $(this).attr('href');
                 const urlParams = new URLSearchParams(href.split('?')[1]);
-                const content = urlParams.get('content');
-                const page = urlParams.get('page');
-                loadContent(content, null, page);
+                
+                // Get all parameters from the clicked link
+                const params = {};
+                for (const [key, value] of urlParams) {
+                    params[key] = value;
+                }
+                
+                // Load content with all parameters
+                loadContent(params.content, null, params.page, params);
             });
 
             // Sidebar link actions to load the respective content

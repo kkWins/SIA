@@ -3071,25 +3071,31 @@ elseif ($content === 'account_settings') {
                         echo "</tbody>
                             </table>";
 
-                        // Add pagination navigation
+                        // Modify the pagination section to include all active filters
                         if (isset($pagination) && $pagination['total_pages'] > 1) {
                             echo "<nav aria-label='Page navigation' class='mt-4'>
                                     <ul class='pagination justify-content-center'>";
                             
-                            // Previous button
-                            $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
-                            $filterParams = http_build_query(array_filter([
+                            // Get all current filter values
+                            $filterParams = array_filter([
                                 'filter_id' => $_GET['filter_id'] ?? '',
                                 'filter_name' => $_GET['filter_name'] ?? '',
                                 'filter_department' => $_GET['filter_department'] ?? '',
                                 'filter_date' => $_GET['filter_date'] ?? '',
                                 'filter_status' => $_GET['filter_status'] ?? ''
-                            ]));
-                            $filterParams = $filterParams ? '&' . $filterParams : '';
-
+                            ]);
+                            
+                            // Build the query string for filters
+                            $filterQueryString = '';
+                            if (!empty($filterParams)) {
+                                $filterQueryString = '&' . http_build_query($filterParams);
+                            }
+                            
+                            // Previous button
+                            $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
                             echo "<li class='page-item{$prevDisabled}'>
                                     <a class='page-link' href='?content=requisition_form_history&page=" . 
-                                    ($pagination['current_page'] - 1) . $filterParams . "'" . 
+                                    ($pagination['current_page'] - 1) . $filterQueryString . "'" . 
                                     ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
                                     ">Previous</a>
                                 </li>";
@@ -3098,7 +3104,7 @@ elseif ($content === 'account_settings') {
                             for ($i = 1; $i <= $pagination['total_pages']; $i++) {
                                 $active = $pagination['current_page'] == $i ? ' active' : '';
                                 echo "<li class='page-item{$active}'>
-                                        <a class='page-link' href='?content=requisition_form_history&page={$i}{$filterParams}'>
+                                        <a class='page-link' href='?content=requisition_form_history&page={$i}{$filterQueryString}'>
                                             {$i}
                                         </a>
                                     </li>";
@@ -3108,7 +3114,7 @@ elseif ($content === 'account_settings') {
                             $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
                             echo "<li class='page-item{$nextDisabled}'>
                                     <a class='page-link' href='?content=requisition_form_history&page=" . 
-                                    ($pagination['current_page'] + 1) . $filterParams . "'" .
+                                    ($pagination['current_page'] + 1) . $filterQueryString . "'" .
                                     ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
                                     ">Next</a>
                                 </li>";
@@ -3123,23 +3129,24 @@ elseif ($content === 'account_settings') {
                         $(document).ready(function() {
                             // Apply filter button click handler
                             $('#applyFilter').click(function() {
-                                applyFilters();
+                                applyFilters(1); // Reset to page 1 when applying new filters
                             });
 
                             // Reset filter button click handler
                             $('#resetFilter').click(function() {
                                 $('#filterForm')[0].reset();
-                                applyFilters();
+                                applyFilters(1); // Reset to page 1 when clearing filters
                             });
 
-                            function applyFilters() {
+                            function applyFilters(page) {
                                 const filters = {
                                     filter_id: $('#filterID').val(),
                                     filter_name: $('#filterName').val(),
                                     filter_department: $('#filterDepartment').val(),
                                     filter_date: $('#filterDate').val(),
                                     filter_status: $('#filterStatus').val(),
-                                    content: 'requisition_form_history'
+                                    content: 'requisition_form_history',
+                                    page: page || 1
                                 };
 
                                 // Update URL with filter parameters
