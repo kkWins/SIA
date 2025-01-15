@@ -27,6 +27,11 @@ if ($content === 'purchase_order') {
 
         if(isset($_GET['po_id'])){
             if($response['po_details']) {
+                // Define hasPaymentDetails before using it
+                $hasPaymentDetails = !empty($response['po_details']['PD_PAYMENT_TYPE']) && 
+                                    !empty($response['po_details']['PD_CHANGE']) && 
+                                    !empty($response['po_details']['PD_AMMOUNT']);
+
                 echo "
                     <div class='card rounded-4 p-4'>
                     <div class='text-start'>
@@ -114,6 +119,7 @@ if ($content === 'purchase_order') {
                                 <label for='arrival_datetime' class='form-label'><strong>Arrival Date & Time:</strong></label>
                                 <input type='datetime-local' class='form-control' id='arrival_datetime' 
                                     value='" . (!empty($response['po_details']['PO_ARRIVAL_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ARRIVAL_DATE'])) : '') . "' 
+                                    " . (!$response['po_details']['PO_ORDER_DATE'] || !$hasPaymentDetails ? 'disabled' : '') . "
                                     required>
                             </div>
                         </div>
@@ -189,8 +195,18 @@ if ($content === 'purchase_order') {
                                 const poId = $(this).data('id');
                                 const orderDateTime = $('#order_datetime').val();
                                 const arrivalDateTime = $('#arrival_datetime').val();
-                                console.log(orderDateTime);
                                 
+                                // Convert datetime strings to Date objects for comparison
+                                const orderDate = new Date(orderDateTime);
+                                const arrivalDate = new Date(arrivalDateTime);
+                                
+                                // Validate dates if both are filled
+                                if (orderDateTime && arrivalDateTime) {
+                                    if (arrivalDate < orderDate) {
+                                        alert('Arrival date cannot be earlier than order date');
+                                        return;
+                                    }
+                                }
                                 
                                 // Send AJAX request
                                 $.ajax({
@@ -219,6 +235,20 @@ if ($content === 'purchase_order') {
                                         alert('Error submitting purchase order');
                                     }
                                 });
+                            });
+
+                            // Add event listener for order_datetime changes
+                            $('#order_datetime').on('change', function() {
+                                const orderDateTime = $(this).val();
+                                const hasPaymentDetails = " . json_encode($hasPaymentDetails) . ";
+                                
+                                // Only enable arrival_datetime if order_datetime has a value AND payment details exist
+                                $('#arrival_datetime').prop('disabled', !orderDateTime || !hasPaymentDetails);
+                                
+                                // Set minimum date for arrival_datetime to be the order date
+                                if (orderDateTime) {
+                                    $('#arrival_datetime').attr('min', orderDateTime);
+                                }
                             });
                         });
                         </script>";
