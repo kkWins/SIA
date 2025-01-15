@@ -2518,10 +2518,11 @@ elseif ($content === 'account_settings') {
             </script>";
 } elseif ($role === 'Admin') {
     if ($content === 'manage_employees') {
-        // Get employees data with pagination
+        // Get employees data with pagination and search
         $page = isset($_GET['page']) ? $_GET['page'] : 1;
+        $search = isset($_GET['search']) ? $_GET['search'] : '';  // Add this line
         require_once 'admin/get_employees.php';
-        $result = get_employees(); // Add this line to call the function
+        $result = get_employees($search); // Pass the search parameter
 
         echo "<h2>Manage Employees</h2>
 
@@ -2534,6 +2535,18 @@ elseif ($content === 'account_settings') {
                     Add Employee
                 </button>
             </div>
+
+            <!-- Search form moved to right side -->
+            <div class='d-flex justify-content-end mb-3'>
+                <form id='searchForm' class='d-flex gap-2' style='width: 600px;'>
+                    <input type='text' class='form-control' id='searchTerm' name='search' 
+                        placeholder='Search by name, email, department...'
+                        value='" . (isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '') . "'>
+                    <button type='submit' class='btn btn-primary'>Search</button>
+                    <button type='button' class='btn btn-secondary' id='clearSearch'>Clear</button>
+                </form>
+            </div>
+
             <div class='table-responsive'>
                 <table class='table table-striped' id='employeesTable'>
                     <thead>
@@ -2583,29 +2596,35 @@ elseif ($content === 'account_settings') {
                 // Pagination
                 if (isset($result['pagination']) && $result['pagination']['total_pages'] > 1) {
                     $pagination = $result['pagination'];
+                    
+                    // Add this line to handle search parameter
+                    $searchParam = isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
+                    
                     echo "<nav aria-label='Page navigation' class='mt-4'>
                             <ul class='pagination justify-content-center'>";
                     
                     // Previous button
                     $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
                     echo "<li class='page-item{$prevDisabled}'>
-                            <a class='page-link' href='?content=manage_employees&page=" . ($pagination['current_page'] - 1) . "'>Previous</a>
+                            <a class='page-link' href='?content=manage_employees&page=" . 
+                            ($pagination['current_page'] - 1) . $searchParam . "'>Previous</a>
                           </li>";
-
+                
                     // Page numbers
                     for ($i = 1; $i <= $pagination['total_pages']; $i++) {
                         $active = $pagination['current_page'] == $i ? ' active' : '';
                         echo "<li class='page-item{$active}'>
-                                <a class='page-link' href='?content=manage_employees&page={$i}'>{$i}</a>
+                                <a class='page-link' href='?content=manage_employees&page={$i}{$searchParam}'>{$i}</a>
                               </li>";
                     }
-
+                
                     // Next button
                     $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
                     echo "<li class='page-item{$nextDisabled}'>
-                            <a class='page-link' href='?content=manage_employees&page=" . ($pagination['current_page'] + 1) . "'>Next</a>
+                            <a class='page-link' href='?content=manage_employees&page=" . 
+                            ($pagination['current_page'] + 1) . $searchParam . "'>Next</a>
                           </li>";
-
+                
                     echo "</ul>
                         </nav>";
                 }
@@ -2613,157 +2632,192 @@ elseif ($content === 'account_settings') {
             echo "</div>
         </div>";
 
-        // Add Employee Modal HTML remains the same
-        echo "<!-- Add Employee Modal -->
-            <div class='modal fade' id='addEmployeeModal' tabindex='-1' aria-labelledby='addEmployeeModalLabel' aria-hidden='true'>
-                <div class='modal-dialog modal-lg'>
+            // Add Employee Modal HTML remains the same
+            echo "<!-- Add Employee Modal -->
+                <div class='modal fade' id='addEmployeeModal' tabindex='-1' aria-labelledby='addEmployeeModalLabel' aria-hidden='true'>
+                    <div class='modal-dialog modal-lg'>
+                        <div class='modal-content'>
+                            <div class='modal-header'>
+                                <h5 class='modal-title' id='addEmployeeModalLabel'>Add New Employee</h5>
+                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                            </div>
+                            <div class='modal-body'>
+                                <form id='addEmployeeForm'>
+                                    <div class='row'>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='emp_fname' class='form-label'>First Name</label>
+                                            <input type='text' class='form-control' id='emp_fname' name='emp_fname' required>
+                                        </div>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='emp_lname' class='form-label'>Last Name</label>
+                                            <input type='text' class='form-control' id='emp_lname' name='emp_lname' required>
+                                        </div>
+                                    </div>
+                                    <div class='row'>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='emp_email' class='form-label'>Email</label>
+                                            <input type='email' class='form-control' id='emp_email' name='emp_email' required>
+                                        </div>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='emp_password' class='form-label'>Password</label>
+                                            <input type='password' class='form-control' id='emp_password' name='emp_password' required>
+                                        </div>
+                                    </div>
+                                    <div class='row'>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='department' class='form-label'>Department</label>
+                                            <select class='form-select' id='department' name='department' required>
+                                                <option value=''>Select Department</option>
+                                                <option value='Finance'>Finance</option>
+                                                <option value='Inventory'>Inventory</option>
+                                                <option value='Labor'>Labor</option>
+                                            </select>
+                                        </div>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='position' class='form-label'>Position</label>
+                                            <select class='form-select' id='position' name='position' required>
+                                                <option value=''>Select Position</option>
+                                                <option value='Manager'>Manager</option>
+                                                <option value='Staff'>Staff</option>
+                                            </select>
+                                        </div>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='contact_no' class='form-label'>Contact Number</label>
+                                            <input type='text' class='form-control' id='contact_no' name='contact_no' required>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class='modal-footer'>
+                                <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                <button type='button' class='btn btn-primary' id='submitEmployee'>Add Employee</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deactivate Confirmation Modal -->
+                <div class='modal fade' id='toggleStatusModal' tabindex='-1' aria-labelledby='toggleStatusModalLabel' aria-hidden='true'>
+                <div class='modal-dialog'>
                     <div class='modal-content'>
                         <div class='modal-header'>
-                            <h5 class='modal-title' id='addEmployeeModalLabel'>Add New Employee</h5>
+                            <h5 class='modal-title' id='toggleStatusModalLabel'>Confirm Status Change</h5>
                             <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
                         </div>
                         <div class='modal-body'>
-                            <form id='addEmployeeForm'>
-                                <div class='row'>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='emp_fname' class='form-label'>First Name</label>
-                                        <input type='text' class='form-control' id='emp_fname' name='emp_fname' required>
-                                    </div>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='emp_lname' class='form-label'>Last Name</label>
-                                        <input type='text' class='form-control' id='emp_lname' name='emp_lname' required>
-                                    </div>
-                                </div>
-                                <div class='row'>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='emp_email' class='form-label'>Email</label>
-                                        <input type='email' class='form-control' id='emp_email' name='emp_email' required>
-                                    </div>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='emp_password' class='form-label'>Password</label>
-                                        <input type='password' class='form-control' id='emp_password' name='emp_password' required>
-                                    </div>
-                                </div>
-                                <div class='row'>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='department' class='form-label'>Department</label>
-                                        <select class='form-select' id='department' name='department' required>
-                                            <option value=''>Select Department</option>
-                                            <option value='Finance'>Finance</option>
-                                            <option value='Inventory'>Inventory</option>
-                                            <option value='Labor'>Labor</option>
-                                        </select>
-                                    </div>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='position' class='form-label'>Position</label>
-                                        <select class='form-select' id='position' name='position' required>
-                                            <option value=''>Select Position</option>
-                                            <option value='Manager'>Manager</option>
-                                            <option value='Staff'>Staff</option>
-                                        </select>
-                                    </div>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='contact_no' class='form-label'>Contact Number</label>
-                                        <input type='text' class='form-control' id='contact_no' name='contact_no' required>
-                                    </div>
-                                </div>
-                            </form>
+                            <p id='toggleStatusMessage'></p>
+                            <input type='hidden' id='toggle_emp_id'>
+                            <input type='hidden' id='toggle_status'>
                         </div>
                         <div class='modal-footer'>
-                            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
-                            <button type='button' class='btn btn-primary' id='submitEmployee'>Add Employee</button>
+                            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Cancel</button>
+                            <button type='button' class='btn btn-primary' id='confirmToggleStatus'>Confirm</button>
                         </div>
                     </div>
                 </div>
-            </div>
+                </div>
 
-            <!-- Deactivate Confirmation Modal -->
-            <div class='modal fade' id='toggleStatusModal' tabindex='-1' aria-labelledby='toggleStatusModalLabel' aria-hidden='true'>
-            <div class='modal-dialog'>
-                <div class='modal-content'>
-                    <div class='modal-header'>
-                        <h5 class='modal-title' id='toggleStatusModalLabel'>Confirm Status Change</h5>
-                        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-                    </div>
-                    <div class='modal-body'>
-                        <p id='toggleStatusMessage'></p>
-                        <input type='hidden' id='toggle_emp_id'>
-                        <input type='hidden' id='toggle_status'>
-                    </div>
-                    <div class='modal-footer'>
-                        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Cancel</button>
-                        <button type='button' class='btn btn-primary' id='confirmToggleStatus'>Confirm</button>
-                    </div>
-                </div>
-            </div>
-            </div>
-
-            <!-- Edit Employee Modal -->
-            <div class='modal fade' id='editEmployeeModal' tabindex='-1' aria-labelledby='editEmployeeModalLabel' aria-hidden='true'>
-                <div class='modal-dialog modal-lg'>
-                    <div class='modal-content'>
-                        <div class='modal-header'>
-                            <h5 class='modal-title' id='editEmployeeModalLabel'>Edit Employee</h5>
-                            <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-                        </div>
-                        <div class='modal-body'>
-                            <form id='editEmployeeForm'>
-                                <input type='hidden' id='edit_emp_id' name='emp_id'>
-                                <div class='row'>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='edit_emp_fname' class='form-label'>First Name</label>
-                                        <input type='text' class='form-control' id='edit_emp_fname' name='emp_fname' required>
+                <!-- Edit Employee Modal -->
+                <div class='modal fade' id='editEmployeeModal' tabindex='-1' aria-labelledby='editEmployeeModalLabel' aria-hidden='true'>
+                    <div class='modal-dialog modal-lg'>
+                        <div class='modal-content'>
+                            <div class='modal-header'>
+                                <h5 class='modal-title' id='editEmployeeModalLabel'>Edit Employee</h5>
+                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                            </div>
+                            <div class='modal-body'>
+                                <form id='editEmployeeForm'>
+                                    <input type='hidden' id='edit_emp_id' name='emp_id'>
+                                    <div class='row'>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='edit_emp_fname' class='form-label'>First Name</label>
+                                            <input type='text' class='form-control' id='edit_emp_fname' name='emp_fname' required>
+                                        </div>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='edit_emp_lname' class='form-label'>Last Name</label>
+                                            <input type='text' class='form-control' id='edit_emp_lname' name='emp_lname' required>
+                                        </div>
                                     </div>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='edit_emp_lname' class='form-label'>Last Name</label>
-                                        <input type='text' class='form-control' id='edit_emp_lname' name='emp_lname' required>
+                                    <div class='row'>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='edit_emp_email' class='form-label'>Email</label>
+                                            <input type='email' class='form-control' id='edit_emp_email' name='emp_email' required>
+                                        </div>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='edit_emp_password' class='form-label'>Password (leave blank if unchanged)</label>
+                                            <input type='password' class='form-control' id='edit_emp_password' name='emp_password'>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class='row'>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='edit_emp_email' class='form-label'>Email</label>
-                                        <input type='email' class='form-control' id='edit_emp_email' name='emp_email' required>
+                                    <div class='row'>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='edit_department' class='form-label'>Department</label>
+                                            <select class='form-select' id='edit_department' name='department' required>
+                                                <option value=''>Select Department</option>
+                                                <option value='Finance'>Finance</option>
+                                                <option value='Inventory'>Inventory</option>
+                                                <option value='Labor'>Labor</option>
+                                            </select>
+                                        </div>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='edit_position' class='form-label'>Position</label>
+                                            <select class='form-select' id='edit_position' name='position' required>
+                                                <option value=''>Select Position</option>
+                                                <option value='Manager'>Manager</option>
+                                                <option value='Staff'>Staff</option>
+                                            </select>
+                                        </div>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='edit_contact_no' class='form-label'>Contact Number</label>
+                                            <input type='text' class='form-control' id='edit_contact_no' name='contact_no' required>
+                                        </div>
                                     </div>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='edit_emp_password' class='form-label'>Password (leave blank if unchanged)</label>
-                                        <input type='password' class='form-control' id='edit_emp_password' name='emp_password'>
-                                    </div>
-                                </div>
-                                <div class='row'>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='edit_department' class='form-label'>Department</label>
-                                        <select class='form-select' id='edit_department' name='department' required>
-                                            <option value=''>Select Department</option>
-                                            <option value='Finance'>Finance</option>
-                                            <option value='Inventory'>Inventory</option>
-                                            <option value='Labor'>Labor</option>
-                                        </select>
-                                    </div>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='edit_position' class='form-label'>Position</label>
-                                        <select class='form-select' id='edit_position' name='position' required>
-                                            <option value=''>Select Position</option>
-                                            <option value='Manager'>Manager</option>
-                                            <option value='Staff'>Staff</option>
-                                        </select>
-                                    </div>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='edit_contact_no' class='form-label'>Contact Number</label>
-                                        <input type='text' class='form-control' id='edit_contact_no' name='contact_no' required>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                        <div class='modal-footer'>
-                            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
-                            <button type='button' class='btn btn-primary' id='updateEmployee'>Update Employee</button>
+                                </form>
+                            </div>
+                            <div class='modal-footer'>
+                                <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                <button type='button' class='btn btn-primary' id='updateEmployee'>Update Employee</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
           
           <script>
             $(document).ready(function() {
+
+                // Handle search form submission
+                $('#searchForm').on('submit', function(e) {
+                    e.preventDefault();
+                    const searchTerm = $('#searchTerm').val();
+                    
+                    // Make AJAX call directly
+                    $.get('load_content.php', {
+                        content: 'manage_employees',
+                        search: searchTerm
+                    }, function(response) {
+                        $('#content').html(response);
+                        
+                        // Update URL without reloading - Fixed the string concatenation
+                        const newUrl = '?content=manage_employees&search=' + encodeURIComponent(searchTerm);
+                        history.pushState({}, '', newUrl);
+                    });
+                });
+
+                // Handle clear search
+                $('#clearSearch').click(function(e) {
+                    e.preventDefault();
+                    $('#searchTerm').val('');
+                    
+                    // Make AJAX call directly
+                    $.get('load_content.php', {
+                        content: 'manage_employees'
+                    }, function(response) {
+                        $('#content').html(response);
+                        
+                        // Update URL without reloading
+                        const newUrl = '?content=manage_employees';
+                        history.pushState({}, '', newUrl);
+                    });
+                });
                 
                 $('.toggle-status').click(function() {
                     const empId = $(this).data('id');

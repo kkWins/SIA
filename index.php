@@ -354,6 +354,13 @@ $department = $_SESSION['department'];
                     params.page = page;
                 }
                 
+                // Get search parameter from URL if it exists
+                const urlParams = new URLSearchParams(window.location.search);
+                const searchTerm = urlParams.get('search');
+                if (searchTerm) {
+                    params.search = searchTerm;
+                }
+                
                 let url = `?${new URLSearchParams(params).toString()}`;
                 
                 if (id) {
