@@ -1436,9 +1436,6 @@ if ($content === 'purchase_order') {
                 });
             });
         </script>
-
-
-
             ";
         } else {
             echo "<p>No inventory items found.</p>";
@@ -1545,9 +1542,9 @@ if ($content === 'purchase_order') {
                                             <div class='modal-body'>
                                                 <form id='purchaseRequestForm'>
                                                     <div class='mb-3'>
-                                                        <label for='vendor' class='form-label'>Select Vendor</label>
+                                                        <label for='vendor' class='form-label fw-bold'>Supplier Name</label>
                                                         <select class='form-select vendor-select' id='vendor' required>
-                                                            <option value=''>Select Vendor</option>
+                                                            <option value=''>Select Supplier</option>
                                                         </select>
                                                     </div>
                                                     
@@ -1564,15 +1561,15 @@ if ($content === 'purchase_order') {
                                                         <tbody>
                                                             <tr>
                                                                 <td>
-                                                                    <select class='form-select item-select'>
-                                                                        <option value=''>Select Item</option>
+                                                                    <select class='form-select item-select' disabled>
+                                                                        <option value=''>Select Supplier First</option>
                                                                     </select>
                                                                 </td>
                                                                 <td>
                                                                     <input type='number' class='form-control quantity' min='1'>
                                                                 </td>
                                                                 <td>
-                                                                    <input type='number' class='form-control price' min='0' step='0.01'>
+                                                                    <input type='number' class='form-control price' min='0' step='0.01' readonly>
                                                                 </td>
                                                                 <td class='total'>0.00</td>
                                                                 <td>
@@ -1628,18 +1625,156 @@ if ($content === 'purchase_order') {
                                     }
                                 });
 
-                                // Load inventory items
-                                $.ajax({
-                                    url: 'get_inventory.php',
-                                    type: 'GET',
-                                    success: function(data) {
-                                        const items = JSON.parse(data);
-                                        const options = items.map(function(item) {
-                                            return '<option value=\"' + item.id + '\">' + item.name + '</option>';
-                                        }).join('');
-                                        $('.item-select').append(options);
+                                // Update the vendor change handler
+                                $('#vendor').on('change', function() {
+                                    const vendorId = $(this).val();
+                                    $('.item-select').prop('disabled', !vendorId);
+                                    
+                                    // Clear existing items and reset fields
+                                    $('.item-select').empty().append($('<option>', {
+                                        value: '',
+                                        text: vendorId ? 'Select Item' : 'Select Supplier First'
+                                    }));
+                                    $('.price').val(''); // Clear price fields
+                                    $('.quantity').val(''); // Clear quantity fields
+                                    $('.total').text('0.00'); // Reset totals
+                                    $('#grandTotal').text('0.00'); // Reset grand total
+                                    
+                                    if (vendorId) {
+                                        // Load items for selected vendor with their prices
+                                        $.ajax({
+                                            url: 'get_vendor_items.php',
+                                            type: 'GET',
+                                            data: { vendor_id: vendorId },
+                                            success: function(response) {
+                                                try {
+                                                    const items = JSON.parse(response);
+                                                    if (items.length === 0) {
+                                                        alert('No items found for this supplier');
+                                                        return;
+                                                    }
+                                                    
+                                                    $('.item-select').each(function() {
+                                                        const select = $(this);
+                                                        items.forEach(function(item) {
+                                                            select.append($('<option>', {
+                                                                value: item.id,
+                                                                text: item.name + ' (' + item.brand + ')',
+                                                                'data-price': item.price
+                                                            }));
+                                                        });
+                                                    });
+                                                    
+                                                    // Add change handler for item selection
+                                                    $('.item-select').off('change').on('change', function() {
+                                                        const selectedOption = $(this).find('option:selected');
+                                                        const price = selectedOption.data('price');
+                                                        $(this).closest('tr').find('.price').val(price);
+                                                        calculateTotal($(this).closest('tr'));
+                                                    });
+                                                    
+                                                } catch(e) {
+                                                    console.error('Error parsing JSON:', e);
+                                                    alert('Error loading items. Please try again.');
+                                                }
+                                            },
+                                            error: function(xhr, status, error) {
+                                                console.error('Ajax Error:', error);
+                                                alert('Error loading items. Please try again.');
+                                            }
+                                        });
                                     }
                                 });
+
+                                 // Add new row
+                                $('#addNewRow').click(function() {
+                                    // Get all currently selected items
+                                    const selectedItems = [];
+                                    $('.item-select').each(function() {
+                                        const selectedValue = $(this).val();
+                                        if (selectedValue) {
+                                            selectedItems.push(selectedValue);
+                                        }
+                                    });
+                                    
+                                    // Get all options from first select, but filter out already selected items
+                                    const firstSelect = $('.item-select').first();
+                                    const availableOptions = [];
+                                    firstSelect.find('option').each(function() {
+                                        const value = $(this).val();
+                                        if (value && !selectedItems.includes(value)) {
+                                            availableOptions.push($(this).prop('outerHTML'));
+                                        }
+                                    });
+                                    
+                                    // Only add new row if there are available items
+                                    if (availableOptions.length > 0) {
+                                        const newRow = 
+                                            '<tr>' +
+                                                '<td>' +
+                                                    '<select class=\"form-select item-select\">' +
+                                                    '<option value=\"\">Select Item</option>' + // Add default option
+                                                    availableOptions.join('') +
+                                                    '</select>' +
+                                                '</td>' +
+                                                '<td>' +
+                                                    '<input type=\"number\" class=\"form-control quantity\" min=\"1\">' +
+                                                '</td>' +
+                                                '<td>' +
+                                                    '<input type=\"number\" class=\"form-control price\" min=\"0\" step=\"0.01\" readonly>' +
+                                                '</td>' +
+                                                '<td class=\"total\">0.00</td>' +
+                                                '<td>' +
+                                                    '<button type=\"button\" class=\"btn btn-danger btn-sm delete-row\">Delete</button>' +
+                                                '</td>' +
+                                            '</tr>';
+                                        $('#prItems tbody').append(newRow);
+                                        
+                                        // Add change handler for the newly added item select
+                                        const newSelect = $('#prItems tbody tr:last-child .item-select');
+                                        newSelect.on('change', function() {
+                                            const selectedOption = $(this).find('option:selected');
+                                            const price = selectedOption.data('price');
+                                            $(this).closest('tr').find('.price').val(price);
+                                            calculateTotal($(this).closest('tr'));
+                                            
+                                            // Update all other selects to remove this option
+                                            const selectedValue = $(this).val();
+                                            if (selectedValue) {
+                                                $('.item-select').not(this).each(function() {
+                                                    $(this).find('option[value=\"' + selectedValue + '\"]').remove();
+                                                });
+                                            }
+                                        });
+                                    } else {
+                                        alert('No more items available to add.');
+                                    }
+                                });
+
+                                // Update delete-row handler to restore the option to other selects
+                                $(document).on('click', '.delete-row', function() {
+                                    const row = $(this).closest('tr');
+                                    const select = row.find('.item-select');
+                                    const selectedOption = select.find('option:selected');
+                                    
+                                    if (selectedOption.val()) {
+                                        // Get the HTML of the selected option
+                                        const optionHtml = selectedOption.prop('outerHTML');
+                                        
+                                        // Add this option back to all other selects
+                                        $('.item-select').each(function() {
+                                            if (!$(this).find('option[value=\"' + selectedOption.val() + '\"]').length) {
+                                                $(this).append(optionHtml);
+                                            }
+                                        });
+                                    }
+                                    
+                                    // Remove the row
+                                    row.remove();
+                                    calculateGrandTotal();
+                                });
+
+
 
                                 // Calculate total price
                                 function calculateTotal(row) {
@@ -1660,13 +1795,21 @@ if ($content === 'purchase_order') {
                                 }
 
                                 // Delete row from form (not delete PO)
-                                $(document).on('click', '.delete-row', function() {
-                                    if ($('#prItems tbody tr').length > 1) {
-                                        $(this).closest('tr').remove();
-                                        calculateGrandTotal();
-                                    } else {
-                                        alert('Cannot delete the last row.');
-                                    }
+                                $(document).ready(function() {
+                                    // Use one-time event binding with .off() first to prevent duplicates
+                                    $(document).off('click', '.delete-row').on('click', '.delete-row', function(e) {
+                                        e.stopPropagation(); // Prevent event bubbling
+                                        
+                                        if ($('#prItems tbody tr').length > 1) {
+                                            $(this).closest('tr').remove();
+                                            calculateGrandTotal();
+                                        } else if ($('#itemsModal').hasClass('show')) {
+                                            // Don't show alert if modal is being closed
+                                            return;
+                                        } else {
+                                            alert('Cannot delete the last row.');
+                                        }
+                                    });
                                 });
 
                                 $(document).on('click', '.delete-po', function(e) {
@@ -1699,33 +1842,11 @@ if ($content === 'purchase_order') {
                                     }
                                 });
 
+
+
                                 // Calculate totals on input change
                                 $(document).on('input', '.quantity, .price', function() {
                                     calculateTotal($(this).closest('tr'));
-                                });
-
-                                // Add new row
-                                $('#addNewRow').click(function() {
-                                    var existingOptions = $('.item-select').first().html();
-                                    const newRow = 
-                                        '<tr>' +
-                                            '<td>' +
-                                                '<select class=\"form-select item-select\">' +
-                                                existingOptions +
-                                                '</select>' +
-                                            '</td>' +
-                                            '<td>' +
-                                                '<input type=\"number\" class=\"form-control quantity\" min=\"1\">' +
-                                            '</td>' +
-                                            '<td>' +
-                                                '<input type=\"number\" class=\"form-control price\" min=\"0\" step=\"0.01\">' +
-                                            '</td>' +
-                                            '<td class=\"total\">0.00</td>' +
-                                            '<td>' +
-                                                '<button type=\"button\" class=\"btn btn-danger btn-sm delete-row\">Delete</button>' +
-                                            '</td>' +
-                                        '</tr>';
-                                    $('#prItems tbody').append(newRow);
                                 });
 
                                 // Submit new purchase request
@@ -2581,16 +2702,21 @@ elseif ($content === 'requisition_history') {
                 type: 'GET',
                 dataType: 'json',
                 success: function(items) {
-                    const \$dropdown = $('#item');
-                    \$dropdown.empty(); // Clear existing options
-                    \$dropdown.append('<option value=\"\">Select Item</option>'); // Default option
+                    const $dropdown = $('#item');
+                    $dropdown.empty(); // Clear existing options
+                    $dropdown.append($('<option>', {
+                        value: '',
+                        text: 'Select Item',
+                        disabled: true,
+                        selected: true
+                    })); // Placeholder option
 
                     if (items.length > 0) {
                         items.forEach(function(item) {
-                            \$dropdown.append('<option value=\"' + item.id + '\" data-name=\"' + item.name + '\">' + item.name + '</option>');
+                            $dropdown.append('<option value=\"' + item.id + '\" data-name=\"' + item.name + '\">' + item.name + '</option>');
                         });
                     } else {
-                        alert('No items found in inventory.');
+                        alert('All items are already added.');
                     }
                 },
                 error: function() {

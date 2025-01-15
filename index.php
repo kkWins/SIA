@@ -28,7 +28,7 @@ $department = $_SESSION['department'];
             background-color: #fefefe; /* Dark background */
         }
         #sidebar {
-            width: 250px;
+            width: 280px;
             background-color: #212529; /* Darker sidebar */
             padding: 15px;
             border-right: 1px solid #495057; /* Lighter border */
@@ -202,7 +202,7 @@ $department = $_SESSION['department'];
 
             #sidebar {
                 position: fixed;
-                left: -250px; /* Hide sidebar by default on mobile */
+                left: -280px; /* Hide sidebar by default on mobile */
                 top: 0;
                 bottom: 0;
                 transition: left 0.3s ease;
