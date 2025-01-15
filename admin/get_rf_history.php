@@ -9,7 +9,7 @@ $filter_date = isset($_GET['filter_date']) ? mysqli_real_escape_string($db, $_GE
 $filter_status = isset($_GET['filter_status']) ? mysqli_real_escape_string($db, $_GET['filter_status']) : '';
 
 // Build WHERE clause based on filters
-$where_conditions = [];
+$where_conditions = ["prf.PRF_STATUS != 'Pending'"];
 if ($filter_id) {
     $where_conditions[] = "prf.PRF_ID LIKE '%$filter_id%'";
 }
@@ -26,7 +26,7 @@ if ($filter_status) {
     $where_conditions[] = "prf.PRF_STATUS = '$filter_status'";
 }
 
-$where_clause = !empty($where_conditions) ? "WHERE " . implode(" AND ", $where_conditions) : "";
+$where_clause = "WHERE " . implode(" AND ", $where_conditions);
 
 // Get total count for pagination
 $count_query = "SELECT COUNT(*) as total 

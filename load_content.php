@@ -3027,6 +3027,7 @@ elseif ($content === 'account_settings') {
                                       <th>Item</th>
                                       <th>Quantity</th>
                                       <th>Description</th>
+                                      <th>Date Received</th>
                                   </tr>
                               </thead>
                               <tbody>";
@@ -3035,8 +3036,13 @@ elseif ($content === 'account_settings') {
                     echo "<tr>
                             <td>{$item['item_name']}</td>
                             <td>{$item['quantity']}</td>
-                            <td>{$item['description']}</td>
-                          </tr>";
+                            <td>{$item['description']}</td>";
+                            if($item['WD_DATE_RECEIVED']){
+                                echo "<td>" . date('F j, Y h:i A', strtotime($item['WD_DATE_RECEIVED'])) . "</td>";
+                            }else{
+                                echo "<td>-</td>";
+                            }
+                          echo "</tr>";
                 }
                 
                 echo "</tbody>
@@ -3558,7 +3564,7 @@ echo "</div>
                                         echo "<p class='mb-0'><strong>Order Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ORDER_DATE'])) . "</p>";
                                     }
                                     if($poDetails['PO_ARRIVAL_DATE']){
-                                        echo "<p class='mb-0'><strong>Expected Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
+                                        echo "<p class='mb-0'><strong>Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
                                     }
                                 echo "
                                 </div>
