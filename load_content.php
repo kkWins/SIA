@@ -39,7 +39,7 @@ if ($content === 'purchase_order') {
                             <i class='fas fa-arrow-left'></i> Back
                         </a>
                     </div>";
-                    if($response['po_details']['PO_STATUS'] !== 'canceled'){
+                    if($response['po_details']['PO_STATUS'] !== 'canceled' && $response['po_details']['PO_STATUS'] !== 'completed'){
                         echo "<button class='btn btn-link text-danger position-absolute top-0 end-0 mt-3 me-3 cancel-btn' 
                                 data-id='" . htmlspecialchars($_GET['po_id']) . "' 
                                 title='Cancel PO'>
@@ -141,22 +141,22 @@ if ($content === 'purchase_order') {
                                 <label for='order_datetime' class='form-label'><strong>Order Date & Time:</strong></label>
                                 <input type='datetime-local' class='form-control' id='order_datetime' 
                                     value='" . (!empty($response['po_details']['PO_ORDER_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ORDER_DATE'])) : '') . "' 
-                                    required>
+                                    required " . (($response['po_details']['PO_STATUS'] === 'completed' || $response['po_details']['PO_STATUS'] === 'canceled') ? 'disabled' : '') . ">
                             </div>
                             <div class='col-md-6'>
                                 <label for='arrival_datetime' class='form-label'><strong>Arrival Date & Time:</strong></label>
                                 <input type='datetime-local' class='form-control' id='arrival_datetime' 
                                     value='" . (!empty($response['po_details']['PO_ARRIVAL_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ARRIVAL_DATE'])) : '') . "' 
                                     " . (!$response['po_details']['PO_ORDER_DATE'] || !$hasPaymentDetails ? 'disabled' : '') . "
-                                    required>
+                                    required " . (($response['po_details']['PO_STATUS'] === 'completed' || $response['po_details']['PO_STATUS'] === 'canceled') ? 'disabled' : '') . ">
                             </div>
                         </div>
     
                         <div class='mt-3'>";
                             if($response['po_details']['PO_STATUS'] === 'completed') {
-                                echo "<p class='text-success'>Purchase order is already completed.</p>";
+                                echo "<p class='text-success text-center'>Purchase order is already completed.</p>";
                             }else if($response['po_details']['PO_STATUS'] === 'canceled') {
-                                echo "<p class='text-danger'>Purchase order has been canceled.</p>";
+                                echo "<p class='text-danger text-center'>Purchase order has been canceled.</p>";
                             } else {
                                 // Check if payment details exist
                                 $hasPaymentDetails = $response['po_details']['PD_PAYMENT_TYPE'] && 
@@ -174,7 +174,7 @@ if ($content === 'purchase_order') {
                                         </div>";
                                 } else if($response['po_details']['PO_ORDER_DATE'] && !$hasPaymentDetails) {
                                     // If order date exists but no payment details
-                                    echo "<p class='text-danger'>Payment details are missing.</p>";
+                                    echo "<p class='text-danger text-center'>Payment details are missing.</p>";
                                 } else if($hasPaymentDetails && !$response['po_details']['PO_ARRIVAL_DATE']) {
                                     // If payment details exist but no arrival date
                                     echo "<div class='text-end'>
@@ -190,14 +190,63 @@ if ($content === 'purchase_order') {
                             echo "
                         </div>
                     </div>
+
+                    <!-- Validation Error Modal -->
+                    <div class='modal fade' id='validationErrorModal' tabindex='-1' aria-labelledby='validationErrorModalLabel' aria-hidden='true'>
+                        <div class='modal-dialog'>
+                            <div class='modal-content'>
+                                <div class='modal-header'>
+                                    <h5 class='modal-title' id='validationErrorModalLabel'>Form Validation Error</h5>
+                                    <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                                </div>
+                                <div class='modal-body'>
+                                    <p><i class='fas fa-exclamation-circle text-danger me-2'></i><span id='validationErrorMessage'></span></p>
+                                </div>
+                                <div class='modal-footer'>
+                                    <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Success Toast -->
+                    <div class='position-fixed top-0 end-0 p-3' style='z-index: 11'>
+                        <div id='successToast' class='toast align-items-center text-white bg-success border-0' role='alert' aria-live='assertive' aria-atomic='true'>
+                            <div class='d-flex'>
+                                <div class='toast-body'>
+                                    <i class='fas fa-check-circle me-2'></i>
+                                    <span id='successToastMessage'></span>
+                                </div>
+                                <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast' aria-label='Close'></button>
+                            </div>
+                        </div>
+                    </div>
+
                     <script>
                         $(document).ready(function() {
+                            
+                            const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+                            const validationModal = new bootstrap.Modal(document.getElementById('validationErrorModal'));
+
+                            // If order_datetime exists in database, set minimum date for arrival_datetime
+                            const savedOrderDate = '" . (!empty($response['po_details']['PO_ORDER_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ORDER_DATE'])) : '') . "';
+                            if (savedOrderDate) {
+                                $('#arrival_datetime').attr('min', savedOrderDate);
+                            }
 
 
                             $('.cancel-btn').on('click', function() {
                                 const poId = $(this).data('id');
+
+                                $('#validationErrorMessage').text('Are you sure you want to cancel this purchase order? This action cannot be undone.');
+                                validationModal.show();
                                 
-                                if (confirm('Are you sure you want to cancel this purchase order? This action cannot be undone.')) {
+                                $('#validationErrorModal .modal-footer').html(`
+                                    <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                    <button type='button' class='btn btn-danger' id='confirmCancel'>Confirm Cancel</button>
+                                `);
+                                
+                                $('#confirmCancel').on('click', function() {
                                     $.ajax({
                                         url: 'inventory/cancel_purchase_order.php',
                                         type: 'POST',
@@ -209,29 +258,39 @@ if ($content === 'purchase_order') {
                                                 // Check if response is already a JSON object
                                                 const result = typeof response === 'object' ? response : JSON.parse(response);
                                                 if (result.success) {
-                                                    alert('Purchase order canceled successfully');
-                                                    window.location.href = '?content=purchase_order';
+                                                    $('#successToastMessage').text('Purchase order canceled successfully');
+                                                    validationModal.hide();
+                                                    successToast.show();
+                                                    setTimeout(() => {
+                                                        window.location.href = '?content=purchase_order';
+                                                    }, 5000);
                                                 } else {
-                                                    alert('Error: ' + (result.message || 'Unknown error'));
+                                                    $('#validationErrorMessage').text('Error: ' + (result.message || 'Unknown error'));
                                                 }
                                             } catch (e) {
-                                                console.error('Error parsing response:', e);
-                                                alert('Error processing response');
+                                                $('#validationErrorMessage').text('Error processing response');
                                             }
                                         },
                                         error: function(xhr, status, error) {
-                                            console.error('AJAX Error:', status, error);
-                                            alert('Error canceling purchase order');
+                                            $('#validationErrorMessage').text('Error canceling purchase order');
                                         }
                                     });
-                                }
+                                });
                             });
 
                             // Add complete button click handler
                             $('.complete-btn').on('click', function() {
                                 const poId = $(this).data('id');
+
+                                $('#validationErrorMessage').text('Are you sure you want to mark this purchase order as completed?');
+                                validationModal.show();
                                 
-                                if (confirm('Are you sure you want to mark this purchase order as completed?')) {
+                                $('#validationErrorModal .modal-footer').html(`
+                                    <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                    <button type='button' class='btn btn-success' id='confirmComplete'>Confirm Complete</button>
+                                `);
+                                
+                                $('#confirmComplete').on('click', function() {
                                     $.ajax({
                                         url: 'inventory/complete_purchase_order.php',
                                         type: 'POST',
@@ -240,22 +299,26 @@ if ($content === 'purchase_order') {
                                         },
                                         success: function(response) {
                                             try {
-                                                if (response.success) {
-                                                    alert('Purchase order completed successfully');
-                                                    window.location.href = '?content=purchase_order';
+                                                const result = typeof response === 'object' ? response : JSON.parse(response);
+                                                if (result.success) {
+                                                    $('#successToastMessage').text('Purchase order completed successfully');
+                                                    validationModal.hide();
+                                                    successToast.show();
+                                                    setTimeout(() => {
+                                                        window.location.href = '?content=purchase_order';
+                                                    }, 5000);
                                                 } else {
-                                                    alert('Error: ' + (response.message || 'Unknown error'));
+                                                    $('#validationErrorMessage').text('Error: ' + (result.message || 'Unknown error'));
                                                 }
                                             } catch (e) {
-                                                console.error('Error parsing response:', e);
-                                                alert('Error processing response');
+                                                $('#validationErrorMessage').text('Error processing response');
                                             }
                                         },
                                         error: function() {
-                                            alert('Error completing purchase order');
+                                            $('#validationErrorMessage').text('Error completing purchase order');
                                         }
                                     });
-                                }
+                                });
                             });
 
                             
@@ -271,7 +334,8 @@ if ($content === 'purchase_order') {
                                 // Validate dates if both are filled
                                 if (orderDateTime && arrivalDateTime) {
                                     if (arrivalDate < orderDate) {
-                                        alert('Arrival date cannot be earlier than order date');
+                                        $('#validationErrorMessage').text('Arrival date cannot be earlier than order date');
+                                        validationModal.show();
                                         return;
                                     }
                                 }
@@ -286,21 +350,26 @@ if ($content === 'purchase_order') {
                                         arrival_datetime: arrivalDateTime
                                     },
                                     success: function(response) {
-                                        try {
+                                         try {
                                             const result = JSON.parse(response);
                                             if (result.success) {
-                                                alert('Purchase order submitted successfully');
-                                                window.location.href = '?content=purchase_order';
+                                                $('#successToastMessage').text('Purchase order submitted successfully');
+                                                successToast.show();
+                                                setTimeout(() => {
+                                                    window.location.href = '?content=purchase_order';
+                                                }, 5000);
                                             } else {
-                                                alert('Error: ' + (result.message || 'Unknown error'));
+                                                $('#validationErrorMessage').text('Error: ' + (result.message || 'Unknown error'));
+                                                validationModal.show();
                                             }
                                         } catch (e) {
-                                            console.error('Error parsing response:', e);
-                                            alert('Error processing response');
+                                            $('#validationErrorMessage').text('Error processing response');
+                                            validationModal.show();
                                         }
                                     },
                                     error: function() {
-                                        alert('Error submitting purchase order');
+                                        $('#validationErrorMessage').text('Error submitting purchase order');
+                                        validationModal.show();
                                     }
                                 });
                             });
@@ -454,7 +523,7 @@ if ($content === 'purchase_order') {
                     <div class='row mb-3 mt-3'>
                         <div class='col-md-4'>
                             <label for='payment_type' class='form-label'><strong>Payment Type:</strong></label>
-                            <select class='form-select' id='payment_type' required>
+                            <select class='form-select' id='payment_type' required " . (($response['po_details']['PO_STATUS'] === 'completed' || $response['po_details']['PO_STATUS'] === 'canceled') ? 'disabled' : '') . ">
                                 <option value=''>Select payment type</option>
                                 <option value='cash' " . ($response['payment_details']['PD_PAYMENT_TYPE'] === 'cash' ? 'selected' : '') . ">Cash</option>
                                 <option value='check' " . ($response['payment_details']['PD_PAYMENT_TYPE'] === 'check' ? 'selected' : '') . ">Check</option>
@@ -464,13 +533,14 @@ if ($content === 'purchase_order') {
                             <label for='payment_amount' class='form-label'><strong>Payment Amount:</strong></label>
                             <input type='number' class='form-control' id='payment_amount' 
                                 value='" . (!empty($response['payment_details']['PD_AMMOUNT']) ? $response['payment_details']['PD_AMMOUNT'] : '') . "'
-                                min='0' step='0.01' required>
+                                min='" . $grandTotal . "' step='0.01' required " . (($response['po_details']['PO_STATUS'] === 'completed' || $response['po_details']['PO_STATUS'] === 'canceled') ? 'disabled' : '') . ">
+                            <div class='invalid-feedback'>Payment amount must be greater than or equal to the grand total</div>
                         </div>
                         <div class='col-md-4'>
                             <label for='payment_change' class='form-label'><strong>Change:</strong></label>
-                            <input type='number' class='form-control' id='payment_change' 
+                            <input type='number' disabled class='form-control' id='payment_change' 
                                 value='" . (!empty($response['payment_details']['PD_CHANGE']) ? $response['payment_details']['PD_CHANGE'] : '') . "'
-                                min='0' step='0.01' required>
+                                min='0' step='0.01' required readonly>
                         </div>
                     </div>
     
@@ -478,11 +548,11 @@ if ($content === 'purchase_order') {
                         
                         if($response['po_details']['PO_STATUS'] === 'completed'){
                             echo "
-                            <p class='text-success'>Purchase order is already completed.</p>
+                            <p class='text-success text-center'>Purchase order is already completed.</p>
                             ";
                         }elseif($response['po_details']['PO_STATUS'] === 'canceled'){
                             echo "
-                            <p class='text-danger'>Purchase order is already canceled.</p>
+                            <p class='text-danger text-center'>Purchase order is already canceled.</p>
                             ";
                         }else{
 
@@ -497,8 +567,66 @@ if ($content === 'purchase_order') {
                     echo "</div>
                 </div>
 
+                <!-- Validation Error Modal -->
+                <div class='modal fade' id='validationErrorModal' tabindex='-1' aria-labelledby='validationErrorModalLabel' aria-hidden='true'>
+                    <div class='modal-dialog'>
+                        <div class='modal-content'>
+                            <div class='modal-header'>
+                                <h5 class='modal-title' id='validationErrorModalLabel'>Form Validation Error</h5>
+                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                            </div>
+                            <div class='modal-body'>
+                                <p><i class='fas fa-exclamation-circle text-danger me-2'></i>Please fill in all payment details</p>
+                            </div>
+                            <div class='modal-footer'>
+                                <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Success Toast -->
+                <div class='position-fixed top-0 end-0 p-3' style='z-index: 11'>
+                    <div id='successToast' class='toast align-items-center text-white bg-success border-0' role='alert' aria-live='assertive' aria-atomic='true'>
+                        <div class='d-flex'>
+                            <div class='toast-body'>
+                                <i class='fas fa-check-circle me-2'></i>
+                                <span id='successToastMessage'></span>
+                            </div>
+                            <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast' aria-label='Close'></button>
+                        </div>
+                    </div>
+                </div>
+
                 <script>
                     $(document).ready(function() {
+
+                        const grandTotal = " . $grandTotal . ";
+                        const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+                        const validationModal = new bootstrap.Modal(document.getElementById('validationErrorModal'));
+    
+                        $('#payment_amount').on('input', function() {
+                            const paymentAmount = parseFloat($(this).val()) || 0;
+                            const change = paymentAmount - grandTotal;
+                            
+                            // Validate payment amount
+                            if (paymentAmount < grandTotal) {
+                                $(this).addClass('is-invalid');
+                                $('.submit1-btn').prop('disabled', true);
+                            } else {
+                                $(this).removeClass('is-invalid');
+                                $('.submit1-btn').prop('disabled', false);
+                                // Only update change if payment amount is valid
+                                $('#payment_change').val(change.toFixed(2));
+                            }
+                        });
+
+                        // Initial validation on page load
+                        if ($('#payment_amount').val()) {
+                            $('#payment_amount').trigger('input');
+                        }
+                        
+
                         $('.submit1-btn').on('click', function() {
                             const poId = $(this).data('id');
                             const paymentType = $('#payment_type').val();
@@ -507,7 +635,7 @@ if ($content === 'purchase_order') {
                             
                             // Validate inputs
                             if (!paymentType || !paymentAmount || !paymentChange) {
-                                alert('Please fill in all payment details');
+                                validationModal.show();
                                 return;
                             }
                             
@@ -526,17 +654,23 @@ if ($content === 'purchase_order') {
                                         // Check if response is already an object
                                         const result = typeof response === 'object' ? response : JSON.parse(response);
                                         if (result.success) {
-                                            alert('Payment submitted successfully');
-                                            window.location.href = '?content=purchase_order';
+                                            $('#successToastMessage').text('Payment submitted successfully');
+                                            successToast.show();
+                                            setTimeout(() => {
+                                                window.location.href = '?content=purchase_order';
+                                            }, 5000);
                                         } else {
-                                            alert('Error: ' + (result.message || 'Unknown error'));
+                                            $('#errorToastMessage').text('Error: ' + (result.message || 'Unknown error'));
+                                            errorToast.show();
                                         }
                                     } catch (e) {
-                                        alert('Error processing response');
+                                        $('#errorToastMessage').text('Error processing response');
+                                        errorToast.show();
                                     }
                                 },
                                 error: function(xhr, status, error) {
-                                    alert('Error submitting payment. Check console for details.');
+                                    $('#errorToastMessage').text('Error submitting payment');
+                                    errorToast.show();
                                 }
                             });
                         });
@@ -605,22 +739,22 @@ if ($content === 'purchase_order') {
                         <i class='fas fa-arrow-left'></i> Back
                     </a>
                 </div>
-                <h3>Purchase Request # {$_GET['pending_pr']}</h3>
+                <h3>Purchase Request PR-{$_GET['pending_pr']}</h3>
                 <div class='row mb-3'>
                     <div class='col-md-6'>
-                        <p><strong>Requester:</strong> {$response['po_details']['fullname']}</p>
-                        <p><strong>Date of Request:</strong> {$response['po_details']['PO_PR_DATE_CREATED']}</p>
+                        <p class='mb-0'><strong>Requester:</strong> {$response['po_details']['fullname']}</p>
+                        <p class='mb-0'><strong>Date of Request:</strong> {$response['po_details']['PO_PR_DATE_CREATED']}</p>
                         
                     </div>
                     <div class='col-md-6'>
-                        <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
-                        <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
-                        <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
+                        <p class='mb-0'><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
+                        <p class='mb-0'><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                        <p class='mb-0'><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
                     </div>
                 </div>";
 
                 if($response['po_details']['PO_STATUS'] === 'rejected') {
-                    echo "<div class='alert alert-danger'>
+                    echo "<div class='alert alert-danger mt-3'>
                             <strong>Rejection Reason:</strong> " . htmlspecialchars($response['po_details']['ap_desc']) . "
                           </div>";
                 }
@@ -715,8 +849,38 @@ if ($content === 'purchase_order') {
                     </div>
                 </div>
 
+                <!-- Toast containers -->
+                <div class='position-fixed top-0 end-0 p-3' style='z-index: 11'>
+                    <div id='successToast' class='toast align-items-center text-white bg-success border-0' role='alert' aria-live='assertive' aria-atomic='true'>
+                        <div class='d-flex'>
+                            <div class='toast-body'>
+                                <i class='fas fa-check-circle me-2'></i>
+                                <span id='successToastMessage'></span>
+                            </div>
+                            <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast' aria-label='Close'></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class='position-fixed top-0 end-0 p-3' style='z-index: 11'>
+                    <div id='errorToast' class='toast align-items-center text-white bg-danger border-0' role='alert' aria-live='assertive' aria-atomic='true'>
+                        <div class='d-flex'>
+                            <div class='toast-body'>
+                                <i class='fas fa-exclamation-circle me-2'></i>
+                                <span id='errorToastMessage'></span>
+                            </div>
+                            <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast' aria-label='Close'></button>
+                        </div>
+                    </div>
+                </div>
+
                 <script>
                     $(document).ready(function() {
+
+                        // Toast initialization
+                        const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+                        const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
+
                         // Show rejection modal when reject button is clicked
                         $('.reject-btn').on('click', function() {
                             const poId = $(this).data('id');
@@ -746,19 +910,24 @@ if ($content === 'purchase_order') {
                                     try {
                                         const result = JSON.parse(response);
                                         if (result.success) {
-                                            alert('Purchase order approved successfully');
+                                            $('#successToastMessage').text('Purchase order approved successfully');
+                                            successToast.show();
                                             $('#approveModal').modal('hide');
-                                            // Redirect back to the list view
-                                            window.location.href = '?content=pending_pr';
+                                            setTimeout(() => {
+                                                window.location.href = '?content=pending_pr';
+                                            }, 4000);
                                         } else {
-                                            alert('Error: ' + result.message);
+                                            $('#errorToastMessage').text('Error: ' + result.message);
+                                            errorToast.show();
                                         }
                                     } catch (e) {
-                                        alert('Error processing response');
+                                        $('#errorToastMessage').text('Error processing response');
+                                        errorToast.show();
                                     }
                                 },
                                 error: function() {
-                                    alert('Error processing request');
+                                    $('#errorToastMessage').text('Error processing request');
+                                    errorToast.show();
                                 }
                             });
                         
@@ -773,7 +942,8 @@ if ($content === 'purchase_order') {
                             const rejectReason = $('#reject_reason').val();
 
                             if (!rejectReason) {
-                                alert('Please provide a reason for rejection');
+                                $('#errorToastMessage').text('Please provide a reason for rejection');
+                                errorToast.show();
                                 return;
                             }
 
@@ -788,19 +958,24 @@ if ($content === 'purchase_order') {
                                     try {
                                         const result = JSON.parse(response);
                                         if (result.success) {
-                                            alert('Purchase order rejected successfully');
+                                            $('#successToastMessage').text('Purchase order rejected successfully');
+                                            successToast.show();
                                             $('#rejectModal').modal('hide');
-                                            // Redirect back to the list view
-                                            window.location.href = '?content=pending_pr';
+                                            setTimeout(() => {
+                                                window.location.href = '?content=pending_pr';
+                                            }, 4000);
                                         } else {
-                                            alert('Error: ' + result.message);
+                                            $('#errorToastMessage').text('Error: ' + result.message);
+                                            errorToast.show();
                                         }
                                     } catch (e) {
-                                        alert('Error processing response');
+                                        $('#errorToastMessage').text('Error processing response');
+                                        errorToast.show();
                                     }
                                 },
                                 error: function() {
-                                    alert('Error processing request');
+                                    $('#errorToastMessage').text('Error processing request');
+                                    errorToast.show();
                                 }
                             });
                         });
@@ -828,7 +1003,7 @@ if ($content === 'purchase_order') {
                     
                     foreach ($pos as $po) {
                         echo "<tr>
-                                <td>" . htmlspecialchars($po['PO_ID']) . "</td>
+                                <td>" . htmlspecialchars("PR-".$po['PO_ID']) . "</td>
                                 <td>" . htmlspecialchars($po['fullname']) . "</td>
                                 <td>" . htmlspecialchars($po['SP_NAME']) . "</td>
                                 <td>" . date('F d, Y', strtotime($po['PO_PR_DATE_CREATED'])) . "</td>
@@ -1473,20 +1648,20 @@ if ($content === 'purchase_order') {
                           <h3> PR ID #{$_GET['pr_id']}</h3>
                           <div class='row mb-3'>
                               <div class='col-md-6'>
-                                  <p><strong>Requester:</strong> {$response['po_details']['fullname']}</p>
-                                  <p><strong>Date of Request:</strong> {$response['po_details']['PO_PR_DATE_CREATED']}</p>
+                                  <p class='mb-0'><strong>Requester:</strong> {$response['po_details']['fullname']}</p>
+                                  <p class='mb-0'><strong>Date of Request:</strong> {$response['po_details']['PO_PR_DATE_CREATED']}</p>
                                   
                                   
                               </div>
                               <div class='col-md-6'>
-                                  <p><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
-                                  <p><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
-                                  <p><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
+                                  <p class='mb-0'><strong>Supplier Name:</strong> {$response['po_details']['SP_NAME']}</p>
+                                  <p class='mb-0'><strong>Contact no:</strong> {$response['po_details']['SP_NUMBER']}</p>
+                                  <p class='mb-0'><strong>Address:</strong> {$response['po_details']['SP_ADDRESS']}</p>
                               </div>
                           </div>";
 
                           if($response['po_details']['PO_STATUS'] === 'rejected') {
-                              echo "<div class='alert alert-danger'>
+                              echo "<div class='alert alert-danger mt-3'>
                                       <strong>Rejection Reason:</strong> " . htmlspecialchars($response['po_details']['ap_desc']) . "
                                     </div>";
                           }
@@ -3086,11 +3261,14 @@ elseif ($content === 'account_settings') {
             <!-- Search form moved to right side -->
             <div class='d-flex justify-content-end mb-3'>
                 <form id='searchForm' class='d-flex gap-2' style='width: 600px;'>
+                <div class='input-group mb-3'>
                     <input type='text' class='form-control' id='searchTerm' name='search' 
                         placeholder='Search by name, email, department...'
                         value='" . (isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '') . "'>
-                    <button type='submit' class='btn btn-primary'>Search</button>
-                    <button type='button' class='btn btn-secondary' id='clearSearch'>Clear</button>
+                    <button type='button' class='btn btn-outline-secondary' id='clearSearch'>
+                        <i class='fas fa-times'>
+                    </i></button>
+                </div>
                 </form>
             </div>
 
@@ -3193,21 +3371,21 @@ elseif ($content === 'account_settings') {
                                     <div class='row'>
                                         <div class='col-md-6 mb-3'>
                                             <label for='emp_fname' class='form-label'>First Name</label>
-                                            <input type='text' class='form-control' id='emp_fname' name='emp_fname' required>
+                                            <input type='text' class='form-control' id='emp_fname' name='emp_fname' maxlength='50' required>
                                         </div>
                                         <div class='col-md-6 mb-3'>
                                             <label for='emp_lname' class='form-label'>Last Name</label>
-                                            <input type='text' class='form-control' id='emp_lname' name='emp_lname' required>
+                                            <input type='text' class='form-control' id='emp_lname' name='emp_lname' maxlength='50' required>
                                         </div>
                                     </div>
                                     <div class='row'>
                                         <div class='col-md-6 mb-3'>
                                             <label for='emp_email' class='form-label'>Email</label>
-                                            <input type='email' class='form-control' id='emp_email' name='emp_email' required>
+                                            <input type='email' class='form-control' id='emp_email' name='emp_email' maxlength='50' required>
                                         </div>
                                         <div class='col-md-6 mb-3'>
                                             <label for='emp_password' class='form-label'>Password</label>
-                                            <input type='password' class='form-control' id='emp_password' name='emp_password' required>
+                                            <input type='password' class='form-control' id='emp_password' name='emp_password' maxlength='50' required>
                                         </div>
                                     </div>
                                     <div class='row'>
@@ -3230,7 +3408,7 @@ elseif ($content === 'account_settings') {
                                         </div>
                                         <div class='col-md-4 mb-3'>
                                             <label for='contact_no' class='form-label'>Contact Number</label>
-                                            <input type='text' class='form-control' id='contact_no' name='contact_no' required>
+                                            <input type='number' class='form-control' id='contact_no' name='contact_no' maxlength='12' required>
                                         </div>
                                     </div>
                                 </form>
@@ -3278,17 +3456,17 @@ elseif ($content === 'account_settings') {
                                     <div class='row'>
                                         <div class='col-md-6 mb-3'>
                                             <label for='edit_emp_fname' class='form-label'>First Name</label>
-                                            <input type='text' class='form-control' id='edit_emp_fname' name='emp_fname' required>
+                                            <input type='text' class='form-control' id='edit_emp_fname' name='emp_fname' maxlength='50' required>
                                         </div>
                                         <div class='col-md-6 mb-3'>
                                             <label for='edit_emp_lname' class='form-label'>Last Name</label>
-                                            <input type='text' class='form-control' id='edit_emp_lname' name='emp_lname' required>
+                                            <input type='text' class='form-control' id='edit_emp_lname' name='emp_lname' maxlength='50' required>
                                         </div>
                                     </div>
                                     <div class='row'>
                                         <div class='col-md-6 mb-3'>
                                             <label for='edit_emp_email' class='form-label'>Email</label>
-                                            <input type='email' class='form-control' id='edit_emp_email' name='emp_email' required>
+                                            <input type='email' class='form-control' id='edit_emp_email' name='emp_email' maxlength='50' required>
                                         </div>
                                         <div class='col-md-6 mb-3'>
                                             <label for='edit_emp_password' class='form-label'>Password (leave blank if unchanged)</label>
@@ -3315,7 +3493,7 @@ elseif ($content === 'account_settings') {
                                         </div>
                                         <div class='col-md-4 mb-3'>
                                             <label for='edit_contact_no' class='form-label'>Contact Number</label>
-                                            <input type='text' class='form-control' id='edit_contact_no' name='contact_no' required>
+                                            <input type='number' class='form-control' id='edit_contact_no' name='contact_no' maxlength='12' required>
                                         </div>
                                     </div>
                                 </form>
@@ -3327,9 +3505,42 @@ elseif ($content === 'account_settings') {
                         </div>
                     </div>
                 </div>
+
+
+                <!-- Success Toast -->
+                <div class='position-fixed top-0 end-0 p-3' style='z-index: 11'>
+                    <div id='successToast' class='toast align-items-center text-white bg-success border-0' role='alert' aria-live='assertive' aria-atomic='true'>
+                        <div class='d-flex'>
+                            <div class='toast-body'>
+                                <i class='fas fa-check-circle me-2'></i>
+                                <span id='successToastMessage'></span>
+                            </div>
+                            <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast' aria-label='Close'></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Toast -->
+                <div class='position-fixed top-0 end-0 p-3' style='z-index: 11'>
+                    <div id='errorToast' class='toast align-items-center text-white bg-danger border-0' role='alert' aria-live='assertive' aria-atomic='true'>
+                        <div class='d-flex'>
+                            <div class='toast-body'>
+                                <i class='fas fa-exclamation-circle me-2'></i>
+                                <span id='errorToastMessage'></span>
+                            </div>
+                            <button type='button' class='btn-close btn-close-white me-2 m-auto' data-bs-dismiss='toast' aria-label='Close'></button>
+                        </div>
+                    </div>
+                </div>
+
+
+
           
           <script>
             $(document).ready(function() {
+
+                const successToast = new bootstrap.Toast(document.getElementById('successToast'));
+                const errorToast = new bootstrap.Toast(document.getElementById('errorToast'));
 
                 // Handle search form submission
                 $('#searchForm').on('submit', function(e) {
@@ -3394,16 +3605,20 @@ elseif ($content === 'account_settings') {
                         dataType: 'json',
                         success: function(response) {
                             if (response.status === 'success') {
-                                alert(response.message);
+                                $('#successToastMessage').text(response.message);
+                                successToast.show();
                                 $('#toggleStatusModal').modal('hide');
-                                window.location.href = 'index.php?content=manage_employees';
+                                setTimeout(() => {
+                                    window.location.href = 'index.php?content=manage_employees';
+                                }, 1500);
                             } else {
-                                alert('Error: ' + response.message);
+                                $('#errorToastMessage').text('Error: ' + response.message);
+                                errorToast.show();
                             }
                         },
                         error: function(xhr, status, error) {
-                            console.log('Server Response:', xhr.responseText); // Add this for debugging
-                            alert('Error changing employee status: ' + error);
+                            $('#errorToastMessage').text('Error changing employee status: ' + error);
+                            errorToast.show();
                         }
                     });
                 });
@@ -3434,12 +3649,14 @@ elseif ($content === 'account_settings') {
                             // Show the modal
                             $('#editEmployeeModal').modal('show');
                         } else {
-                            alert('Error: ' + response.message);
+                                $('#errorToastMessage').text('Error: ' + response.message);
+                                errorToast.show();
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            $('#errorToastMessage').text('Error fetching employee details: ' + error);
+                            errorToast.show();
                         }
-                    },
-                    error: function(xhr, status, error) {
-                        alert('Error fetching employee details: ' + error);
-                    }
                     });
                 });
 
@@ -3459,15 +3676,20 @@ elseif ($content === 'account_settings') {
                     dataType: 'json',
                     success: function(response) {
                         if (response.status === 'success') {
-                            alert(response.message);
+                            $('#successToastMessage').text(response.message);
+                            successToast.show();
                             $('#editEmployeeModal').modal('hide');
-                            window.location.href = 'index.php?content=manage_employees';
+                            setTimeout(() => {
+                                window.location.href = 'index.php?content=manage_employees';
+                            }, 1500);
                         } else {
-                            alert('Error: ' + response.message);
+                            $('#errorToastMessage').text('Error: ' + response.message);
+                            errorToast.show();
                         }
                     },
                     error: function(xhr, status, error) {
-                        alert('Error updating employee: ' + error);
+                        $('#errorToastMessage').text('Error updating employee: ' + error);
+                        errorToast.show();
                     }
                     });
                 });
@@ -3493,21 +3715,24 @@ elseif ($content === 'account_settings') {
                             if (response.status === 'success') {
                                 $('#addEmployeeForm')[0].reset();
                                 $('#addEmployeeModal').modal('hide');
-                                alert(response.message);
-                                // Reload the employee list without refreshing the page
-                                window.location.href = '?content=manage_employees';
+                                $('#successToastMessage').text(response.message);
+                                successToast.show();
+                                setTimeout(() => {
+                                    window.location.href = '?content=manage_employees';
+                                }, 1500);
                             } else {
-                                alert('Error: ' + response.message);
+                                $('#errorToastMessage').text('Error: ' + response.message);
+                                errorToast.show();
                             }
                         },
                         error: function(xhr, status, error) {
-                            console.log('Response:', xhr.responseText); // Add this for debugging
                             try {
                                 const response = JSON.parse(xhr.responseText);
-                                alert('Error: ' + response.message);
+                                $('#errorToastMessage').text('Error: ' + response.message);
                             } catch(e) {
-                                alert('Error adding employee: ' + error);
+                                $('#errorToastMessage').text('Error adding employee: ' + error);
                             }
+                            errorToast.show();
                         }
                     });
                 });
