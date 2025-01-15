@@ -14,6 +14,16 @@ if (!isset($_SESSION['ID'])) {
 
 $emp_id = $_SESSION['ID'];
 
+// Add this search form before the main query
+echo <<<HTML
+<div class="mb-3">
+    <div class="input-group">
+        <input type="text" class="form-control" id="staffSearch" placeholder="Search by PRF ID or Date (YYYY-MM-DD)">
+        <button class="btn btn-outline-secondary" type="button" id="clearSearch">Clear</button>
+    </div>
+</div>
+HTML;
+
 // Main query for requisitions
 $query = "SELECT 
             prf.PRF_ID, 
@@ -23,6 +33,7 @@ $query = "SELECT
           FROM purchase_or_requisition_form prf
           LEFT JOIN approval a ON prf.AP_ID = a.ap_id
           WHERE prf.EMP_ID = ?
+          AND prf.PRF_STATUS IN ('rejected', 'closed')
           ORDER BY prf.PRF_DATE DESC";
 
 $stmt = $db->prepare($query);
@@ -120,6 +131,25 @@ $(document).ready(function() {
                 $('#itemsList').html('<div class="alert alert-danger">Error loading items</div>');
             }
         });
+    });
+
+    $('#staffSearch').on('keyup', function() {
+        const searchText = $(this).val().toLowerCase();
+        $('tbody tr').each(function() {
+            const prfId = $(this).find('td:eq(0)').text().toLowerCase();
+            const date = $(this).find('td:eq(1)').text().toLowerCase();
+            
+            if (prfId.includes(searchText) || date.includes(searchText)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    $('#clearSearch').click(function() {
+        $('#staffSearch').val('');
+        $('tbody tr').show();
     });
 });
 </script>

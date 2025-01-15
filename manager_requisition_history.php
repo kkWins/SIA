@@ -7,6 +7,15 @@ if (!isset($_SESSION['loggedIn']) || !$_SESSION['loggedIn']) {
     exit;
 }
 
+// Add this search form before the main query
+echo <<<HTML
+<div class="mb-3">
+    <div class="input-group">
+        <input type="text" class="form-control" id="managerSearch" placeholder="Search by Employee Name, Department, or Date (YYYY-MM-DD)">
+        <button class="btn btn-outline-secondary" type="button" id="clearSearch">Clear</button>
+    </div>
+</div>
+HTML;
 
 $query = "SELECT 
             prf.PRF_ID, 
@@ -17,9 +26,7 @@ $query = "SELECT
           FROM purchase_or_requisition_form prf
           JOIN employee emp ON prf.EMP_ID = emp.emp_id
           JOIN department dep ON emp.DEPT_ID = dep.DEPT_ID
-          WHERE (prf.PRF_STATUS = 'approved' 
-             OR prf.PRF_STATUS = 'rejected'
-             OR prf.PRF_STATUS = 'pending')
+          WHERE prf.PRF_STATUS IN ('rejected', 'closed')
           AND emp.DEPT_ID = ?
           ORDER BY prf.PRF_DATE DESC";
 
@@ -76,7 +83,7 @@ if ($result->num_rows > 0) {
     echo "</tbody>";
     echo "</table>";
 } else {
-    echo "<div class='alert alert-info'>No rejected requisitions found.</div>";
+    echo "<div class='alert alert-info'>No rejected or closed requisitions found.</div>";
 }
 
 $stmt->close();
@@ -121,6 +128,28 @@ $(document).ready(function() {
                 $('#itemsList').html('<div class="alert alert-danger">Error loading items</div>');
             }
         });
+    });
+
+    $('#managerSearch').on('keyup', function() {
+        const searchText = $(this).val().toLowerCase();
+        $('tbody tr').each(function() {
+            const employeeName = $(this).find('td:eq(1)').text().toLowerCase();
+            const department = $(this).find('td:eq(2)').text().toLowerCase();
+            const date = $(this).find('td:eq(3)').text().toLowerCase();
+            
+            if (employeeName.includes(searchText) || 
+                department.includes(searchText) || 
+                date.includes(searchText)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+
+    $('#clearSearch').click(function() {
+        $('#managerSearch').val('');
+        $('tbody tr').show();
     });
 });
 </script>
