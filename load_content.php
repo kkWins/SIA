@@ -27,11 +27,6 @@ if ($content === 'purchase_order') {
 
         if(isset($_GET['po_id'])){
             if($response['po_details']) {
-                // Define hasPaymentDetails before using it
-                $hasPaymentDetails = !empty($response['po_details']['PD_PAYMENT_TYPE']) && 
-                                    !empty($response['po_details']['PD_CHANGE']) && 
-                                    !empty($response['po_details']['PD_AMMOUNT']);
-
                 echo "
                     <div class='card rounded-4 p-4'>
                     <div class='text-start'>
@@ -72,28 +67,7 @@ if ($content === 'purchase_order') {
                            <p class='mb-0'><strong>Address:</strong> Logarta St 6014 Mandaue City, Philippines</p>
                            <p class='mb-0'><strong>Contact No:</strong> {$response['po_details']['EMP_NUMBER']}</p>
                         </div>
-                    </div>
-
-                    <div class='order-details'>
-                            <div class='row'>
-                                <div class='col-md-6'>";
-                                    if($response['po_details']['PD_PAYMENT_TYPE']){
-                                        echo "<p class='mb-0'><strong>Payment Type:</strong> {$response['po_details']['PD_PAYMENT_TYPE']}</p>";
-                                    }
-                                    if($response['po_details']['PD_AMMOUNT']){
-                                        echo "<p class='mb-0'><strong>Amount:</strong> ₱" . number_format($response['po_details']['PD_AMMOUNT'], 2) . "</p>";
-                                    }
-                                    if($response['po_details']['PD_CHANGE']){
-                                        echo "<p class='mb-0'><strong>Change:</strong> ₱" . number_format($response['po_details']['PD_CHANGE'], 2) . "</p>";
-                                    }
-                                echo "</div>";                              
-                        echo "
-                            </div>
-                        </div>
-                    
-
-                    
-                    ";
+                    </div>";
     
                     if($response['po_details']['PO_STATUS'] === 'rejected') {
                         echo "<div class='alert alert-danger'>
@@ -144,7 +118,7 @@ if ($content === 'purchase_order') {
                                     required " . (($response['po_details']['PO_STATUS'] === 'completed' || $response['po_details']['PO_STATUS'] === 'canceled') ? 'disabled' : '') . ">
                             </div>
                             <div class='col-md-6'>
-                                <label for='arrival_datetime' class='form-label'><strong>Arrival Date & Time:</strong></label>
+                                <label for='arrival_datetime' class='form-label'><strong>Expected Arrival Date & Time:</strong></label>
                                 <input type='datetime-local' class='form-control' id='arrival_datetime' 
                                     value='" . (!empty($response['po_details']['PO_ARRIVAL_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ARRIVAL_DATE'])) : '') . "' 
                                     " . (!$response['po_details']['PO_ORDER_DATE'] || !$hasPaymentDetails ? 'disabled' : '') . "
@@ -162,10 +136,6 @@ if ($content === 'purchase_order') {
                                 $hasPaymentDetails = $response['po_details']['PD_PAYMENT_TYPE'] && 
                                                     $response['po_details']['PD_CHANGE'] && 
                                                     $response['po_details']['PD_AMMOUNT'];
-
-                                
-                                echo "<div class='text-end'>";
-        
                                 
                                 if(!$response['po_details']['PO_ORDER_DATE']) {
                                     // If order date is empty, show submit button
@@ -373,20 +343,6 @@ if ($content === 'purchase_order') {
                                     }
                                 });
                             });
-
-                            // Add event listener for order_datetime changes
-                            $('#order_datetime').on('change', function() {
-                                const orderDateTime = $(this).val();
-                                const hasPaymentDetails = " . json_encode($hasPaymentDetails) . ";
-                                
-                                // Only enable arrival_datetime if order_datetime has a value AND payment details exist
-                                $('#arrival_datetime').prop('disabled', !orderDateTime || !hasPaymentDetails);
-                                
-                                // Set minimum date for arrival_datetime to be the order date
-                                if (orderDateTime) {
-                                    $('#arrival_datetime').attr('min', orderDateTime);
-                                }
-                            });
                         });
                         </script>";
     
@@ -555,14 +511,11 @@ if ($content === 'purchase_order') {
                             <p class='text-danger text-center'>Purchase order is already canceled.</p>
                             ";
                         }else{
-
-                            if($response['po_details']['PO_STATUS'] !== 'canceled'){
-                                echo "
-                                <div class='text-end'>
-                                    <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
-                                </div>
-                                ";
-                            }
+                            echo "
+                            <div class='text-end'>
+                                <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                            </div>
+                            ";
                         }
                     echo "</div>
                 </div>
@@ -1184,437 +1137,18 @@ if ($content === 'purchase_order') {
                             </tr>";
                         }
             
-                    echo "</tbody>
+            echo "</tbody>
                 </table>
             </div>";
         } else {
             echo "<p>No pending requisitions found.</p>";
         }
     }
-} elseif ($content === 'withdrawal_deposit_history') {
-    include('deposit_withdrawal_history.php');
-        if ($content === 'withdrawal_deposit_history') {
-            echo "<h3>Deposit History</h3>";
-            if (!empty($depositData)) {
-                // Generate deposit history table
-                echo "<table class='table table-bordered table-striped'>
-                        <thead class='thead-dark'>
-                            <tr>
-                                <th>Quantity</th>
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Employee ID</th>
-                                <th>Inventory ID</th>
-                            </tr>
-                        </thead>
-                        <tbody>";
-                foreach ($depositData as $row) {
-                    echo "<tr>
-                            <td>{$row['DP_QUANTITY']}</td>
-                            <td>{$row['DP_DATE']}</td>
-                            <td>{$row['DP_DESCRIPTION']}</td>
-                            <td>{$row['EMP_ID']}</td>
-                            <td>{$row['INV_ID']}</td>
-                        </tr>";
-                }
-                echo "</tbody></table>";
-            } else {
-                echo "<p>No deposit history records found.</p>";
-            }
-        
-            echo "<h3>Withdrawal History</h3>";
-            if (!empty($withdrawalData)) {
-                // Generate withdrawal history table
-                echo "<table class='table table-bordered table-striped'>
-                        <thead class='thead-dark'>
-                            <tr>
-                                <th>Quantity</th>
-                                <th>Date</th>
-                                <th>Reason</th>
-                                <th>Employee ID</th>
-                                <th>Inventory ID</th>
-                            </tr>
-                        </thead>
-                        <tbody>";
-                foreach ($withdrawalData as $row) {
-                    echo "<tr>
-                            <td>{$row['WDL_QUANTITY']}</td>
-                            <td>{$row['WDL_DATE']}</td>
-                            <td>{$row['WDL_REASON']}</td>
-                            <td>{$row['EMP_ID']}</td>
-                            <td>{$row['INV_ID']}</td>
-                        </tr>";
-                }
-                echo "</tbody></table>";
-            } else {
-                echo "<p>No withdrawal history records found.</p>";
-            }
-        }
-} elseif ($content === 'withdrawal_deposit') {
-    include('get_inventory_manager.php');
 
+} elseif ($content === 'withdrawal_deposit') {
     if ($conca === 'Inventory Manager') {
         echo "<h2>Withdrawal & Deposit</h2>
               <p>Manage withdrawals and deposits here.</p>";
-
-        if (!empty($response) && isset($response[0]['id'])) {
-            // Generate table
-            echo "
-                <!-- Create Inventory Item Button -->
-                <div class=\"d-flex justify-content-end\">
-                    <button class=\"btn btn-primary\" data-bs-toggle=\"modal\" data-bs-target=\"#createModal\">Add Inventory Item</button>
-                </div>
-
-                <!-- Create Modal -->
-                <div class=\"modal fade\" id=\"createModal\" tabindex=\"-1\" aria-labelledby=\"createModalLabel\" aria-hidden=\"true\">
-                    <div class=\"modal-dialog\">
-                        <div class=\"modal-content\">
-                            <div class=\"modal-header\">
-                                <h5 class=\"modal-title\" id=\"createModalLabel\">Add Inventory Item</h5>
-                                <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"Close\"></button>
-                            </div>
-                            <div class=\"modal-body\">
-                                <form id=\"createInventoryForm\">
-                                    <div class=\"mb-3\">
-                                        <label for=\"invQuantity\" class=\"form-label\">Intitial Quantity:</label>
-                                        <input type=\"number\" class=\"form-control\" id=\"invQuantity\" name=\"quantity\" required>
-                                    </div>
-                                    <div class=\"mb-3\">
-                                        <label for=\"invModelName\" class=\"form-label\">Model Name:</label>
-                                        <input type=\"text\" class=\"form-control\" id=\"invModelName\" name=\"model_name\" required>
-                                    </div>
-                                    <div class=\"mb-3\">
-                                        <label for=\"invBrand\" class=\"form-label\">Brand:</label>
-                                        <input type=\"text\" class=\"form-control\" id=\"invBrand\" name=\"brand\" required>
-                                    </div>
-                                    <div class=\"mb-3\">
-                                        <label for=\"invLocation\" class=\"form-label\">Location:</label>
-                                        <input type=\"text\" class=\"form-control\" id=\"invLocation\" name=\"location\" required>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class=\"modal-footer\">
-                                <button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button>
-                                <button type=\"button\" class=\"btn btn-primary\" id=\"submitCreateForm\">Save Item</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                   
-            
-            
-                <table class='table table-bordered table-striped'>
-                    <thead class='thead-dark'>
-                        <tr>
-                            <th>ID</th>
-                            <th>Quantity</th>
-                            <th>Model Name</th>
-                            <th>Brand</th>
-                            <th>Location</th>
-                            <th>Date Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>";
-                    foreach ($response as $item) {
-                        echo "<tr>
-                                <td>{$item['id']}</td> <!-- This corresponds to 'id' in the response array -->
-                                <td>{$item['quantity']}</td> <!-- This corresponds to 'quantity' in the response array -->
-                                <td>{$item['model_name']}</td> <!-- This corresponds to 'model_name' in the response array -->
-                                <td>{$item['brand']}</td> <!-- This corresponds to 'brand' in the response array -->
-                                <td>{$item['location']}</td> <!-- This corresponds to 'location' in the response array -->
-                                <td>{$item['date_created']}</td> <!-- This corresponds to 'date_created' in the response array -->
-                                <td>
-                                    <button class='btn btn-success action-btn' data-id='{$item['id']}' data-action='deposit' data-name='{$item['model_name']}' data-stock='{$item['quantity']}'>Deposit</button>
-                                    <button class='btn btn-danger action-btn' data-id='{$item['id']}' data-action='withdraw' data-name='{$item['model_name']}' data-stock='{$item['quantity']}'>Withdraw</button>
-                                    <button class='btn btn-warning edit-btn' data-id='{$item['id']}' data-model='{$item['model_name']}' data-brand='{$item['brand']}' data-location='{$item['location']}'>Edit</button>
-                                </td>
-                              </tr>";
-                    }
-
-            echo "</tbody></table>";
-
-            // Add modal structure and jQuery script
-            echo "
-            <!-- Modal -->
-            <div class=\"modal fade\" id=\"actionModal\" tabindex=\"-1\" aria-labelledby=\"modalTitle\" aria-hidden=\"true\">
-                <div class=\"modal-dialog\">
-                    <div class=\"modal-content\">
-                        <div class=\"modal-header\">
-                            <h5 class=\"modal-title\" id=\"modalTitle\"></h5>
-                            <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"Close\"></button>
-                        </div>
-                        <div class=\"modal-body\">
-                            <p id=\"modalDetails\"></p>
-                            <p><strong>Current Stock:</strong> <span id=\"modalStock\"></span></p>
-
-                            <!-- Staff Selection Dropdown -->
-                            <div class=\"mb-3\">
-                                <label for=\"modalStaff\" class=\"form-label\">Select Staff:</label>
-                                <select class=\"form-control\" id=\"modalStaff\" required>
-                                    <option value=\"\">Select Staff</option>
-                                </select>
-                            </div>
-
-                            <div class=\"mb-3\">
-                                <label for=\"modalQuantity\" class=\"form-label\">Enter Quantity:</label>
-                                <input type=\"number\" class=\"form-control\" id=\"modalQuantity\" min=\"1\" required />
-                            </div>
-                            <div class=\"mb-3\" id=\"descriptionGroup\" style=\"display:none;\">
-                                <label for=\"modalDescription\" class=\"form-label\">Description (for Deposit):</label>
-                                <input type=\"text\" class=\"form-control\" id=\"modalDescription\" required />
-                            </div>
-                            <div class=\"mb-3\" id=\"reasonGroup\" style=\"display:none;\">
-                                <label for=\"modalReason\" class=\"form-label\">Reason (for Withdrawal):</label>
-                                <input type=\"text\" class=\"form-control\" id=\"modalReason\" required />
-                            </div>
-                        </div>
-                        <div class=\"modal-footer\">
-                            <button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button>
-                            <button type=\"button\" class=\"btn btn-primary\" id=\"modalSubmit\">Submit</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Modal for Edit Item -->
-            <div class=\"modal fade\" id=\"editModal\" tabindex=\"-1\" aria-labelledby=\"editModalTitle\" aria-hidden=\"true\">
-                <div class=\"modal-dialog\">
-                    <div class=\"modal-content\">
-                        <div class=\"modal-header\">
-                            <h5 class=\"modal-title\" id=\"editModalTitle\">Edit Item</h5>
-                            <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"Close\"></button>
-                        </div>
-                        <div class=\"modal-body\">
-                            <!-- Edit Form -->
-                            <form id=\"editForm\">
-                                <input type=\"hidden\" id=\"editItemId\" />
-
-                                <div class=\"mb-3\">
-                                    <label for=\"editModelName\" class=\"form-label\">Model Name:</label>
-                                    <input type=\"text\" class=\"form-control\" id=\"editModelName\" value=\"\" readonly required />
-                                </div>
-
-                                <div class=\"mb-3\">
-                                    <label for=\"editBrand\" class=\"form-label\">Brand:</label>
-                                    <input type=\"text\" class=\"form-control\" id=\"editBrand\" readonly required />
-                                </div>
-
-                                <div class=\"mb-3\">
-                                    <label for=\"editLocation\" class=\"form-label\">Location:</label>
-                                    <input type=\"text\" class=\"form-control\" id=\"editLocation\" required />
-                                </div>
-                            </form>
-                        </div>
-                        <div class=\"modal-footer\">
-                            <button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">Close</button>
-                            <button type=\"button\" class=\"btn btn-primary\" id=\"saveEditBtn\">Save Changes</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            <script>
-            $(document).ready(function() {
-                $('#submitCreateForm').on('click', function() {
-                let formData = {
-                    quantity: $('#invQuantity').val(),
-                    model_name: $('#invModelName').val(),
-                    brand: $('#invBrand').val(),
-                    location: $('#invLocation').val()
-                };
-
-                // Validate the form
-                if (!formData.quantity || !formData.model_name || !formData.brand || !formData.location) {
-                    alert('Please fill in all fields.');
-                    return;
-                }
-
-                // Send the form data via AJAX
-                $.ajax({
-                    url: 'add_item.php',
-                    type: 'POST',
-                    data: formData,
-                    success: function(response) {
-                        alert(response); // Notify the user
-                        $('#createModal').modal('hide'); // Hide the modal
-                        location.reload(); // Reload the page
-                    },
-                    error: function(xhr, status, error) {
-                        alert('An error occurred: ' + error);
-                    }
-                });
-            });
-
-
-
-
-                // Edit button functionality
-                $('.edit-btn').on('click', function() {
-                    let itemId = $(this).data('id');
-                    let modelName = $(this).data('model');
-                    let brand = $(this).data('brand');
-                    let location = $(this).data('location');
-
-                    // Populate the modal with the current item data
-                    $('#editItemId').val(itemId);
-                    $('#editModelName').val(modelName);
-                    $('#editBrand').val(brand);
-                    $('#editLocation').val(location);
-
-                    // Show the edit modal
-                    $('#editModal').modal('show');
-                });
-
-                // Save the changes to the item
-                $('#saveEditBtn').on('click', function() {
-                    let itemId = $('#editItemId').val();
-                    let location = $('#editLocation').val();
-
-                    // Validate the fields
-                    if (!location) {
-                        alert('Please fill in the location.');
-                        return;
-                    }
-
-                    // AJAX request to save the changes
-                    $.ajax({
-                        url: 'edit_inventory_item.php',  // The PHP file to handle the edit action
-                        type: 'POST',
-                        data: {
-                            item_id: itemId,
-                            location: location
-                        },
-                        success: function(response) {
-                            alert(response);
-                            $('#editModal').modal('hide');  // Close the modal
-                        },
-                        error: function(xhr, status, error) {
-                            alert('An error occurred: ' + error);
-                        }
-                    });
-                });
-
-                // Use the hidden.bs.modal event to reload the page after the modal closes
-                $('#editModal').on('hidden.bs.modal', function () {
-                    location.reload();  // Reload page after modal is fully closed
-                });
-
-                // Fetch staff for inventory department when modal is shown
-                $('.action-btn').on('click', function() {
-                    let itemId = $(this).data('id');
-                    let action = $(this).data('action');
-                    let itemName = $(this).data('name');
-                    let stock = $(this).data('stock');
-
-                    $('#modalTitle').text(action.charAt(0).toUpperCase() + action.slice(1) + ' Item');
-                    $('#modalDetails').text('Item: ' + itemName + ' (ID: ' + itemId + ')');
-                    $('#modalStock').text(stock);
-                    $('#modalQuantity').val('');  // Reset quantity field
-                    $('#modalDescription').val('');  // Reset description field
-                    $('#modalReason').val('');  // Reset reason field
-
-                    // Show the appropriate field based on action (Deposit or Withdraw)
-                    if (action === 'deposit') {
-                        $('#descriptionGroup').show(); // Show Description field for Deposit
-                        $('#reasonGroup').hide();      // Hide Reason field for Deposit
-                    } else if (action === 'withdraw') {
-                        $('#descriptionGroup').hide(); // Hide Description field for Withdraw
-                        $('#reasonGroup').show();      // Show Reason field for Withdraw
-                    }
-
-                    $('#actionModal').modal('show');
-
-                    // AJAX request to fetch inventory staff
-                    $.ajax({
-                        url: 'get_staff_inv.php',  // The PHP file to fetch staff data
-                        type: 'GET',
-                        success: function(response) {
-                            let staffData = JSON.parse(response);
-                            let staffDropdown = $('#modalStaff');
-                            staffDropdown.empty(); // Clear existing options
-                            staffDropdown.append('<option value=\"\">Select Staff</option>'); // Default option
-
-                            // Append staff options to the dropdown
-                            staffData.forEach(function(staff) {
-                                staffDropdown.append('<option value=\"' + staff.EMP_ID + '\">' + staff.EMP_NAME + '</option>');
-                            });
-                        },
-                        error: function(xhr, status, error) {
-                            alert('Failed to load staff data: ' + error);
-                        }
-                    });
-
-                    // Handle Submit button click in the modal
-                    $('#modalSubmit').off('click').on('click', function() {
-                        let quantity = $('#modalQuantity').val();
-                        let description = $('#modalDescription').val();
-                        let reason = $('#modalReason').val();
-                        let selectedStaff = $('#modalStaff').val();
-
-                        // Check if all required fields are filled
-                        if (!selectedStaff || !quantity || (action === 'deposit' && !description) || (action === 'withdraw' && !reason)) {
-                            alert('Please fill in all required fields.');
-                            return;
-                        }
-
-                        // Ensure staff selection is made
-                        if (!selectedStaff) {
-                            alert('Please select a staff member.');
-                            return;
-                        }
-
-                        // Check if the quantity entered for withdrawal is greater than the available stock
-                        if (action === 'withdraw' && quantity > stock) {
-                            alert('Error: Withdrawal quantity cannot be greater than available stock.');
-                            return;
-                        }
-
-                        // Confirmation message
-                        let confirmationMessage = '';
-                        if (action === 'deposit') {
-                            confirmationMessage = 'Are you sure you want to deposit ' + quantity + ' of ' + itemName + '?';
-                        } else if (action === 'withdraw') {
-                            confirmationMessage = 'Are you sure you want to withdraw ' + quantity + ' of ' + itemName + '?';
-                        }
-
-                        if (confirmationMessage && confirm(confirmationMessage)) {
-                            // Proceed with the AJAX request after confirmation
-                            if (quantity && quantity > 0) {
-                                $.ajax({
-                                    url: 'deposit_or_withdrawal.php',
-                                    type: 'POST',
-                                    data: {
-                                        action: action,
-                                        item_id: itemId,
-                                        quantity: quantity,
-                                        staff_id: selectedStaff,  // Include the selected staff ID
-                                        description: description,  // Only for deposit
-                                        reason: reason             // Only for withdraw
-                                    },
-                                    success: function(response) {
-                                        alert(response);
-                                        $('#actionModal').modal('hide');
-                                        location.reload();  // Reload page after action
-                                    },
-                                    error: function(xhr, status, error) {
-                                        alert('An error occurred: ' + error);
-                                    }
-                                });
-                            } else {
-                                alert('Please enter a valid quantity.');
-                            }
-                        }
-                    });
-                });
-            });
-        </script>
-            ";
-        } else {
-            echo "<p>No inventory items found.</p>";
-        }
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
@@ -2475,6 +2009,7 @@ if ($content === 'purchase_order') {
                                 <th>ID</th>
                                 <th>Requester Name</th>
                                 <th>Submitted Date</th>
+                                <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -2485,6 +2020,7 @@ if ($content === 'purchase_order') {
                             <td>" . htmlspecialchars($req['requisition_id']) . "</td>
                             <td>" . htmlspecialchars($req['employee_name']) . "</td>
                             <td>" . htmlspecialchars($req['submitted_date']) . "</td>
+                            <td>" . htmlspecialchars($req['requisition_status']) . "</td>
                             <td>
                                 <a href='#' 
                                     class='btn btn-sm btn-primary view-requisition' 
@@ -2508,14 +2044,248 @@ if ($content === 'purchase_order') {
     }
 }
 elseif ($content === 'requisition_history') {
-    // Inside the requisition_withdrawal section in load_content.php
     echo "<h2>Requisition History</h2>";
 
-    // Button to load requisition history
-    echo "<button id=\"goToWithdrawal\" class=\"btn btn-primary\">Go to Requisition History</button>";
+    // Check if the user is a staff or manager
+    if ($role === 'Staff') {
+        // Staff 
+        include('staff_requisition_history.php');
+    } elseif ($role === 'Manager') {
+        // Manager 
+        include('manager_requisition_history.php');
+    } 
+}
+elseif ($content === 'manager_purchase_order_history') {
+    if(isset($_GET['po_id'])) {
+        // Show detailed view for specific PO
+        include('admin/get_po_order_details.php');
+        
+        if ($poDetails) {
+            echo "<div class='d-flex justify-content-between align-items-center mb-3'>
+                    <h3>Purchase Order Details PO-{$poDetails['PO_ID']}</h3>
+                    </div>
+                  <div class='card rounded-4 p-4'>
+                      <div class='text-start'>
+                            <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='manager_purchase_order_history'>
+                                <i class='fas fa-arrow-left'></i> Back
+                            </a>
+                      </div>
+                      
+                      <div class='row mb-3'>
+                          <div class='col-md-4'>
+                              <p><strong>PO Status:</strong> {$poDetails['PO_STATUS']}</p>
+                              <p><strong>Supplier:</strong> {$poDetails['SP_NAME']}</p>
+                              <p><strong>Contact Person:</strong> {$poDetails['SP_CONTACT_PERSON']}</p>
+                          </div>
+                          <div class='col-md-4'>
+                              <p><strong>Contact No:</strong> {$poDetails['SP_CONTACT']}</p>
+                              <p><strong>Email:</strong> {$poDetails['SP_EMAIL']}</p>
+                              <p><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
+                          </div>
+                          <div class='col-md-4'>
+                              <p><strong>Date Created:</strong> " . date('F d, Y', strtotime($poDetails['PO_PR_DATE_CREATED'])) . "</p>
+                              <p><strong>Deliver To:</strong> {$poDetails['deliverTo']}</p>
+                              <p><strong>Employee Number:</strong> {$poDetails['EMP_NUMBER']}</p>
+                          </div>
+                      </div>
 
+                      <div class='table-responsive'>
+                          <table class='table'>
+                              <thead>
+                                  <tr>
+                                      <th>Item Name</th>
+                                      <th>Brand</th>
+                                      <th>Quantity</th>
+                                      <th>Unit Price</th>
+                                      <th>Total Price</th>
+                                  </tr>
+                              </thead>
+                              <tbody>";
+                              
+                              $grand_total = 0;
+                              foreach ($poDetails['items'] as $item) {
+                                  $total = $item['PO_QUANTITY'] * $item['PO_UNIT_PRICE'];
+                                  $grand_total += $total;
+                                  echo "<tr>
+                                          <td>{$item['INV_MODEL_NAME']}</td>
+                                          <td>{$item['INV_BRAND']}</td>
+                                          <td>{$item['PO_QUANTITY']}</td>
+                                          <td>" . number_format($item['PO_UNIT_PRICE'], 2) . "</td>
+                                          <td>" . number_format($total, 2) . "</td>
+                                      </tr>";
+                              }
+                              
+                              echo "</tbody>
+                              <tfoot>
+                                  <tr>
+                                      <td colspan='4' class='text-end'><strong>Grand Total:</strong></td>
+                                      <td><strong>" . number_format($grand_total, 2) . "</strong></td>
+                                  </tr>
+                              </tfoot>
+                          </table>
+                      </div>";
 
+            if ($poDetails['PO_STATUS'] === 'completed' && isset($poDetails['PD_PAYMENT_TYPE'])) {
+                echo "<div class='mt-4'>
+                        <h4>Payment Details</h4>
+                        <div class='row'>
+                            <div class='col-md-4'>
+                                <p><strong>Payment Type:</strong> {$poDetails['PD_PAYMENT_TYPE']}</p>
+                            </div>
+                            <div class='col-md-4'>
+                                <p><strong>Amount Paid:</strong> " . number_format($poDetails['PD_AMMOUNT'], 2) . "</p>
+                            </div>
+                            <div class='col-md-4'>
+                                <p><strong>Change:</strong> " . number_format($poDetails['PD_CHANGE'], 2) . "</p>
+                            </div>
+                        </div>
+                    </div>";
+            }
 
+            echo "</div>";
+
+        } else {
+            echo "<h3>Purchase order not found.</h3>";
+        }
+    } else {
+        include('get_manager_po_history.php');
+        
+        echo "<h3>Purchase Order History</h3>
+              <div class='card rounded-4 p-4'>
+                <form id='filterForm' class='mb-4'>
+                    <div class='row g-3'>
+                        <div class='col-md'>
+                            <input type='text' class='form-control' id='filterID' placeholder='PO ID' name='filter_id'>
+                        </div>
+                        <div class='col-md'>
+                            <select class='form-select' id='filterSupplier' name='filter_supplier'>
+                                <option value=''>All Suppliers</option>";
+                                // Fetch and display suppliers
+                                $supplierQuery = "SELECT SP_ID, SP_NAME FROM supplier WHERE SP_STATUS = '1' ORDER BY SP_NAME";
+                                $supplierResult = mysqli_query($db, $supplierQuery);
+                                while ($supplier = mysqli_fetch_assoc($supplierResult)) {
+                                    $selected = (isset($_GET['filter_supplier']) && $_GET['filter_supplier'] == $supplier['SP_NAME']) ? 'selected' : '';
+                                    echo "<option value='" . htmlspecialchars($supplier['SP_NAME']) . "' {$selected}>" . 
+                                         htmlspecialchars($supplier['SP_NAME']) . "</option>";
+                                }
+        echo "                </select>
+                        </div>
+                        <div class='col-md'>
+                            <input type='date' class='form-control' id='filterDate' name='filter_date'>
+                        </div>
+                        <div class='col-md'>
+                            <select class='form-select' id='filterStatus' name='filter_status'>
+                                <option value=''>All Status</option>
+                                <option value='rejected'>Rejected</option>
+                                <option value='canceled'>Canceled</option>
+                            </select>
+                        </div>
+                        <div class='col-md-auto'>
+                            <button type='button' class='btn btn-primary' id='applyFilter'>Apply Filter</button>
+                            <button type='button' class='btn btn-secondary' id='resetFilter'>Reset</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class='table-responsive'>
+                    <table class='table'>
+                        <thead>
+                            <tr>
+                                <th>PO ID</th>
+                                <th>Supplier</th>
+                                <th>Date Created</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>";
+                        
+                        foreach ($purchase_orders as $po) {
+                            echo "<tr>
+                                    <td>PO-{$po['PO_ID']}</td>
+                                    <td>{$po['SP_NAME']}</td>
+                                    <td>" . date('F d, Y', strtotime($po['PO_PR_DATE_CREATED'])) . "</td>
+                                    <td>{$po['PO_STATUS']}</td>
+                                    <td>
+                                        <a href='#' class='btn btn-primary btn-sm view-purchase-order' 
+                                           data-id='{$po['PO_ID']}' 
+                                           data-content='manager_purchase_order_history'>
+                                            <i class='fas fa-eye'></i>
+                                        </a>
+                                    </td>
+                                </tr>";
+                        }
+                        
+                        echo "</tbody>
+                    </table>
+                </div>";
+
+                // Pagination
+                if ($total_pages > 1) {
+                    echo "<nav aria-label='Page navigation' class='mt-4'>
+                            <ul class='pagination justify-content-center'>";
+                    
+                    // Previous button
+                    $prevPage = $page - 1;
+                    echo "<li class='page-item " . ($page <= 1 ? 'disabled' : '') . "'>
+                            <a class='page-link' href='?content=manager_purchase_order_history&page=$prevPage" . 
+                            (isset($_GET['filter_id']) ? "&filter_id=" . $_GET['filter_id'] : "") . 
+                            (isset($_GET['filter_supplier']) ? "&filter_supplier=" . $_GET['filter_supplier'] : "") . 
+                            (isset($_GET['filter_date']) ? "&filter_date=" . $_GET['filter_date'] : "") . 
+                            (isset($_GET['filter_status']) ? "&filter_status=" . $_GET['filter_status'] : "") . 
+                            "' tabindex='-1'>Previous</a>
+                          </li>";
+
+                    // Page numbers
+                    for ($i = 1; $i <= $total_pages; $i++) {
+                        echo "<li class='page-item " . ($page == $i ? 'active' : '') . "'>
+                                <a class='page-link' href='?content=manager_purchase_order_history&page=$i" . 
+                                (isset($_GET['filter_id']) ? "&filter_id=" . $_GET['filter_id'] : "") . 
+                                (isset($_GET['filter_supplier']) ? "&filter_supplier=" . $_GET['filter_supplier'] : "") . 
+                                (isset($_GET['filter_date']) ? "&filter_date=" . $_GET['filter_date'] : "") . 
+                                (isset($_GET['filter_status']) ? "&filter_status=" . $_GET['filter_status'] : "") . 
+                                "'>$i</a>
+                              </li>";
+                    }
+
+                    // Next button
+                    $nextPage = $page + 1;
+                    echo "<li class='page-item " . ($page >= $total_pages ? 'disabled' : '') . "'>
+                            <a class='page-link' href='?content=manager_purchase_order_history&page=$nextPage" . 
+                            (isset($_GET['filter_id']) ? "&filter_id=" . $_GET['filter_id'] : "") . 
+                            (isset($_GET['filter_supplier']) ? "&filter_supplier=" . $_GET['filter_supplier'] : "") . 
+                            (isset($_GET['filter_date']) ? "&filter_date=" . $_GET['filter_date'] : "") . 
+                            (isset($_GET['filter_status']) ? "&filter_status=" . $_GET['filter_status'] : "") . 
+                            "'>Next</a>
+                          </li>";
+                    
+                    echo "</ul>
+                        </nav>";
+                }
+
+        echo "</div>
+              
+              <script>
+                $(document).ready(function() {
+                    // Apply filter
+                    $('#applyFilter').click(function() {
+                        const formData = $('#filterForm').serialize();
+                        window.location.href = '?content=manager_purchase_order_history&' + formData;
+                    });
+
+                    // Reset filter
+                    $('#resetFilter').click(function() {
+                        window.location.href = '?content=manager_purchase_order_history';
+                    });
+
+                    // Set filter values from URL parameters
+                    const urlParams = new URLSearchParams(window.location.search);
+                    $('#filterID').val(urlParams.get('filter_id'));
+                    $('#filterDate').val(urlParams.get('filter_date'));
+                    $('#filterStatus').val(urlParams.get('filter_status'));
+                });
+              </script>";
+    }
 } elseif ($content === 'requisition_withdrawal') {
     echo "<h2>Requisition Withdrawal</h2>";
 
@@ -2699,23 +2469,8 @@ elseif ($content === 'requisition_history') {
                     data: { wd_id: withdrawalId },
                     success: function(response) {
                         if (response === 'success') {
-                            // Check if the requisition is closed (you can adjust this based on your backend logic)
-                            $.ajax({
-                                url: 'check_status.php',  // PHP file to check requisition status
-                                type: 'POST',
-                                data: { wd_id: withdrawalId },
-                                success: function(statusResponse) {
-                                    if (statusResponse === 'closed') {
-                                        alert('The requisition has been fulfilled and closed.');
-                                    } else {
-                                        alert('Item marked as delivered.');
-                                    }
-                                    location.reload();  // Reload the page to update the table
-                                },
-                                error: function() {
-                                    alert('Error checking requisition status');
-                                }
-                            });
+                            alert('Item marked as delivered');
+                            location.reload();  // Reload the page to update the table
                         } else {
                             alert('Error updating delivered date');
                         }
@@ -3001,8 +2756,6 @@ elseif ($content === 'requisition_history') {
                     success: function(response) {
                         if (response === 'Staff') {
                             location.reload(); // Reload the page if the role is 'staff'
-                        }else if(response === 'Manager'){
-                            location.reload(); // Reload the page if the role is 'admin'
                         }
                     }
                 });
@@ -3214,18 +2967,15 @@ elseif ($content === 'requisition_history') {
                     });
                 });
         
-                // Function to validate a date (not older than 1 day ago and not more than 1 hour ahead)
-                    function validateDate(inputDate) {
-                        var now = new Date();
-                        var oneHourLater = new Date();
-                        oneHourLater.setHours(now.getHours() + 1);  // Set to one hour after the current time
-
-                        var oneDayAgo = new Date();
-                        oneDayAgo.setDate(now.getDate() - 1);  // Set to one day before the current time
-
-                        // Ensure the date is not older than 1 day ago and is not more than 1 hour in the future
-                        return inputDate <= oneHourLater && inputDate >= oneDayAgo;
-                    }
+                // Function to validate a date (not older than now and not more than 1 hour ahead)
+                function validateDate(inputDate) {
+                    var now = new Date();
+                    var oneHourLater = new Date();
+                    oneHourLater.setHours(now.getHours() + 1);  // Set to one hour after the current time
+        
+                    // Ensure the date is not in the past and is not more than 1 hour in the future
+                    return inputDate <= oneHourLater && inputDate >= now;
+                }
             });
         </script>";
         
@@ -3920,7 +3670,6 @@ elseif ($content === 'account_settings') {
                                       <th>Item</th>
                                       <th>Quantity</th>
                                       <th>Description</th>
-                                      <th>Date Received</th>
                                   </tr>
                               </thead>
                               <tbody>";
@@ -3929,13 +3678,8 @@ elseif ($content === 'account_settings') {
                     echo "<tr>
                             <td>{$item['item_name']}</td>
                             <td>{$item['quantity']}</td>
-                            <td>{$item['description']}</td>";
-                            if($item['WD_DATE_RECEIVED']){
-                                echo "<td>" . date('F j, Y h:i A', strtotime($item['WD_DATE_RECEIVED'])) . "</td>";
-                            }else{
-                                echo "<td>-</td>";
-                            }
-                          echo "</tr>";
+                            <td>{$item['description']}</td>
+                          </tr>";
                 }
                 
                 echo "</tbody>
@@ -4457,7 +4201,7 @@ echo "</div>
                                         echo "<p class='mb-0'><strong>Order Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ORDER_DATE'])) . "</p>";
                                     }
                                     if($poDetails['PO_ARRIVAL_DATE']){
-                                        echo "<p class='mb-0'><strong>Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
+                                        echo "<p class='mb-0'><strong>Expected Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
                                     }
                                 echo "
                                 </div>
@@ -4542,7 +4286,6 @@ echo "</div>
                               <option value=''>All Status</option>
                               <option value='approved'>Approved</option>
                               <option value='completed'>Completed</option>
-                              <option value='canceled'>Canceled</option>
                           </select>
                       </div>
                       <div class='col-md-auto'>
@@ -4557,7 +4300,6 @@ echo "</div>
                                   <th>ID</th>
                                   <th>Supplier</th>
                                   <th>Date of Issue</th>
-                                  <th>Status</th>
                                   <th>Action</th>
                               </tr>
                           </thead>
@@ -4569,7 +4311,6 @@ echo "</div>
                             <td>PO-{$po['PO_ID']}</td>
                             <td>{$po['SP_NAME']}</td>
                             <td>" . date('F d, Y', strtotime($po['ap_date'])) . "</td>
-                            <td>{$po['PO_STATUS']}</td>
                             <td>
                                 <a href='#' 
                                 class='btn btn-sm btn-primary view-purchase-order'

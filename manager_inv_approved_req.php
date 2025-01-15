@@ -152,7 +152,8 @@ $itemsSql = "SELECT
             $response[] = [
                 'requisition_id' => $row['Requisition_ID'],
                 'employee_name' => $row['Employee_Name'],
-                'submitted_date' => $row['Submitted_Date']
+                'submitted_date' => $row['Submitted_Date'],
+                'requisition_status' => $row['Requisition_Status']
             ];
         }
     } else {
