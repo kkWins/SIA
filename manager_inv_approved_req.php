@@ -140,7 +140,9 @@ $itemsSql = "SELECT
     WHERE 
         prf.PRF_STATUS = 'approved' 
     GROUP BY 
-        prf.PRF_ID;";
+        prf.PRF_ID
+    ORDER BY prf.prf_id DESC;
+        ";
 
     $result = $connection->query($sql);
     $response = [];

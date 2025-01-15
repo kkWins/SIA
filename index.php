@@ -19,6 +19,7 @@ $department = $_SESSION['department'];
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             display: flex;
@@ -277,6 +278,7 @@ $department = $_SESSION['department'];
                     <a href="#" class="sidebar-link" id="purchase-order-history-link">Purchase Order History</a>
                     <a href="#" class="sidebar-link" id="requisition-withdrawal-link">Requisition Withdrawal</a>
                     <a href="#" class="sidebar-link" id="inventory-task-link">Requisition Withdrawal/Delivery Task</a>   
+                    <a href="#" class="sidebar-link" id="manage-suppliers-link">Manage Suppliers</a>
                 <?php elseif ($role == 'Staff'): ?>
                     <a href="#" class="sidebar-link" id="requisition-form-link">Requisition Form</a>
                     <a href="#" class="sidebar-link" id="requisition-history-link">Requisition History</a>
@@ -343,11 +345,26 @@ $department = $_SESSION['department'];
                 loadContent(content, null, page);
             }
 
-            function loadContent(content, id = null, page = null) {
-                const params = { content: content };
-                let url = `?content=${content}`;
+            function loadContent(content, id = null, page = null, additionalParams = {}) {
+                // Remove any existing page parameter from additionalParams to avoid duplication
+                const { page: _, ...filteredParams } = additionalParams;
                 
-                // Only add ID parameters if they're provided
+                const params = { content: content, ...filteredParams };
+                
+                // Add page parameter only if it exists
+                if (page) {
+                    params.page = page;
+                }
+                
+                // Get search parameter from URL if it exists
+                const urlParams = new URLSearchParams(window.location.search);
+                const searchTerm = urlParams.get('search');
+                if (searchTerm) {
+                    params.search = searchTerm;
+                }
+                
+                let url = `?${new URLSearchParams(params).toString()}`;
+                
                 if (id) {
                     if (content === 'purchase_request' || content === 'purchase_request_history') {
                         params.pr_id = id;
@@ -361,24 +378,18 @@ $department = $_SESSION['department'];
                     } else if (content === 'requisition_approval' || content === 'approved_requisitions') {
                         params.req_id = id;
                         url += `&req_id=${id}`;
-                    }else if (content === 'inventory-task') {
+                    } else if (content === 'inventory-task') {
                         params.req_id = id;
                         url += `&req_id=${id}`;
-                    }else if (content === 'requisition_form_history') {
+                    } else if (content === 'requisition_form_history') {
                         params.req_id = id;
                         url += `&req_id=${id}`;
                     }
                 }
 
-                // Add page parameter if provided
-                if (page) {
-                    params.page = page;
-                    url += `&page=${page}`;
-                }
-
                 // Update URL and load content
                 history.pushState({}, '', url);
-                $.get('load_content.php', params, function (response) {
+                $.get('load_content.php', params, function(response) {
                     $('#content').html(response);
                 });
             }
@@ -388,9 +399,15 @@ $department = $_SESSION['department'];
                 e.preventDefault();
                 const href = $(this).attr('href');
                 const urlParams = new URLSearchParams(href.split('?')[1]);
-                const content = urlParams.get('content');
-                const page = urlParams.get('page');
-                loadContent(content, null, page);
+                
+                // Get all parameters from the clicked link
+                const params = {};
+                for (const [key, value] of urlParams) {
+                    params[key] = value;
+                }
+                
+                // Load content with all parameters
+                loadContent(params.content, null, params.page, params);
             });
 
             // Sidebar link actions to load the respective content
@@ -476,6 +493,11 @@ $department = $_SESSION['department'];
             $('#purchase-order-history-link').click(function (e) {
                 e.preventDefault();
                 loadContent('purchase_order_history');
+            });
+
+            $('#manage-suppliers-link').click(function (e) {
+                e.preventDefault();
+                loadContent('manage_suppliers');
             });
 
             $(document).on('loadContentEvent', function(e, content, id, page) {

@@ -64,7 +64,8 @@ if(isset($_GET['pending_pr'])){
     FROM purchase_order po 
     JOIN supplier sp ON sp.SP_ID = po.SP_ID
     JOIN employee emp ON emp.emp_id = po.EMP_ID
-    WHERE po.PO_STATUS IN ('pending', 'rejected')";
+    WHERE po.PO_STATUS IN ('pending', 'rejected')
+    ORDER BY po.po_id DESC;";
 
     $result = $db->query($sql);
     $pos = [];

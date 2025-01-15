@@ -29,6 +29,11 @@ if ($content === 'purchase_order') {
             if($response['po_details']) {
                 echo "
                     <div class='card rounded-4 p-4'>
+                    <div class='text-start'>
+                        <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_order'>
+                            <i class='fas fa-arrow-left'></i> Back
+                        </a>
+                    </div>
                     <div class='row'>
                         <div class='col-md-6'>
                             <h3>MOONLIGHT</h3>
@@ -113,15 +118,73 @@ if ($content === 'purchase_order') {
                             </div>
                         </div>
     
-                        <div class='mt-3'>
-                            <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_order'>
-                                <i class='fas fa-arrow-left'></i> Back
-                            </a>
-                            <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                        <div class='mt-3'>";
+                            if($response['po_details']['PO_STATUS'] === 'completed') {
+                                echo "<p class='text-success'>Purchase order is already completed.</p>";
+                            } else {
+                                // Check if payment details exist
+                                $hasPaymentDetails = $response['po_details']['PD_PAYMENT_TYPE'] && 
+                                                    $response['po_details']['PD_CHANGE'] && 
+                                                    $response['po_details']['PD_AMMOUNT'];
+                                
+                                if(!$response['po_details']['PO_ORDER_DATE']) {
+                                    // If order date is empty, show submit button
+                                    echo "<div class='text-end'>
+                                            <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                                        </div>";
+                                } else if($response['po_details']['PO_ORDER_DATE'] && !$hasPaymentDetails) {
+                                    // If order date exists but no payment details
+                                    echo "<p class='text-danger'>Payment details are missing.</p>";
+                                } else if($hasPaymentDetails && !$response['po_details']['PO_ARRIVAL_DATE']) {
+                                    // If payment details exist but no arrival date
+                                    echo "<div class='text-end'>
+                                            <button class='btn btn-success submit-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                                        </div>";
+                                } else if($response['po_details']['PO_ARRIVAL_DATE']) {
+                                    // If arrival date exists
+                                    echo "<div class='text-end'>
+                                            <button class='btn btn-success complete-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Complete</button>
+                                        </div>";
+                                }
+                            }
+                            echo "
                         </div>
                     </div>
                     <script>
                         $(document).ready(function() {
+
+                            // Add complete button click handler
+                            $('.complete-btn').on('click', function() {
+                                const poId = $(this).data('id');
+                                
+                                if (confirm('Are you sure you want to mark this purchase order as completed?')) {
+                                    $.ajax({
+                                        url: 'inventory/complete_purchase_order.php',
+                                        type: 'POST',
+                                        data: {
+                                            po_id: poId
+                                        },
+                                        success: function(response) {
+                                            try {
+                                                if (response.success) {
+                                                    alert('Purchase order completed successfully');
+                                                    window.location.href = '?content=purchase_order';
+                                                } else {
+                                                    alert('Error: ' + (response.message || 'Unknown error'));
+                                                }
+                                            } catch (e) {
+                                                console.error('Error parsing response:', e);
+                                                alert('Error processing response');
+                                            }
+                                        },
+                                        error: function() {
+                                            alert('Error completing purchase order');
+                                        }
+                                    });
+                                }
+                            });
+
+                            
                             $('.submit-btn').on('click', function() {
                                 const poId = $(this).data('id');
                                 const orderDateTime = $('#order_datetime').val();
@@ -189,7 +252,7 @@ if ($content === 'purchase_order') {
                                         <a href='#' class='btn btn-sm btn-primary view-requisition' 
                                             data-content='purchase_order' 
                                             data-id='" . $po['PO_ID'] . "'>
-                                            <i class='fas fa-eye'></i> View
+                                            <i class='fas fa-eye'></i>
                                         </a>
                                     </td>
                                 </tr>";
@@ -201,7 +264,7 @@ if ($content === 'purchase_order') {
             }else{
                 echo "
                 <div>
-                    <h5>No Pending Purchase Request Found!</h5>
+                    <p>No Pending Purchase Order Found!</p>
                 </div>
                 ";
             }
@@ -216,6 +279,11 @@ if ($content === 'purchase_order') {
             if($response['po_details']) {
                 echo "
                     <div class='card rounded-4 p-4'>
+                    <div class='text-start'>
+                        <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_order'>
+                            <i class='fas fa-arrow-left'></i> Back
+                        </a>
+                    </div>
                     <div class='row'>
                         <div class='col-md-6'>
                             <h3>MOONLIGHT</h3>
@@ -308,12 +376,20 @@ if ($content === 'purchase_order') {
                         </div>
                     </div>
     
-                    <div class='mt-3'>
-                        <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_order'>
-                            <i class='fas fa-arrow-left'></i> Back
-                        </a>
-                        <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
-                    </div>
+                    <div class='mt-3'>";
+                        
+                        if($response['po_details']['PO_STATUS'] === 'completed'){
+                            echo "
+                            <p class='text-success'>Purchase order is already completed.</p>
+                            ";
+                        }else{
+                            echo "
+                            <div class='text-end'>
+                                <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                            </div>
+                            ";
+                        }
+                    echo "</div>
                 </div>
 
                 <script>
@@ -391,7 +467,7 @@ if ($content === 'purchase_order') {
                                         <a href='#' class='btn btn-sm btn-primary view-requisition' 
                                             data-content='purchase_order' 
                                             data-id='" . $po['PO_ID'] . "'>
-                                            <i class='fas fa-eye'></i> View
+                                            <i class='fas fa-eye'></i>
                                         </a>
                                     </td>
                                 </tr>";
@@ -403,7 +479,7 @@ if ($content === 'purchase_order') {
             }else{
                 echo "
                 <div>
-                    <h5>No Pending Purchase Request Found!</h5>
+                    <p>No Pending Purchase Order Found!</p>
                 </div>
                 ";
             }
@@ -419,6 +495,11 @@ if ($content === 'purchase_order') {
         if($response['po_details']) {
             echo "
                 <div class='card rounded-4 p-4'>
+                <div class='text-start'>
+                    <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='pending_pr'>
+                        <i class='fas fa-arrow-left'></i> Back
+                    </a>
+                </div>
                 <h3>Purchase Request # {$_GET['pending_pr']}</h3>
                 <div class='row mb-3'>
                     <div class='col-md-6'>
@@ -477,12 +558,6 @@ if ($content === 'purchase_order') {
                                 <button class='btn btn-danger reject-btn' data-id='" . htmlspecialchars($_GET['pending_pr']) . "'>Reject</button>
                                 <button class='btn btn-success approve-btn' data-id='" . htmlspecialchars($_GET['pending_pr']) . "'>Approve</button>
                             </div>";
-                    }else{
-                        echo "<div class='mt-3'>
-                                <a href='#' class='btn btn-secondary back-to-list' data-content='pending_pr'>
-                                    <i class='fas fa-arrow-left'></i> Back
-                                </a>
-                            </div>";
                     }
                     
                 echo "</div>";
@@ -509,6 +584,7 @@ if ($content === 'purchase_order') {
                                 <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
                                 <button type='button' class='btn btn-danger' id='confirmReject'>Confirm Rejection</button>
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -529,6 +605,7 @@ if ($content === 'purchase_order') {
                                 <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
                                 <button type='button' class='btn btn-success' id='confirmApprove'>Confirm Approval</button>
                             </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -655,7 +732,7 @@ if ($content === 'purchase_order') {
                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
                                         data-content='pending_pr' 
                                         data-id='" . $po['PO_ID'] . "'>
-                                        <i class='fas fa-eye'></i> View
+                                        <i class='fas fa-eye'></i>
                                     </a>
                                 </td>
                             </tr>";
@@ -667,7 +744,7 @@ if ($content === 'purchase_order') {
         }else{
             echo "
             <div>
-                <h5>No Pending Purchase Request Found!</h5>
+                <p>No Pending Purchase Request Found!</p>
             </div>
             ";
         }
@@ -683,6 +760,11 @@ if ($content === 'purchase_order') {
         if (isset($response['items'])) {
             echo "
             <div class='card rounded-4 p-4'>
+                <div class='text-start'>
+                    <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='requisition_approval'>
+                        <i class='fas fa-arrow-left'></i> Back
+                    </a>
+                </div>
                 <h3>Requisition ID: " . htmlspecialchars($_GET['req_id']) . "</h3>
                 <div class='row mb-3'>
                     <div class='col-md-6'>
@@ -816,7 +898,7 @@ if ($content === 'purchase_order') {
                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
                                         data-content='requisition_approval' 
                                         data-id='" . $req['requisition_id'] . "'>
-                                        <i class='fas fa-eye'></i> View
+                                        <i class='fas fa-eye'></i>
                                     </a>
                                 </td>
                             </tr>";
@@ -826,7 +908,7 @@ if ($content === 'purchase_order') {
                 </table>
             </div>";
         } else {
-            echo "<h3>No pending requisitions found.</h3>";
+            echo "<p>No pending requisitions found.</p>";
         }
     }
 
@@ -837,6 +919,14 @@ if ($content === 'purchase_order') {
     } else {
         echo "<h3>You do not have access to this content.</h3>";
     }
+} elseif ($content === 'manage_suppliers') {
+    if ($conca === 'Inventory Manager') {
+        echo "<h2>Manage Suppliers</h2>";
+        include('inventory/manage_suppliers.php');
+    } else {
+        echo "<h3>You do not have access to this content.</h3>";
+    }
+
 } elseif ($content === 'purchase_request') {
     include('manager_inv_pr.php');
     
@@ -848,6 +938,11 @@ if ($content === 'purchase_order') {
                   if($response['po_details']) {
                       echo "
                       <div class='card rounded-4 p-4'>
+                          <div class='text-start'>
+                              <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_request'>
+                                  <i class='fas fa-arrow-left'></i> Back
+                              </a>
+                          </div>
                           <h3> PR ID #{$_GET['pr_id']}</h3>
                           <div class='row mb-3'>
                               <div class='col-md-6'>
@@ -902,13 +997,6 @@ if ($content === 'purchase_order') {
                                       </tr>
                                   </tfoot>
                                   </table>";
-                              
-                              echo "
-                                  <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_request'>
-                                    <i class='fas fa-arrow-left'></i> Back
-                                  </a>
-                              
-                              </div>";
                           } else {
                               echo 'Purchase Order not found';
                     }
@@ -1117,20 +1205,40 @@ if ($content === 'purchase_order') {
                                 $('#submitPR').click(function() {
                                     const vendor = $('#vendor').val();
                                     const items = [];
+                                    let hasInvalidInput = false;
                                     
                                     $('#prItems tbody tr').each(function() {
                                         const item = $(this).find('.item-select').val();
+                                        const quantity = $(this).find('.quantity').val();
+                                        const price = $(this).find('.price').val();
+                                        
+                                        // Check if this row has an item selected
                                         if (item) {
+                                            // Validate quantity
+                                            if (!quantity || quantity <= 0 || !Number.isInteger(Number(quantity))) {
+                                                alert('Please enter a valid whole number for quantity');
+                                                hasInvalidInput = true;
+                                                return false; // Break the loop
+                                            }
+                                            
+                                            // Validate price
+                                            if (!price || price <= 0 || isNaN(Number(price))) {
+                                                alert('Please enter a valid number for unit price');
+                                                hasInvalidInput = true;
+                                                return false; // Break the loop
+                                            }
+                                            
                                             items.push({
                                                 item_id: item,
-                                                quantity: $(this).find('.quantity').val(),
-                                                price: $(this).find('.price').val(),
+                                                quantity: quantity,
+                                                price: price,
                                                 total: $(this).find('.total').text()
                                             });
                                         }
                                     });
 
-                                    if (vendor && items.length > 0) {
+                                    // Only proceed if all inputs are valid and we have items
+                                    if (!hasInvalidInput && vendor && items.length > 0) {
                                         $.ajax({
                                             url: 'submit_purchase_request.php',
                                             type: 'POST',
@@ -1160,7 +1268,7 @@ if ($content === 'purchase_order') {
                                                 alert('Error processing request. Please try again.');
                                             }
                                         });
-                                    } else {
+                                    } else if (!hasInvalidInput) {
                                         alert('Please fill in all required fields.');
                                     }
                                 });
@@ -1206,12 +1314,12 @@ if ($content === 'purchase_order') {
                                                     <a href='#' class='btn btn-sm btn-primary view-requisition' 
                                                         data-content='purchase_request' 
                                                         data-id='" . $po['PO_ID'] . "'>
-                                                        <i class='fas fa-eye'></i> View
+                                                        <i class='fas fa-eye'></i>
                                                     </a>
                                                     <a href='#' class='btn btn-sm btn-danger delete-po' 
                                                         data-content='purchase_request' 
                                                         data-id='" . $po['PO_ID'] . "'>
-                                                        <i class='fas fa-eye'></i> Delete
+                                                        <i class='fas fa-trash'></i>
                                                     </a>
                                                 </td>
                                             </tr>";
@@ -1250,7 +1358,7 @@ if ($content === 'purchase_order') {
                         }else{
                         echo "
                         <div>
-                            <h5>No Purchase request yet.</h5>
+                            <p>No Purchase request yet.</p>
                         </div>
                         ";
                       }
@@ -1270,6 +1378,11 @@ if ($content === 'purchase_order') {
             if ($response['items']) {
                 echo "
                     <div class='card rounded-4 p-4'>
+                        <div class='text-start'>
+                            <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='approved_requisitions'>
+                                <i class='fas fa-arrow-left'></i> Back
+                            </a>
+                        </div>
                         <h3>Requisition ID {$_GET['req_id']}</h3>
                         <div class='row mb-3'>
                             <div class='col-md-6'>
@@ -1406,6 +1519,42 @@ if ($content === 'purchase_order') {
                 
                     echo"<script>
                         $(document).ready(function() {
+                            $('#endBtn').on('click', function(event) {
+                                event.preventDefault(); // Prevent default button behavior
+
+                                // Get the PRF_ID from the data attribute
+                                const prfId = $(this).data('id');
+
+                                if (prfId) {
+                                    // Confirm the user's action before proceeding
+                                    if (confirm('Are you sure you want to close this requisition? This action cannot be undone.')) {
+                                        // Send an AJAX request to the server
+                                        $.ajax({
+                                            url: 'update_status.php', // Replace with your PHP script path
+                                            method: 'POST',
+                                            data: { PRF_ID: prfId }, // Send the PRF_ID to the server
+                                            success: function(response) {
+                                                if (response.trim() === \"Status updated to 'closed' successfully.\") {
+                                                    alert('Requisition successfully closed.');
+                                                    location.reload(); // Reload the page to reflect changes
+                                                } else if (response.trim() === \"Cannot close PRF. There are records in rf_withdrawal with dates populated.\") {
+                                                    alert('Requisition cannot be closed. Some withdrawal records are still active.');
+                                                } else {
+                                                    alert(response); // Display any other server response
+                                                }
+                                            },
+                                            error: function(xhr, status, error) {
+                                                alert('An error occurred: ' + error);
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    alert('PRF_ID is missing. Please check your setup.');
+                                }
+                            });
+
+
+
                             // Handle Withdraw Button Click
                             $('.withdraw-btn').on('click', function(event) {
                                 event.preventDefault(); // Prevent default form submission
@@ -1477,6 +1626,7 @@ if ($content === 'purchase_order') {
                                     } else {
                                         // Display error message
                                         alert('Error: ' + response.message);
+                                        $(document).trigger('loadContentEvent', ['approved_requisitions', reqId]);
                                     }
                                 }, 'json').fail(function(jqXHR, textStatus, errorThrown) {
                                     // If the request fails, log the error
@@ -1517,7 +1667,7 @@ if ($content === 'purchase_order') {
                                     class='btn btn-sm btn-primary view-requisition' 
                                     data-content='approved_requisitions' 
                                     data-id='" . $req['requisition_id'] . "'>
-                                        <i class='fas fa-eye'></i> View
+                                        <i class='fas fa-eye'></i> 
                                 </a>
                             </td>
                         </tr>";
@@ -1625,83 +1775,125 @@ elseif ($content === 'purchase_order_history') {
         }
     
         echo "</tbody></table>";
-    
+        // Add an End button
+        echo "
+        <div class='mt-3'>
+            <button class='btn btn-danger endBtn' data-req-id='" . htmlspecialchars($response['requisition_id'], ENT_QUOTES, 'UTF-8') . "'>
+                End
+            </button>
+        </div>";
+        
         // Fetch withdrawal history using .get() AJAX request
         echo "<h3>Withdrawal History</h3>";
-echo "<table class='table'>
-        <thead>
-            <tr>
-                <th>Item Name</th>
-                <th>Quantity Withdrawn</th>
-                <th>Withdrawn By</th>
-                <th>Date Withdrawn</th>
-                <th>Date Delivered</th>
-                <th>Date Received</th>
-                <th>Acknowledge</th> <!-- New column for Delivered button -->
-            </tr>
-        </thead>
-        <tbody id='withdrawal-history'></tbody>
-      </table>";
-
-// Add JavaScript for AJAX request to fetch withdrawal data
-echo "
-<script>
-    $(document).ready(function() {
-        var reqId = '" . htmlspecialchars($response['requisition_id']) . "';
+        echo "<table class='table'>
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>Quantity Withdrawn</th>
+                        <th>Withdrawn By</th>
+                        <th>Date Withdrawn</th>
+                        <th>Date Delivered</th>
+                        <th>Date Received</th>
+                        <th>Acknowledge</th> <!-- New column for Delivered button -->
+                    </tr>
+                </thead>
+                <tbody id='withdrawal-history'></tbody>
+            </table>";
         
-        $.get('get_rw_staff.php', { req_id: reqId }, function(data) {
-            var withdrawalData = JSON.parse(data);
-            var html = '';
-            
-            if (Array.isArray(withdrawalData) && withdrawalData.length > 0) {
-                withdrawalData.forEach(function(withdrawal) {
-                    html += '<tr>';
-                    html += '<td>' + withdrawal.item_name + '</td>';
-                    html += '<td>' + withdrawal.quantity + '</td>';
-                    html += '<td>' + withdrawal.withdrawn_by + '</td>';
-                    html += '<td>' + (withdrawal.date_withdrawn || '') + '</td>';
-                    html += '<td>' + (withdrawal.date_delivered || '') + '</td>';
-                    html += '<td>' + (withdrawal.received_date  || '') + '</td>';
-                    
-                    // If the date delivered is null, add a \"Delivered\" button
-                    if (withdrawal.date_delivered && !withdrawal.received_date) {
-                        html += '<td><button class=\"btn btn-success btn-sm\" onclick=\"markDelivered(' + withdrawal.withdrawal_id + ')\">Mark as Delivered</button></td>';
-                    }else if(!withdrawal.received_date){
-                        html += '<td></td>'; // Empty cell if already delivered
+        // Add JavaScript for AJAX request to fetch withdrawal data
+        echo "
+        <script>
+            $(document).ready(function() {
+                var reqId = '" . htmlspecialchars($response['requisition_id']) . "';
+
+                $('.endBtn').on('click', function(event) {
+                    event.preventDefault(); // Prevent default button behavior
+
+                    // Get the PRF_ID from the data attribute
+                    const prfId = $(this).data('req-id');
+
+                    if (prfId) {
+                        // Confirm the user's action before proceeding
+                        if (confirm('Are you sure you want to close this requisition? This action cannot be undone.')) {
+                            // Send an AJAX request to the server
+                            $.ajax({
+                                url: 'update_status.php', // Replace with your PHP script path
+                                method: 'POST',
+                                data: { PRF_ID: prfId }, // Send the PRF_ID to the server
+                                success: function(response) {
+                                    if (response.trim() === \"Status updated to 'closed' successfully.\") {
+                                        alert('Requisition successfully closed.');
+                                        location.reload(); // Reload the page to reflect changes
+                                    } else if (response.trim() === \"Cannot close PRF. There are records in rf_withdrawal with dates populated.\") {
+                                        alert('Requisition cannot be closed. Some withdrawal records are still active.');
+                                    } else {
+                                        alert(response); // Display any other server response
+                                    }
+                                },
+                                error: function(xhr, status, error) {
+                                    alert('An error occurred: ' + error);
+                                }
+                            });
+                        }
                     } else {
-                        html += '<td>Delivered</td>'; // Empty cell if already delivered
+                        alert('PRF_ID is missing. Please check your setup.');
                     }
-
-                    html += '</tr>';
                 });
-            } else {
-                html = '<tr><td colspan=\"6\">No withdrawal information available.</td></tr>';
-            }
-            
-            $('#withdrawal-history').html(html);
-        });
-    });
 
-    // Function to mark the item as delivered (for future implementation)
-    function markDelivered(withdrawalId) {
-        $.ajax({
-            url: 'mark_received.php',  // PHP file to process the request
-            type: 'POST',
-            data: { wd_id: withdrawalId },
-            success: function(response) {
-                if (response === 'success') {
-                    alert('Item marked as delivered');
-                    location.reload();  // Reload the page to update the table
-                } else {
-                    alert('Error updating delivered date');
-                }
-            },
-            error: function() {
-                alert('An error occurred while marking as delivered');
+                
+                $.get('get_rw_staff.php', { req_id: reqId }, function(data) {
+                    var withdrawalData = JSON.parse(data);
+                    var html = '';
+                    
+                    if (Array.isArray(withdrawalData) && withdrawalData.length > 0) {
+                        withdrawalData.forEach(function(withdrawal) {
+                            html += '<tr>';
+                            html += '<td>' + withdrawal.item_name + '</td>';
+                            html += '<td>' + withdrawal.quantity + '</td>';
+                            html += '<td>' + withdrawal.withdrawn_by + '</td>';
+                            html += '<td>' + (withdrawal.date_withdrawn || '') + '</td>';
+                            html += '<td>' + (withdrawal.date_delivered || '') + '</td>';
+                            html += '<td>' + (withdrawal.received_date  || '') + '</td>';
+                            
+                            // If the date delivered is null, add a \"Delivered\" button
+                            if (withdrawal.date_delivered && !withdrawal.received_date) {
+                                html += '<td><button class=\"btn btn-success btn-sm\" onclick=\"markDelivered(' + withdrawal.withdrawal_id + ')\">Mark as Delivered</button></td>';
+                            }else if(!withdrawal.received_date){
+                                html += '<td></td>'; // Empty cell if already delivered
+                            } else {
+                                html += '<td>Delivered</td>'; // Empty cell if already delivered
+                            }
+
+                            html += '</tr>';
+                        });
+                    } else {
+                        html = '<tr><td colspan=\"6\">No withdrawal information available.</td></tr>';
+                    }
+                    
+                    $('#withdrawal-history').html(html);
+                });
+            });
+
+            // Function to mark the item as delivered (for future implementation)
+            function markDelivered(withdrawalId) {
+                $.ajax({
+                    url: 'mark_received.php',  // PHP file to process the request
+                    type: 'POST',
+                    data: { wd_id: withdrawalId },
+                    success: function(response) {
+                        if (response === 'success') {
+                            alert('Item marked as delivered');
+                            location.reload();  // Reload the page to update the table
+                        } else {
+                            alert('Error updating delivered date');
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while marking as delivered');
+                    }
+                });
             }
-        });
-    }
-</script>";
+        </script>";
 
     } elseif (isset($response['prf_status']) && $response['prf_status'] == 'pending') {
         // If there's a pending request, display it
@@ -1734,7 +1926,7 @@ echo "
 
         echo "</tbody></table>
         </div>";  // Close card div
-        echo '<button class="deleteBtn" data-prf-id="' . $response['prf_id'] . '">Delete</button>';
+        echo '<button class="btn btn-danger deleteBtn" data-prf-id="' . $response['prf_id'] . '">Delete</button>';
         echo"
             <script>
             $(document).ready(function(){
@@ -2118,66 +2310,89 @@ echo "
         
             // Script for handling save action
             echo "<script>
-                $(document).ready(function() {
-                    // Attach the click event to each Save button
-                    var reqId = {$reqId};
-                    $('.save-btn').click(function() {
-                        var withdrawalId = $(this).data('id');  // Get the withdrawal ID from the button
-                        var wdate = $(this).data('wdate'); 
-                        // Get the values of the input fields
-                        var wdDateWithdrawn = $('input[name=\"WD_DATE_WITHDRAWN[' + withdrawalId + ']\"]').val();
-                        var wdDateDelivered = $('input[name=\"WD_DATE_DELIVERED[' + withdrawalId + ']\"]').val();
+            $(document).ready(function() {
+                // Attach the click event to each Save button
+                var reqId = {$reqId};
+                $('.save-btn').click(function() {
+                    var withdrawalId = $(this).data('id'); // Get the withdrawal ID from the button
+                    var wdate = $(this).data('wdate'); 
         
-                        // Prepare data object, but only include the fields that have values
-                        var data = { withdrawal_id: withdrawalId };
+                    // Get the values of the input fields
+                    var wdDateWithdrawn = $('input[name=\"WD_DATE_WITHDRAWN[' + withdrawalId + ']\"]').val();
+                    var wdDateDelivered = $('input[name=\"WD_DATE_DELIVERED[' + withdrawalId + ']\"]').val();
         
-                        if (wdDateWithdrawn) {
-                            data.wd_date_withdrawn = wdDateWithdrawn;
+                    // Prepare data object, but only include the fields that have values
+                    var data = { withdrawal_id: withdrawalId };
+        
+                    if (wdDateWithdrawn) {
+                        // Validate the withdrawal date
+                        var withdrawnDate = new Date(wdDateWithdrawn);
+                        if (!validateDate(withdrawnDate)) {
+                            alert(\"Withdrawal date must not be older than now or more than 1 hour in the future.\");
+                            return;
                         }
+                        data.wd_date_withdrawn = wdDateWithdrawn;
+                    }
         
                     if (wdDateDelivered) {
-                        data.wd_date_delivered = wdDateDelivered;
-
-                        // Normalize both wdate (from HTML input) and wdDateDelivered (from SQL) to ensure proper comparison.
+                        // Validate the delivery date
+                        var deliveredDate = new Date(wdDateDelivered);
+                        if (!validateDate(deliveredDate)) {
+                            alert(\"Delivery date must not be older than now or more than 1 hour in the future.\");
+                            return;
+                        }
+        
+                        // Normalize both wdate and wdDateDelivered to ensure proper comparison
                         var wdateNormalized = new Date(wdate);
                         var wdDateDeliveredNormalized = new Date(data.wd_date_delivered);
-
-                        // If wdate is '12:00' (representing midnight in HTML), convert it to '00:00' for comparison.
+        
                         if (wdateNormalized.getHours() === 12 && wdateNormalized.getMinutes() === 0) {
-                            wdateNormalized.setHours(0);  // Convert 12:00 AM to 00:00 for comparison
+                            wdateNormalized.setHours(0); // Convert 12:00 AM to 00:00 for comparison
                         }
-
-                        // Compare the normalized dates
+        
                         if (wdDateDeliveredNormalized < wdateNormalized) {
                             alert(\"Delivery date can't be earlier than withdrawal date\");
                             return;
                         }
-                    }
-
         
-                        // Send the data to the server using AJAX
-                        $.ajax({
-                            url: 'save_withdrawal.php', // PHP script to handle saving
-                            type: 'POST',
-                            data: data,
-                            success: function(response) {
-                                // Process the response from the server (echoed response)
-                                var result = JSON.parse(response);
-                                if (result.success) {
-                                    alert('Record saved successfully!');
-                                    // Optionally, update the UI or feedback
-                                    $(document).trigger('loadContentEvent', ['inventory-task', reqId]);
-                                } else {
-                                    alert('Error saving record.');
-                                }
-                            },
-                            error: function() {
-                                alert('There was an error with the request.');
+                        data.wd_date_delivered = wdDateDelivered;
+                    }
+        
+                    // Send the data to the server using AJAX
+                    $.ajax({
+                        url: 'save_withdrawal.php', // PHP script to handle saving
+                        type: 'POST',
+                        data: data,
+                        success: function(response) {
+                            // Process the response from the server (echoed response)
+                            var result = JSON.parse(response);
+                            if (result.success) {
+                                alert('Record saved successfully!');
+                                // Optionally, update the UI or feedback
+                                $(document).trigger('loadContentEvent', ['inventory-task', reqId]);
+                            } else {
+                                alert('Error saving record.');
                             }
-                        });
+                        },
+                        error: function() {
+                            alert('There was an error with the request.');
+                        }
                     });
                 });
-            </script>";
+        
+                // Function to validate a date (not older than now and not more than 1 hour ahead)
+                function validateDate(inputDate) {
+                    var now = new Date();
+                    var oneHourLater = new Date();
+                    oneHourLater.setHours(now.getHours() + 1);  // Set to one hour after the current time
+        
+                    // Ensure the date is not in the past and is not more than 1 hour in the future
+                    return inputDate <= oneHourLater && inputDate >= now;
+                }
+            });
+        </script>";
+        
+
         } else {
             echo "<p>No withdrawal records found for this requisition.</p>";
         }
@@ -2309,10 +2524,11 @@ elseif ($content === 'account_settings') {
             </script>";
 } elseif ($role === 'Admin') {
     if ($content === 'manage_employees') {
-        // Get employees data with pagination
+        // Get employees data with pagination and search
         $page = isset($_GET['page']) ? $_GET['page'] : 1;
+        $search = isset($_GET['search']) ? $_GET['search'] : '';  // Add this line
         require_once 'admin/get_employees.php';
-        $result = get_employees(); // Add this line to call the function
+        $result = get_employees($search); // Pass the search parameter
 
         echo "<h2>Manage Employees</h2>
 
@@ -2325,6 +2541,18 @@ elseif ($content === 'account_settings') {
                     Add Employee
                 </button>
             </div>
+
+            <!-- Search form moved to right side -->
+            <div class='d-flex justify-content-end mb-3'>
+                <form id='searchForm' class='d-flex gap-2' style='width: 600px;'>
+                    <input type='text' class='form-control' id='searchTerm' name='search' 
+                        placeholder='Search by name, email, department...'
+                        value='" . (isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '') . "'>
+                    <button type='submit' class='btn btn-primary'>Search</button>
+                    <button type='button' class='btn btn-secondary' id='clearSearch'>Clear</button>
+                </form>
+            </div>
+
             <div class='table-responsive'>
                 <table class='table table-striped' id='employeesTable'>
                     <thead>
@@ -2354,7 +2582,7 @@ elseif ($content === 'account_settings') {
                                     <td>" . htmlspecialchars($row['EMP_NUMBER']) . "</td>
                                     <td>
                                         <button class='btn btn-sm btn-primary edit-employee' data-bs-toggle='modal' data-bs-target='#editEmployeeModal' data-id='" . $row['EMP_ID'] . "'>
-                                            <i class='fas fa-edit'></i> Edit
+                                            <i class='fas fa-edit'></i>
                                         </button>
                                         <button class='btn btn-sm " . $statusBtnClass . " toggle-status' 
                                                 data-id='" . $row['EMP_ID'] . "'
@@ -2374,29 +2602,35 @@ elseif ($content === 'account_settings') {
                 // Pagination
                 if (isset($result['pagination']) && $result['pagination']['total_pages'] > 1) {
                     $pagination = $result['pagination'];
+                    
+                    // Add this line to handle search parameter
+                    $searchParam = isset($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '';
+                    
                     echo "<nav aria-label='Page navigation' class='mt-4'>
                             <ul class='pagination justify-content-center'>";
                     
                     // Previous button
                     $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
                     echo "<li class='page-item{$prevDisabled}'>
-                            <a class='page-link' href='?content=manage_employees&page=" . ($pagination['current_page'] - 1) . "'>Previous</a>
+                            <a class='page-link' href='?content=manage_employees&page=" . 
+                            ($pagination['current_page'] - 1) . $searchParam . "'>Previous</a>
                           </li>";
-
+                
                     // Page numbers
                     for ($i = 1; $i <= $pagination['total_pages']; $i++) {
                         $active = $pagination['current_page'] == $i ? ' active' : '';
                         echo "<li class='page-item{$active}'>
-                                <a class='page-link' href='?content=manage_employees&page={$i}'>{$i}</a>
+                                <a class='page-link' href='?content=manage_employees&page={$i}{$searchParam}'>{$i}</a>
                               </li>";
                     }
-
+                
                     // Next button
                     $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
                     echo "<li class='page-item{$nextDisabled}'>
-                            <a class='page-link' href='?content=manage_employees&page=" . ($pagination['current_page'] + 1) . "'>Next</a>
+                            <a class='page-link' href='?content=manage_employees&page=" . 
+                            ($pagination['current_page'] + 1) . $searchParam . "'>Next</a>
                           </li>";
-
+                
                     echo "</ul>
                         </nav>";
                 }
@@ -2404,157 +2638,192 @@ elseif ($content === 'account_settings') {
             echo "</div>
         </div>";
 
-        // Add Employee Modal HTML remains the same
-        echo "<!-- Add Employee Modal -->
-            <div class='modal fade' id='addEmployeeModal' tabindex='-1' aria-labelledby='addEmployeeModalLabel' aria-hidden='true'>
-                <div class='modal-dialog modal-lg'>
+            // Add Employee Modal HTML remains the same
+            echo "<!-- Add Employee Modal -->
+                <div class='modal fade' id='addEmployeeModal' tabindex='-1' aria-labelledby='addEmployeeModalLabel' aria-hidden='true'>
+                    <div class='modal-dialog modal-lg'>
+                        <div class='modal-content'>
+                            <div class='modal-header'>
+                                <h5 class='modal-title' id='addEmployeeModalLabel'>Add New Employee</h5>
+                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                            </div>
+                            <div class='modal-body'>
+                                <form id='addEmployeeForm'>
+                                    <div class='row'>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='emp_fname' class='form-label'>First Name</label>
+                                            <input type='text' class='form-control' id='emp_fname' name='emp_fname' required>
+                                        </div>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='emp_lname' class='form-label'>Last Name</label>
+                                            <input type='text' class='form-control' id='emp_lname' name='emp_lname' required>
+                                        </div>
+                                    </div>
+                                    <div class='row'>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='emp_email' class='form-label'>Email</label>
+                                            <input type='email' class='form-control' id='emp_email' name='emp_email' required>
+                                        </div>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='emp_password' class='form-label'>Password</label>
+                                            <input type='password' class='form-control' id='emp_password' name='emp_password' required>
+                                        </div>
+                                    </div>
+                                    <div class='row'>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='department' class='form-label'>Department</label>
+                                            <select class='form-select' id='department' name='department' required>
+                                                <option value=''>Select Department</option>
+                                                <option value='Finance'>Finance</option>
+                                                <option value='Inventory'>Inventory</option>
+                                                <option value='Labor'>Labor</option>
+                                            </select>
+                                        </div>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='position' class='form-label'>Position</label>
+                                            <select class='form-select' id='position' name='position' required>
+                                                <option value=''>Select Position</option>
+                                                <option value='Manager'>Manager</option>
+                                                <option value='Staff'>Staff</option>
+                                            </select>
+                                        </div>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='contact_no' class='form-label'>Contact Number</label>
+                                            <input type='text' class='form-control' id='contact_no' name='contact_no' required>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class='modal-footer'>
+                                <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                <button type='button' class='btn btn-primary' id='submitEmployee'>Add Employee</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deactivate Confirmation Modal -->
+                <div class='modal fade' id='toggleStatusModal' tabindex='-1' aria-labelledby='toggleStatusModalLabel' aria-hidden='true'>
+                <div class='modal-dialog'>
                     <div class='modal-content'>
                         <div class='modal-header'>
-                            <h5 class='modal-title' id='addEmployeeModalLabel'>Add New Employee</h5>
+                            <h5 class='modal-title' id='toggleStatusModalLabel'>Confirm Status Change</h5>
                             <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
                         </div>
                         <div class='modal-body'>
-                            <form id='addEmployeeForm'>
-                                <div class='row'>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='emp_fname' class='form-label'>First Name</label>
-                                        <input type='text' class='form-control' id='emp_fname' name='emp_fname' required>
-                                    </div>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='emp_lname' class='form-label'>Last Name</label>
-                                        <input type='text' class='form-control' id='emp_lname' name='emp_lname' required>
-                                    </div>
-                                </div>
-                                <div class='row'>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='emp_email' class='form-label'>Email</label>
-                                        <input type='email' class='form-control' id='emp_email' name='emp_email' required>
-                                    </div>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='emp_password' class='form-label'>Password</label>
-                                        <input type='password' class='form-control' id='emp_password' name='emp_password' required>
-                                    </div>
-                                </div>
-                                <div class='row'>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='department' class='form-label'>Department</label>
-                                        <select class='form-select' id='department' name='department' required>
-                                            <option value=''>Select Department</option>
-                                            <option value='Finance'>Finance</option>
-                                            <option value='Inventory'>Inventory</option>
-                                            <option value='Labor'>Labor</option>
-                                        </select>
-                                    </div>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='position' class='form-label'>Position</label>
-                                        <select class='form-select' id='position' name='position' required>
-                                            <option value=''>Select Position</option>
-                                            <option value='Manager'>Manager</option>
-                                            <option value='Staff'>Staff</option>
-                                        </select>
-                                    </div>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='contact_no' class='form-label'>Contact Number</label>
-                                        <input type='text' class='form-control' id='contact_no' name='contact_no' required>
-                                    </div>
-                                </div>
-                            </form>
+                            <p id='toggleStatusMessage'></p>
+                            <input type='hidden' id='toggle_emp_id'>
+                            <input type='hidden' id='toggle_status'>
                         </div>
                         <div class='modal-footer'>
-                            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
-                            <button type='button' class='btn btn-primary' id='submitEmployee'>Add Employee</button>
+                            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Cancel</button>
+                            <button type='button' class='btn btn-primary' id='confirmToggleStatus'>Confirm</button>
                         </div>
                     </div>
                 </div>
-            </div>
+                </div>
 
-            <!-- Deactivate Confirmation Modal -->
-            <div class='modal fade' id='toggleStatusModal' tabindex='-1' aria-labelledby='toggleStatusModalLabel' aria-hidden='true'>
-            <div class='modal-dialog'>
-                <div class='modal-content'>
-                    <div class='modal-header'>
-                        <h5 class='modal-title' id='toggleStatusModalLabel'>Confirm Status Change</h5>
-                        <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-                    </div>
-                    <div class='modal-body'>
-                        <p id='toggleStatusMessage'></p>
-                        <input type='hidden' id='toggle_emp_id'>
-                        <input type='hidden' id='toggle_status'>
-                    </div>
-                    <div class='modal-footer'>
-                        <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Cancel</button>
-                        <button type='button' class='btn btn-primary' id='confirmToggleStatus'>Confirm</button>
-                    </div>
-                </div>
-            </div>
-            </div>
-
-            <!-- Edit Employee Modal -->
-            <div class='modal fade' id='editEmployeeModal' tabindex='-1' aria-labelledby='editEmployeeModalLabel' aria-hidden='true'>
-                <div class='modal-dialog modal-lg'>
-                    <div class='modal-content'>
-                        <div class='modal-header'>
-                            <h5 class='modal-title' id='editEmployeeModalLabel'>Edit Employee</h5>
-                            <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
-                        </div>
-                        <div class='modal-body'>
-                            <form id='editEmployeeForm'>
-                                <input type='hidden' id='edit_emp_id' name='emp_id'>
-                                <div class='row'>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='edit_emp_fname' class='form-label'>First Name</label>
-                                        <input type='text' class='form-control' id='edit_emp_fname' name='emp_fname' required>
+                <!-- Edit Employee Modal -->
+                <div class='modal fade' id='editEmployeeModal' tabindex='-1' aria-labelledby='editEmployeeModalLabel' aria-hidden='true'>
+                    <div class='modal-dialog modal-lg'>
+                        <div class='modal-content'>
+                            <div class='modal-header'>
+                                <h5 class='modal-title' id='editEmployeeModalLabel'>Edit Employee</h5>
+                                <button type='button' class='btn-close' data-bs-dismiss='modal' aria-label='Close'></button>
+                            </div>
+                            <div class='modal-body'>
+                                <form id='editEmployeeForm'>
+                                    <input type='hidden' id='edit_emp_id' name='emp_id'>
+                                    <div class='row'>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='edit_emp_fname' class='form-label'>First Name</label>
+                                            <input type='text' class='form-control' id='edit_emp_fname' name='emp_fname' required>
+                                        </div>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='edit_emp_lname' class='form-label'>Last Name</label>
+                                            <input type='text' class='form-control' id='edit_emp_lname' name='emp_lname' required>
+                                        </div>
                                     </div>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='edit_emp_lname' class='form-label'>Last Name</label>
-                                        <input type='text' class='form-control' id='edit_emp_lname' name='emp_lname' required>
+                                    <div class='row'>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='edit_emp_email' class='form-label'>Email</label>
+                                            <input type='email' class='form-control' id='edit_emp_email' name='emp_email' required>
+                                        </div>
+                                        <div class='col-md-6 mb-3'>
+                                            <label for='edit_emp_password' class='form-label'>Password (leave blank if unchanged)</label>
+                                            <input type='password' class='form-control' id='edit_emp_password' name='emp_password'>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class='row'>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='edit_emp_email' class='form-label'>Email</label>
-                                        <input type='email' class='form-control' id='edit_emp_email' name='emp_email' required>
+                                    <div class='row'>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='edit_department' class='form-label'>Department</label>
+                                            <select class='form-select' id='edit_department' name='department' required>
+                                                <option value=''>Select Department</option>
+                                                <option value='Finance'>Finance</option>
+                                                <option value='Inventory'>Inventory</option>
+                                                <option value='Labor'>Labor</option>
+                                            </select>
+                                        </div>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='edit_position' class='form-label'>Position</label>
+                                            <select class='form-select' id='edit_position' name='position' required>
+                                                <option value=''>Select Position</option>
+                                                <option value='Manager'>Manager</option>
+                                                <option value='Staff'>Staff</option>
+                                            </select>
+                                        </div>
+                                        <div class='col-md-4 mb-3'>
+                                            <label for='edit_contact_no' class='form-label'>Contact Number</label>
+                                            <input type='text' class='form-control' id='edit_contact_no' name='contact_no' required>
+                                        </div>
                                     </div>
-                                    <div class='col-md-6 mb-3'>
-                                        <label for='edit_emp_password' class='form-label'>Password (leave blank if unchanged)</label>
-                                        <input type='password' class='form-control' id='edit_emp_password' name='emp_password'>
-                                    </div>
-                                </div>
-                                <div class='row'>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='edit_department' class='form-label'>Department</label>
-                                        <select class='form-select' id='edit_department' name='department' required>
-                                            <option value=''>Select Department</option>
-                                            <option value='Finance'>Finance</option>
-                                            <option value='Inventory'>Inventory</option>
-                                            <option value='Labor'>Labor</option>
-                                        </select>
-                                    </div>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='edit_position' class='form-label'>Position</label>
-                                        <select class='form-select' id='edit_position' name='position' required>
-                                            <option value=''>Select Position</option>
-                                            <option value='Manager'>Manager</option>
-                                            <option value='Staff'>Staff</option>
-                                        </select>
-                                    </div>
-                                    <div class='col-md-4 mb-3'>
-                                        <label for='edit_contact_no' class='form-label'>Contact Number</label>
-                                        <input type='text' class='form-control' id='edit_contact_no' name='contact_no' required>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                        <div class='modal-footer'>
-                            <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
-                            <button type='button' class='btn btn-primary' id='updateEmployee'>Update Employee</button>
+                                </form>
+                            </div>
+                            <div class='modal-footer'>
+                                <button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>Close</button>
+                                <button type='button' class='btn btn-primary' id='updateEmployee'>Update Employee</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
           
           <script>
             $(document).ready(function() {
+
+                // Handle search form submission
+                $('#searchForm').on('submit', function(e) {
+                    e.preventDefault();
+                    const searchTerm = $('#searchTerm').val();
+                    
+                    // Make AJAX call directly
+                    $.get('load_content.php', {
+                        content: 'manage_employees',
+                        search: searchTerm
+                    }, function(response) {
+                        $('#content').html(response);
+                        
+                        // Update URL without reloading - Fixed the string concatenation
+                        const newUrl = '?content=manage_employees&search=' + encodeURIComponent(searchTerm);
+                        history.pushState({}, '', newUrl);
+                    });
+                });
+
+                // Handle clear search
+                $('#clearSearch').click(function(e) {
+                    e.preventDefault();
+                    $('#searchTerm').val('');
+                    
+                    // Make AJAX call directly
+                    $.get('load_content.php', {
+                        content: 'manage_employees'
+                    }, function(response) {
+                        $('#content').html(response);
+                        
+                        // Update URL without reloading
+                        const newUrl = '?content=manage_employees';
+                        history.pushState({}, '', newUrl);
+                    });
+                });
                 
                 $('.toggle-status').click(function() {
                     const empId = $(this).data('id');
@@ -2715,16 +2984,18 @@ elseif ($content === 'account_settings') {
     }elseif($content === 'requisition_form_history'){
         if (isset($_GET['req_id'])) {
             // Show detailed view for specific requisition
-            include('admin/get_rf_details.php'); // You'll need to create this file
+            include('admin/get_rf_details.php'); 
             
             if ($requisitionDetails) {
                 echo "<div class='d-flex justify-content-between align-items-center mb-3'>
                         <h3>Requisition Details RF-{$_GET['req_id']}</h3>
-                        <a href='#' class='btn btn-secondary back-to-list' data-content='requisition_form_history'>
-                            <i class='fas fa-arrow-left'></i> Back
-                        </a>
                       </div>
                       <div class='card rounded-4 p-4'>
+                        <div class='text-start'>
+                            <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='requisition_form_history'>
+                                <i class='fas fa-arrow-left'></i> Back
+                            </a>
+                        </div>
                           <div class='row'>
                               <div class='col-md-4'>
                                   <p><strong>Requester:</strong> {$requisitionDetails['FULL_NAME']}</p>
@@ -2787,6 +3058,41 @@ elseif ($content === 'account_settings') {
             
             echo "<h3>Requisition Form History</h3>
                 <div class='card rounded-4 p-4'>
+                    <form id='filterForm' class='mb-4'>
+                        <div class='row g-3'>
+                            <div class='col-md'>
+                                <input type='text' class='form-control' id='filterID' placeholder='RF ID' name='filter_id'>
+                            </div>
+                            <div class='col-md'>
+                                <input type='text' class='form-control' id='filterName' placeholder='Requester Name' name='filter_name'>
+                            </div>
+                            <div class='col-md'>
+                                <select class='form-select' id='filterDepartment' name='filter_department'>
+                                    <option value=''>All Departments</option>
+                                    <option value='Finance'>Finance</option>
+                                    <option value='Inventory'>Inventory</option>
+                                    <option value='Labor'>Labor</option>
+                                </select>
+                            </div>
+                            <div class='col-md'>
+                                <input type='date' class='form-control' id='filterDate' name='filter_date'>
+                            </div>
+                            <div class='col-md'>
+                                <select class='form-select' id='filterStatus' name='filter_status'>
+                                    <option value=''>All Status</option>
+                                    <option value='pending'>Pending</option>
+                                    <option value='approved'>Approved</option>
+                                    <option value='rejected'>Rejected</option>
+                                    <option value='closed'>Closed</option>
+                                </select>
+                            </div>
+                            <div class='col-md-auto'>
+                                <button type='button' class='btn btn-primary' id='applyFilter'>Apply Filter</button>
+                                <button type='button' class='btn btn-secondary' id='resetFilter'>Reset</button>
+                            </div>
+                        </div>
+                    </form>
+
                     <table class='table table-striped'>
                         <thead>
                             <tr>
@@ -2799,71 +3105,136 @@ elseif ($content === 'account_settings') {
                             </tr>
                         </thead>
                         <tbody>";
-            
-            if (!empty($requisitions)) {
-                foreach ($requisitions as $req) {
-                    echo "<tr>
-                            <td>RF-{$req['PRF_ID']}</td>
-                            <td>{$req['FULL_NAME']}</td>
-                            <td>{$req['DEPT_NAME']}</td>
-                            <td>"; echo date('F j, Y h:i A', strtotime($req['PRF_DATE'])); echo "</td>
-                            <td>{$req['PRF_STATUS']}</td>
-                            <td>
-                                <a href='#' 
-                                class='btn btn-sm btn-primary view-requisition'
-                                data-content='requisition_form_history'
-                                data-id='" . $req['PRF_ID'] . "'>
-                                    <i class='fas fa-eye'></i> View
-                                </a>
-                            </td>
-                        </tr>";
-                }
-            } else {
-                echo "<tr><td colspan='6' class='text-center'>No requisitions found</td></tr>";
-            }
-            
-            echo "</tbody>
-                </table>
-                </div>";
+        
+                        if (!empty($requisitions)) {
+                            foreach ($requisitions as $req) {
+                                echo "<tr>
+                                        <td>RF-{$req['PRF_ID']}</td>
+                                        <td>{$req['FULL_NAME']}</td>
+                                        <td>{$req['DEPT_NAME']}</td>
+                                        <td>"; echo date('F j, Y h:i A', strtotime($req['PRF_DATE'])); echo "</td>
+                                        <td>{$req['PRF_STATUS']}</td>
+                                        <td>
+                                            <a href='#' 
+                                            class='btn btn-sm btn-primary view-requisition'
+                                            data-content='requisition_form_history'
+                                            data-id='" . $req['PRF_ID'] . "'>
+                                                <i class='fas fa-eye'></i>
+                                            </a>
+                                        </td>
+                                    </tr>";
+                            }
+                        } else {
+                            echo "<tr><td colspan='6' class='text-center'>No requisitions found</td></tr>";
+                        }
+                        
+                        echo "</tbody>
+                            </table>";
 
-            // Add pagination navigation
-            if (isset($pagination) && $pagination['total_pages'] > 1) {
-                echo "<nav aria-label='Page navigation' class='mt-4'>
-                        <ul class='pagination justify-content-center'>";
-                
-                // Previous button
-                $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
-                echo "<li class='page-item{$prevDisabled}'>
-                        <a class='page-link' href='?content=requisition_form_history&page=" . 
-                        ($pagination['current_page'] - 1) . "'" . 
-                        ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
-                        ">Previous</a>
-                      </li>";
-                
-                // Page numbers
-                for ($i = 1; $i <= $pagination['total_pages']; $i++) {
-                    $active = $pagination['current_page'] == $i ? ' active' : '';
-                    echo "<li class='page-item{$active}'>
-                            <a class='page-link' href='?content=requisition_form_history&page={$i}'>
-                                {$i}
-                            </a>
-                          </li>";
-                }
-                
-                // Next button
-                $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
-                echo "<li class='page-item{$nextDisabled}'>
-                        <a class='page-link' href='?content=requisition_form_history&page=" . 
-                        ($pagination['current_page'] + 1) . "'" .
-                        ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
-                        ">Next</a>
-                      </li>";
-                
-                echo "</ul>
-                    </nav>";
-            }
-            
-            echo "</div>";
+                        // Modify the pagination section to include all active filters
+                        if (isset($pagination) && $pagination['total_pages'] > 1) {
+                            echo "<nav aria-label='Page navigation' class='mt-4'>
+                                    <ul class='pagination justify-content-center'>";
+                            
+                            // Get all current filter values
+                            $filterParams = array_filter([
+                                'filter_id' => $_GET['filter_id'] ?? '',
+                                'filter_name' => $_GET['filter_name'] ?? '',
+                                'filter_department' => $_GET['filter_department'] ?? '',
+                                'filter_date' => $_GET['filter_date'] ?? '',
+                                'filter_status' => $_GET['filter_status'] ?? ''
+                            ]);
+                            
+                            // Build the query string for filters
+                            $filterQueryString = '';
+                            if (!empty($filterParams)) {
+                                $filterQueryString = '&' . http_build_query($filterParams);
+                            }
+                            
+                            // Previous button
+                            $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+                            echo "<li class='page-item{$prevDisabled}'>
+                                    <a class='page-link' href='?content=requisition_form_history&page=" . 
+                                    ($pagination['current_page'] - 1) . $filterQueryString . "'" . 
+                                    ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                                    ">Previous</a>
+                                </li>";
+                            
+                            // Page numbers
+                            for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+                                $active = $pagination['current_page'] == $i ? ' active' : '';
+                                echo "<li class='page-item{$active}'>
+                                        <a class='page-link' href='?content=requisition_form_history&page={$i}{$filterQueryString}'>
+                                            {$i}
+                                        </a>
+                                    </li>";
+                            }
+                            
+                            // Next button
+                            $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+                            echo "<li class='page-item{$nextDisabled}'>
+                                    <a class='page-link' href='?content=requisition_form_history&page=" . 
+                                    ($pagination['current_page'] + 1) . $filterQueryString . "'" .
+                                    ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
+                                    ">Next</a>
+                                </li>";
+                            
+                            echo "</ul>
+                                </nav>";
+                        }
+                        
+                        echo "</div>
+                        
+                        <script>
+                        $(document).ready(function() {
+                            // Apply filter button click handler
+                            $('#applyFilter').click(function() {
+                                applyFilters(1); // Reset to page 1 when applying new filters
+                            });
+
+                            // Reset filter button click handler
+                            $('#resetFilter').click(function() {
+                                $('#filterForm')[0].reset();
+                                applyFilters(1); // Reset to page 1 when clearing filters
+                            });
+
+                            function applyFilters(page) {
+                                const filters = {
+                                    filter_id: $('#filterID').val(),
+                                    filter_name: $('#filterName').val(),
+                                    filter_department: $('#filterDepartment').val(),
+                                    filter_date: $('#filterDate').val(),
+                                    filter_status: $('#filterStatus').val(),
+                                    content: 'requisition_form_history',
+                                    page: page || 1
+                                };
+
+                                // Update URL with filter parameters
+                                const url = new URL(window.location.href);
+                                Object.keys(filters).forEach(key => {
+                                    if (filters[key]) {
+                                        url.searchParams.set(key, filters[key]);
+                                    } else {
+                                        url.searchParams.delete(key);
+                                    }
+                                });
+                                history.pushState({}, '', url);
+
+                                // Load filtered content
+                                $.get('load_content.php', filters, function(response) {
+                                    $('#content').html(response);
+                                });
+                            }
+
+                            // Set initial filter values from URL if they exist
+                            const urlParams = new URLSearchParams(window.location.search);
+                            $('#filterID').val(urlParams.get('filter_id') || '');
+                            $('#filterName').val(urlParams.get('filter_name') || '');
+                            $('#filterDepartment').val(urlParams.get('filter_department') || '');
+                            $('#filterDate').val(urlParams.get('filter_date') || '');
+                            $('#filterStatus').val(urlParams.get('filter_status') || '');
+                        });
+                        </script>";
         }
     } elseif($content === 'purchase_request_history'){
         if(isset($_GET['pr_id'])){
@@ -2871,18 +3242,21 @@ elseif ($content === 'account_settings') {
             
             if ($poDetails) {
                 echo "<div class='d-flex justify-content-between align-items-center mb-3'>
+                        
                         <h3>Purchase Request Details PR-{$poDetails['PO_ID']}</h3>
-                        <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_request_history'>
-                            <i class='fas fa-arrow-left'></i> Back
-                        </a>
-                      </div>
+                        </div>
                       <div class='card rounded-4 p-4'>
+                          <div class='text-start'>
+                            <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_request_history'>
+                                <i class='fas fa-arrow-left'></i> Back
+                                </a>
+                        </div>
                           <div class='row'>
                               <div class='col-md-4'>
                                   <p><strong>Requestor:</strong> {$poDetails['fullname']}</p>
                                   <p><strong>Date of Request:</strong> {$poDetails['PO_PR_DATE_CREATED']}</p>
                                   <p><strong>Contact No. :</strong> {$poDetails['EMP_NUMBER']}</p>
-                              </div>
+                        </div>
                               <div class='col-md-4'>
                                   <p><strong>Supplier:</strong> {$poDetails['SP_NAME']}</p>
                                   <p><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
@@ -2954,9 +3328,49 @@ elseif ($content === 'account_settings') {
             }
         } else {
             include('admin/get_pr_history.php');
+            $supplierQuery = "SELECT SP_ID, SP_NAME FROM supplier WHERE SP_STATUS = '1' ORDER BY SP_NAME";
+            $supplierResult = mysqli_query($db, $supplierQuery);
             
             echo "<h3>Purchase Request History</h3>
                   <div class='card rounded-4 p-4'>
+                      <form id='filterForm' class='mb-4'>
+                          <div class='row g-3'>
+                              <div class='col-md'>
+                                  <input type='text' class='form-control' id='filterID' placeholder='PR ID' name='filter_id'>
+                              </div>
+                              <div class='col-md'>
+                                  <input type='text' class='form-control' id='filterName' placeholder='Requester Name' name='filter_name'>
+                              </div>
+                              <div class='col-md'>
+                                  <select class='form-select' id='filterSupplier' name='filter_supplier'>
+                                      <option value=''>All Suppliers</option>";
+                                      // Loop through suppliers and create options
+                                      while ($supplier = mysqli_fetch_assoc($supplierResult)) {
+                                          $selected = (isset($_GET['filter_supplier']) && $_GET['filter_supplier'] == $supplier['SP_NAME']) ? 'selected' : '';
+                                          echo "<option value='" . htmlspecialchars($supplier['SP_NAME']) . "' {$selected}>" . 
+                                               htmlspecialchars($supplier['SP_NAME']) . "</option>";
+                                      }
+                                      
+                                      echo "</select>
+                                                        </div>
+                              <div class='col-md'>
+                                  <input type='date' class='form-control' id='filterDate' name='filter_date'>
+                              </div>
+                              <div class='col-md'>
+                                  <select class='form-select' id='filterStatus' name='filter_status'>
+                                      <option value=''>All Status</option>
+                                      <option value='pending'>Pending</option>
+                                      <option value='approved'>Approved</option>
+                                      <option value='rejected'>Rejected</option>
+                                  </select>
+                              </div>
+                              <div class='col-md-auto'>
+                                  <button type='button' class='btn btn-primary' id='applyFilter'>Apply Filter</button>
+                                  <button type='button' class='btn btn-secondary' id='resetFilter'>Reset</button>
+                              </div>
+                          </div>
+                      </form>
+
                       <table class='table table-striped'>
                           <thead>
                               <tr>
@@ -2969,70 +3383,136 @@ elseif ($content === 'account_settings') {
                               </tr>
                           </thead>
                           <tbody>";
-        
-            if (!empty($purchase_requests)) {
-                foreach ($purchase_requests as $pr) {
-                    echo "<tr>
-                            <td>PR-{$pr['PO_ID']}</td>
-                            <td>{$pr['fullname']}</td>
-                            <td>{$pr['SP_NAME']}</td>
-                            <td>" . date('F d, Y', strtotime($pr['PO_PR_DATE_CREATED'])) . "</td>
-                            <td>{$pr['PO_STATUS']}</td>
-                            <td>
-                                <a href='#' 
-                                class='btn btn-sm btn-primary view-purchase-request'
-                                data-content='purchase_request_history'
-                                data-id='" . $pr['PO_ID'] . "'>
-                                    <i class='fas fa-eye'></i> View
-                                </a>
-                            </td>
-                          </tr>";
-                }
-            } else {
-                echo "<tr><td colspan='5' class='text-center'>No purchase requests found</td></tr>";
-            }
-            
-            echo "</tbody>
-                  </table>";
 
-            // Pagination
-            if (isset($pagination) && $pagination['total_pages'] > 1) {
-                echo "<nav aria-label='Page navigation' class='mt-4'>
-                        <ul class='pagination justify-content-center'>";
-                
-                // Previous button
-                $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
-                echo "<li class='page-item{$prevDisabled}'>
-                        <a class='page-link' href='?content=purchase_request_history&page=" . 
-                        ($pagination['current_page'] - 1) . "'" . 
-                        ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
-                        ">Previous</a>
-                      </li>";
-                
-                // Page numbers
-                for ($i = 1; $i <= $pagination['total_pages']; $i++) {
-                    $active = $pagination['current_page'] == $i ? ' active' : '';
-                    echo "<li class='page-item{$active}'>
-                            <a class='page-link' href='?content=purchase_request_history&page={$i}'>
-                                {$i}
-                            </a>
-                          </li>";
-                }
-                
-                // Next button
-                $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
-                echo "<li class='page-item{$nextDisabled}'>
-                        <a class='page-link' href='?content=purchase_request_history&page=" . 
-                        ($pagination['current_page'] + 1) . "'" .
-                        ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
-                        ">Next</a>
-                      </li>";
-                
-                echo "</ul>
-                    </nav>";
-            }
-            
-            echo "</div>";
+    if (!empty($purchase_requests)) {
+        foreach ($purchase_requests as $pr) {
+            echo "<tr>
+                    <td>PR-{$pr['PO_ID']}</td>
+                    <td>{$pr['fullname']}</td>
+                    <td>{$pr['SP_NAME']}</td>
+                    <td>" . date('F d, Y', strtotime($pr['PO_PR_DATE_CREATED'])) . "</td>
+                    <td>{$pr['PO_STATUS']}</td>
+                    <td>
+                        <a href='#' 
+                        class='btn btn-sm btn-primary view-purchase-request'
+                        data-content='purchase_request_history'
+                        data-id='" . $pr['PO_ID'] . "'>
+                            <i class='fas fa-eye'></i>
+                        </a>
+                    </td>
+                  </tr>";
+        }
+    } else {
+        echo "<tr><td colspan='6' class='text-center'>No purchase requests found</td></tr>";
+    }
+    
+    echo "</tbody>
+          </table>";
+
+// Pagination
+if (isset($pagination) && $pagination['total_pages'] > 1) {
+    echo "<nav aria-label='Page navigation' class='mt-4'>
+            <ul class='pagination justify-content-center'>";
+    
+    // Get all current filter values
+    $filterParams = array_filter([
+        'filter_id' => $_GET['filter_id'] ?? '',
+        'filter_name' => $_GET['filter_name'] ?? '',
+        'filter_supplier' => $_GET['filter_supplier'] ?? '',
+        'filter_date' => $_GET['filter_date'] ?? '',
+        'filter_status' => $_GET['filter_status'] ?? ''
+    ]);
+    
+    // Build the query string for filters
+    $filterQueryString = '';
+    if (!empty($filterParams)) {
+        $filterQueryString = '&' . http_build_query($filterParams);
+    }
+    
+    // Previous button
+    $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+    echo "<li class='page-item{$prevDisabled}'>
+            <a class='page-link' href='?content=purchase_request_history&page=" . 
+            ($pagination['current_page'] - 1) . $filterQueryString . "'" . 
+            ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
+            ">Previous</a>
+          </li>";
+    
+    // Page numbers
+    for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+        $active = $pagination['current_page'] == $i ? ' active' : '';
+        echo "<li class='page-item{$active}'>
+                <a class='page-link' href='?content=purchase_request_history&page={$i}{$filterQueryString}'>
+                    {$i}
+                </a>
+              </li>";
+    }
+    
+    // Next button
+    $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+    echo "<li class='page-item{$nextDisabled}'>
+            <a class='page-link' href='?content=purchase_request_history&page=" . 
+            ($pagination['current_page'] + 1) . $filterQueryString . "'" .
+            ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
+            ">Next</a>
+          </li>";
+    
+    echo "</ul>
+        </nav>";
+}
+
+echo "</div>
+      
+      <script>
+      $(document).ready(function() {
+          // Apply filter button click handler
+          $('#applyFilter').click(function() {
+              applyFilters(1); // Reset to page 1 when applying new filters
+          });
+
+          // Reset filter button click handler
+          $('#resetFilter').click(function() {
+              $('#filterForm')[0].reset();
+              applyFilters(1); // Reset to page 1 when clearing filters
+          });
+
+          function applyFilters(page) {
+              const filters = {
+                  filter_id: $('#filterID').val(),
+                  filter_name: $('#filterName').val(),
+                  filter_supplier: $('#filterSupplier').val(),
+                  filter_date: $('#filterDate').val(),
+                  filter_status: $('#filterStatus').val(),
+                  content: 'purchase_request_history',
+                  page: page || 1
+              };
+
+              // Update URL with filter parameters
+              const url = new URL(window.location.href);
+              Object.keys(filters).forEach(key => {
+                  if (filters[key]) {
+                      url.searchParams.set(key, filters[key]);
+                  } else {
+                      url.searchParams.delete(key);
+                  }
+              });
+              history.pushState({}, '', url);
+
+              // Load filtered content
+              $.get('load_content.php', filters, function(response) {
+                  $('#content').html(response);
+              });
+          }
+
+          // Set initial filter values from URL if they exist
+          const urlParams = new URLSearchParams(window.location.search);
+          $('#filterID').val(urlParams.get('filter_id') || '');
+          $('#filterName').val(urlParams.get('filter_name') || '');
+          $('#filterSupplier').val(urlParams.get('filter_supplier') || '');
+          $('#filterDate').val(urlParams.get('filter_date') || '');
+          $('#filterStatus').val(urlParams.get('filter_status') || '');
+      });
+      </script>";
         }
     } elseif($content === 'purchase_order_history'){
         if(isset($_GET['po_id'])) {
@@ -3042,11 +3522,13 @@ elseif ($content === 'account_settings') {
             if ($poDetails) {
                 echo "<div class='d-flex justify-content-between align-items-center mb-3'>
                         <h3>Purchase Order Details PO-{$poDetails['PO_ID']}</h3>
-                        <a href='#' class='btn btn-secondary back-to-list' data-content='purchase_order_history'>
-                            <i class='fas fa-arrow-left'></i> Back
-                        </a>
-                      </div>
+                        </div>
                       <div class='card rounded-4 p-4'>
+                          <div class='text-start'>
+                                <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_order_history'>
+                                    <i class='fas fa-arrow-left'></i> Back
+                                </a>
+                        </div>
                           <div class='row'>
                             <div class='col-md-6'>
                                 <h3>MOONLIGHT</h3>
@@ -3075,14 +3557,31 @@ elseif ($content === 'account_settings') {
                             </div>
                         </div>
                         
-                        <div class='order-details'>";
-                            if($poDetails['PO_ORDER_DATE']){
-                                echo "<p class='mb-0'><strong>Order Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ORDER_DATE'])) . "</p>";
-                            }
-                            if($poDetails['PO_ARRIVAL_DATE']){
-                                echo "<p class='mb-0'><strong>Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
-                            }
-                        echo "</div>";
+                        <div class='order-details'>
+                            <div class='row'>
+                                <div class='col-md-6'>";
+                                    if($poDetails['PO_ORDER_DATE']){
+                                        echo "<p class='mb-0'><strong>Order Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ORDER_DATE'])) . "</p>";
+                                    }
+                                    if($poDetails['PO_ARRIVAL_DATE']){
+                                        echo "<p class='mb-0'><strong>Expected Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
+                                    }
+                                echo "
+                                </div>
+                                <div class='col-md-6'>";
+                                    if($poDetails['PD_PAYMENT_TYPE']){
+                                        echo "<p class='mb-0'><strong>Payment Check:</strong> {$poDetails['PD_PAYMENT_TYPE']}</p>";
+                                    }
+                                    if($poDetails['PD_AMMOUNT']){
+                                        echo "<p class='mb-0'><strong>Amount:</strong> ₱" . number_format($poDetails['PD_AMMOUNT'], 2) . "</p>";
+                                    }
+                                    if($poDetails['PD_CHANGE']){
+                                        echo "<p class='mb-0'><strong>Amount:</strong> ₱" . number_format($poDetails['PD_CHANGE'], 2) . "</p>";
+                                    }
+                                echo "</div>";                              
+                        echo "
+                            </div>
+                        </div>";
                           
                         echo "<h4 class='mt-3'>Items</h4>
                           <table class='table'>
@@ -3124,6 +3623,40 @@ elseif ($content === 'account_settings') {
             
             echo "<h3>Purchase Order History</h3>
                   <div class='card rounded-4 p-4'>
+                  <form id='filterForm' class='mb-4'>
+                  <div class='row g-3'>
+                      <div class='col-md'>
+                          <input type='text' class='form-control' id='filterID' placeholder='PO ID' name='filter_id'>
+                      </div>
+                      <div class='col-md'>
+                          <select class='form-select' id='filterSupplier' name='filter_supplier'>
+                              <option value=''>All Suppliers</option>";
+                              // Fetch and display suppliers
+                              $supplierQuery = "SELECT SP_ID, SP_NAME FROM supplier WHERE SP_STATUS = '1' ORDER BY SP_NAME";
+                              $supplierResult = mysqli_query($db, $supplierQuery);
+                              while ($supplier = mysqli_fetch_assoc($supplierResult)) {
+                                  $selected = (isset($_GET['filter_supplier']) && $_GET['filter_supplier'] == $supplier['SP_NAME']) ? 'selected' : '';
+                                  echo "<option value='" . htmlspecialchars($supplier['SP_NAME']) . "' {$selected}>" . 
+                                       htmlspecialchars($supplier['SP_NAME']) . "</option>";
+                              }
+    echo "                </select>
+                      </div>
+                      <div class='col-md'>
+                          <input type='date' class='form-control' id='filterDate' name='filter_date'>
+                      </div>
+                      <div class='col-md'>
+                          <select class='form-select' id='filterStatus' name='filter_status'>
+                              <option value=''>All Status</option>
+                              <option value='approved'>Approved</option>
+                              <option value='completed'>Completed</option>
+                          </select>
+                      </div>
+                      <div class='col-md-auto'>
+                          <button type='button' class='btn btn-primary' id='applyFilter'>Apply Filter</button>
+                          <button type='button' class='btn btn-secondary' id='resetFilter'>Reset</button>
+                      </div>
+                  </div>
+              </form>
                       <table class='table table-striped'>
                           <thead>
                               <tr>
@@ -3140,13 +3673,13 @@ elseif ($content === 'account_settings') {
                     echo "<tr>
                             <td>PO-{$po['PO_ID']}</td>
                             <td>{$po['SP_NAME']}</td>
-                            <td>{$po['ap_date']}</td>
+                            <td>" . date('F d, Y', strtotime($po['ap_date'])) . "</td>
                             <td>
                                 <a href='#' 
                                 class='btn btn-sm btn-primary view-purchase-order'
                                 data-content='purchase_order_history'
                                 data-id='" . $po['PO_ID'] . "'>
-                                    <i class='fas fa-eye'></i> View
+                                    <i class='fas fa-eye'></i>
                                 </a>
                             </td>
                           </tr>";
@@ -3159,43 +3692,106 @@ elseif ($content === 'account_settings') {
                   </table>";
 
             // Pagination
-            if (isset($pagination) && $pagination['total_pages'] > 1) {
-                echo "<nav aria-label='Page navigation' class='mt-4'>
-                        <ul class='pagination justify-content-center'>";
-                
-                // Previous button
-                $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
-                echo "<li class='page-item{$prevDisabled}'>
-                        <a class='page-link' href='?content=purchase_order_history&page=" . 
-                        ($pagination['current_page'] - 1) . "'" . 
-                        ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
-                        ">Previous</a>
-                      </li>";
-                
-                // Page numbers
-                for ($i = 1; $i <= $pagination['total_pages']; $i++) {
-                    $active = $pagination['current_page'] == $i ? ' active' : '';
-                    echo "<li class='page-item{$active}'>
-                            <a class='page-link' href='?content=purchase_order_history&page={$i}'>
-                                {$i}
-                            </a>
-                          </li>";
-                }
-                
-                // Next button
-                $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
-                echo "<li class='page-item{$nextDisabled}'>
-                        <a class='page-link' href='?content=purchase_order_history&page=" . 
-                        ($pagination['current_page'] + 1) . "'" .
-                        ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
-                        ">Next</a>
-                      </li>";
-                
-                echo "</ul>
-                    </nav>";
-            }
-            
-            echo "</div>";
+if (isset($pagination) && $pagination['total_pages'] > 1) {
+    echo "<nav aria-label='Page navigation' class='mt-4'>
+            <ul class='pagination justify-content-center'>";
+    
+    // Get all current filter values
+    $filterParams = array_filter([
+        'filter_id' => $_GET['filter_id'] ?? '',
+        'filter_supplier' => $_GET['filter_supplier'] ?? '',
+        'filter_date' => $_GET['filter_date'] ?? '',
+        'filter_status' => $_GET['filter_status'] ?? ''
+    ]);
+    
+    // Build the query string for filters
+    $filterQueryString = '';
+    if (!empty($filterParams)) {
+        $filterQueryString = '&' . http_build_query($filterParams);
+    }
+    
+    // Previous button
+    $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+    echo "<li class='page-item{$prevDisabled}'>
+            <a class='page-link' href='?content=purchase_order_history&page=" . 
+            ($pagination['current_page'] - 1) . $filterQueryString . "'" . 
+            ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
+            ">Previous</a>
+          </li>";
+    
+    // Page numbers
+    for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+        $active = $pagination['current_page'] == $i ? ' active' : '';
+        echo "<li class='page-item{$active}'>
+                <a class='page-link' href='?content=purchase_order_history&page={$i}{$filterQueryString}'>
+                    {$i}
+                </a>
+              </li>";
+    }
+    
+    // Next button
+    $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+    echo "<li class='page-item{$nextDisabled}'>
+            <a class='page-link' href='?content=purchase_order_history&page=" . 
+            ($pagination['current_page'] + 1) . $filterQueryString . "'" .
+            ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
+            ">Next</a>
+          </li>";
+    
+    echo "</ul>
+        </nav>";
+}
+
+echo "</div>
+      
+      <script>
+      $(document).ready(function() {
+          // Apply filter button click handler
+          $('#applyFilter').click(function() {
+              applyFilters(1); // Reset to page 1 when applying new filters
+          });
+
+          // Reset filter button click handler
+          $('#resetFilter').click(function() {
+              $('#filterForm')[0].reset();
+              applyFilters(1); // Reset to page 1 when clearing filters
+          });
+
+          function applyFilters(page) {
+              const filters = {
+                  filter_id: $('#filterID').val(),
+                  filter_supplier: $('#filterSupplier').val(),
+                  filter_date: $('#filterDate').val(),
+                  filter_status: $('#filterStatus').val(),
+                  content: 'purchase_order_history',
+                  page: page || 1
+              };
+
+              // Update URL with filter parameters
+              const url = new URL(window.location.href);
+              Object.keys(filters).forEach(key => {
+                  if (filters[key]) {
+                      url.searchParams.set(key, filters[key]);
+                  } else {
+                      url.searchParams.delete(key);
+                  }
+              });
+              history.pushState({}, '', url);
+
+              // Load filtered content
+              $.get('load_content.php', filters, function(response) {
+                  $('#content').html(response);
+              });
+          }
+
+          // Set initial filter values from URL if they exist
+          const urlParams = new URLSearchParams(window.location.search);
+          $('#filterID').val(urlParams.get('filter_id') || '');
+          $('#filterSupplier').val(urlParams.get('filter_supplier') || '');
+          $('#filterDate').val(urlParams.get('filter_date') || '');
+          $('#filterStatus').val(urlParams.get('filter_status') || '');
+      });
+      </script>";
         }
     } else {
         echo "<h3>You do not have access to this content.</h3>";
