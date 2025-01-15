@@ -65,7 +65,28 @@ if ($content === 'purchase_order') {
                            <p class='mb-0'><strong>Address:</strong> Logarta St 6014 Mandaue City, Philippines</p>
                            <p class='mb-0'><strong>Contact No:</strong> {$response['po_details']['EMP_NUMBER']}</p>
                         </div>
-                    </div>";
+                    </div>
+
+                    <div class='order-details'>
+                            <div class='row'>
+                                <div class='col-md-6'>";
+                                    if($response['po_details']['PD_PAYMENT_TYPE']){
+                                        echo "<p class='mb-0'><strong>Payment Type:</strong> {$response['po_details']['PD_PAYMENT_TYPE']}</p>";
+                                    }
+                                    if($response['po_details']['PD_AMMOUNT']){
+                                        echo "<p class='mb-0'><strong>Amount:</strong> ₱" . number_format($response['po_details']['PD_AMMOUNT'], 2) . "</p>";
+                                    }
+                                    if($response['po_details']['PD_CHANGE']){
+                                        echo "<p class='mb-0'><strong>Change:</strong> ₱" . number_format($response['po_details']['PD_CHANGE'], 2) . "</p>";
+                                    }
+                                echo "</div>";                              
+                        echo "
+                            </div>
+                        </div>
+                    
+
+                    
+                    ";
     
                     if($response['po_details']['PO_STATUS'] === 'rejected') {
                         echo "<div class='alert alert-danger'>
