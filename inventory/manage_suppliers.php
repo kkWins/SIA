@@ -131,17 +131,21 @@ $inactive_suppliers = $result->fetch_all(MYSQLI_ASSOC);
                                 <div class="card-body">
                                     <div class="row mb-2">
                                         <div class="col-md-8">
-                                            <label class="fw-bold form-label">Product 1</label>
-                                            <input type="text" class="form-control" name="products[]" placeholder="Enter product name" required>
+                                            <label class="fw-bold form-label">Product Name</label>
+                                            <select class="form-select inventory-product" name="products[]" required>
+                                                <option value="">Select Product</option>
+                                                <?php
+                                                $inv_result = $db->query("SELECT INV_ID, INV_MODEL_NAME, INV_BRAND FROM inventory ORDER BY INV_MODEL_NAME");
+                                                while ($product = $inv_result->fetch_assoc()) {
+                                                    echo "<option value='{$product['INV_ID']}'>{$product['INV_MODEL_NAME']} - {$product['INV_BRAND']}</option>";
+                                                }
+                                                ?>
+                                            </select>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="fw-bold form-label">Unit Price</label>
                                             <input type="number" class="form-control" name="prices[]" placeholder="₱0.00" step="0.01" min="0" required>
                                         </div>
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="fw-bold form-label">Description</label>
-                                        <textarea class="form-control" name="descriptions[]" placeholder="Enter product description" rows="2"></textarea>
                                     </div>
                                     <button type="button" class="btn btn-sm remove-product position-absolute top-0 end-0 m-3">
                                         <i class="fa-solid fa-times"></i>
@@ -212,7 +216,9 @@ $inactive_suppliers = $result->fetch_all(MYSQLI_ASSOC);
                     </div>
                     <div class="mb-3">
                         <label class="fw-bold form-label">Products Supplied</label>
-                        <div id="editProductsContainer"></div>
+                        <div id="editProductsContainer">
+                            <!-- Products will be dynamically loaded here -->
+                        </div>
                         <button type="button" class="btn btn-success w-25" id="editAddProduct">
                             Add Another Product
                         </button>
@@ -282,6 +288,25 @@ $(document).ready(function() {
                 errors.push(`Invalid price for Product ${index + 1}. Must be greater than 0`);
             }
         });
+
+        // Check for duplicate products
+        const selectedProducts = $('[name="products[]"]').map(function() {
+            return $(this).val();
+        }).get();
+        
+        const duplicateProducts = selectedProducts.filter((item, index) => 
+            selectedProducts.indexOf(item) !== index && item !== ''
+        );
+
+        if (duplicateProducts.length > 0) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Duplicate Products',
+                text: 'Please remove duplicate products before saving.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
 
         // Show all validation errors if any
         if (errors.length > 0) {
@@ -418,23 +443,26 @@ $(document).ready(function() {
 
     // Update the add product handlers
     $('#addProduct').click(function() {
-        const productCount = $('.product-entry').length + 1;
         const newProduct = `
             <div class="product-entry card mb-3">
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-md-8">
-                            <label class="fw-bold form-label">Product ${productCount}</label>
-                            <input type="text" class="form-control" name="products[]" placeholder="Enter product name" required>
+                            <label class="fw-bold form-label">Product Name</label>
+                            <select class="form-select inventory-product" name="products[]" required>
+                                <option value="">Select Product</option>
+                                <?php
+                                $inv_result = $db->query("SELECT INV_ID, INV_MODEL_NAME, INV_BRAND FROM inventory ORDER BY INV_MODEL_NAME");
+                                while ($product = $inv_result->fetch_assoc()) {
+                                    echo "<option value='{$product['INV_ID']}'>{$product['INV_MODEL_NAME']} - {$product['INV_BRAND']}</option>";
+                                }
+                                ?>
+                            </select>
                         </div>
                         <div class="col-md-4">
                             <label class="fw-bold form-label">Unit Price</label>
                             <input type="number" class="form-control" name="prices[]" placeholder="₱0.00" step="0.01" min="0" required>
                         </div>
-                    </div>
-                    <div class="mb-2">
-                        <label class="fw-bold form-label">Description</label>
-                        <textarea class="form-control" name="descriptions[]" placeholder="Enter product description" rows="2"></textarea>
                     </div>
                     <button type="button" class="btn btn-sm remove-product position-absolute top-0 end-0 m-3">
                         <i class="fa-solid fa-times"></i>
@@ -456,11 +484,10 @@ $(document).ready(function() {
             
             // Display only active products
             const productsHtml = data.products
-                .filter(p => p.status === 'active')  // Filter for active products only
+                .filter(p => p.status === 'active')
                 .map(p => 
                     `<div class="product-item mb-2">
                         <strong>${p.product_name}</strong> - ₱${parseFloat(p.unit_price).toFixed(2)}
-                        ${p.product_description ? `<p class="mb-0">${p.product_description}</p>` : ''}
                     </div>`
                 ).join('');
             $('#view-products').html(productsHtml);
@@ -490,19 +517,21 @@ $(document).ready(function() {
                         <div class="card-body">
                             <div class="row mb-2">
                                 <div class="col-md-8">
-                                    <label class="fw-bold form-label">Product ${index + 1}</label>
-                                    <input type="text" class="form-control" name="products[]" value="${p.product_name}" required>
-                                    <input type="hidden" name="product_ids[]" value="${p.sp_prod_id}">
-                                    <input type="hidden" name="product_status[]" value="active">
+                                    <label class="fw-bold form-label">Product Name</label>
+                                    <select class="form-select inventory-product" name="products[]" required>
+                                        <option value="">Select Product</option>
+                                        <?php
+                                        $inv_result = $db->query("SELECT INV_ID, INV_MODEL_NAME, INV_BRAND FROM inventory ORDER BY INV_MODEL_NAME");
+                                        while ($product = $inv_result->fetch_assoc()) {
+                                            echo "<option value='{$product['INV_ID']}'>{$product['INV_MODEL_NAME']} - {$product['INV_BRAND']}</option>";
+                                        }
+                                        ?>
+                                    </select>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="fw-bold form-label">Unit Price</label>
                                     <input type="number" class="form-control" name="prices[]" value="${p.unit_price}" step="0.01" min="0" required>
                                 </div>
-                            </div>
-                            <div class="mb-2">
-                                <label class="fw-bold form-label">Description</label>
-                                <textarea class="form-control" name="descriptions[]" rows="2">${p.product_description || ''}</textarea>
                             </div>
                             <button type="button" class="btn btn-sm btn-warning deactivate-product" data-id="${p.sp_prod_id}" title="Deactivate">
                                 <i class="fa-solid fa-ban"></i>
@@ -510,28 +539,27 @@ $(document).ready(function() {
                         </div>
                     </div>`;
                 $('#editProductsContainer').append(productHtml);
+                
+                // Set the selected product in the dropdown
+                $(`#editProductsContainer .product-entry:last select`).val(p.inv_id);
             });
 
             // Inactive Products Section
             if (data.products.some(p => p.status === 'inactive')) {
                 $('#editProductsContainer').append('<h5 class="mt-4 mb-3">Inactive Products</h5>');
-                data.products.filter(p => p.status === 'inactive').forEach((p, index) => {
+                data.products.filter(p => p.status === 'inactive').forEach(p => {
                     const productHtml = `
                         <div class="product-entry card mb-3 bg-light" data-product-id="${p.sp_prod_id}">
                             <div class="card-body">
                                 <div class="row mb-2">
                                     <div class="col-md-8">
-                                        <label class="fw-bold form-label">Product ${index + 1}</label>
+                                        <label class="fw-bold form-label">Product</label>
                                         <input type="text" class="form-control" value="${p.product_name}" disabled>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="fw-bold form-label">Unit Price</label>
                                         <input type="number" class="form-control" value="${p.unit_price}" disabled>
                                     </div>
-                                </div>
-                                <div class="mb-2">
-                                    <label class="fw-bold form-label">Description</label>
-                                    <textarea class="form-control" rows="2" disabled>${p.product_description || ''}</textarea>
                                 </div>
                                 <div class="text-end">
                                     <button type="button" class="btn btn-sm btn-success activate-product" data-id="${p.sp_prod_id}" title="Activate">
@@ -551,26 +579,32 @@ $(document).ready(function() {
         });
     });
 
-    // Add product field in edit modal
+    // Update the add product handler for edit modal
     $('#editAddProduct').click(function() {
-        const productCount = $('#editProductsContainer .product-entry').length + 1;
         const newProduct = `
             <div class="product-entry card mb-3">
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-md-8">
-                            <label class="fw-bold form-label">Product ${productCount}</label>
-                            <input type="text" class="form-control" name="products[]" placeholder="Enter product name" required>
+                            <label class="fw-bold form-label">Product Name</label>
+                            <select class="form-select inventory-product" name="products[]" required>
+                                <option value="">Select Product</option>
+                                <?php
+                                $inv_result = $db->query("SELECT INV_ID, INV_MODEL_NAME, INV_BRAND FROM inventory ORDER BY INV_MODEL_NAME");
+                                while ($product = $inv_result->fetch_assoc()) {
+                                    echo "<option value='{$product['INV_ID']}'>{$product['INV_MODEL_NAME']} - {$product['INV_BRAND']}</option>";
+                                }
+                                ?>
+                            </select>
                         </div>
                         <div class="col-md-4">
                             <label class="fw-bold form-label">Unit Price</label>
                             <input type="number" class="form-control" name="prices[]" placeholder="₱0.00" step="0.01" min="0" required>
                         </div>
                     </div>
-                    <div class="mb-2">
-                        <label class="fw-bold form-label">Description</label>
-                        <textarea class="form-control" name="descriptions[]" placeholder="Enter product description" rows="2"></textarea>
-                    </div>
+                    <button type="button" class="btn btn-sm remove-product position-absolute top-0 end-0 m-3">
+                        <i class="fa-solid fa-times"></i>
+                    </button>
                 </div>
             </div>`;
         $('#editProductsContainer').append(newProduct);
@@ -631,6 +665,25 @@ $(document).ready(function() {
                 errors.push(`Invalid price for Product ${index + 1}. Must be greater than 0`);
             }
         });
+
+        // Check for duplicate products
+        const selectedProducts = $('#editSupplierForm [name="products[]"]').map(function() {
+            return $(this).val();
+        }).get();
+        
+        const duplicateProducts = selectedProducts.filter((item, index) => 
+            selectedProducts.indexOf(item) !== index && item !== ''
+        );
+
+        if (duplicateProducts.length > 0) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Duplicate Products',
+                text: 'Please remove duplicate products before saving.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
 
         // Show all validation errors if any
         if (errors.length > 0) {
@@ -1149,6 +1202,29 @@ $(document).ready(function() {
                 });
             }
         });
+    });
+
+    // Add validation when selecting products
+    $(document).on('change', '.inventory-product', function() {
+        const selectedValue = $(this).val();
+        if (!selectedValue) return;
+
+        const $modal = $(this).closest('.modal');
+        const $otherSelects = $modal.find('.inventory-product').not(this);
+        
+        const isDuplicate = $otherSelects.filter(function() {
+            return $(this).val() === selectedValue;
+        }).length > 0;
+
+        if (isDuplicate) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Duplicate Product',
+                text: 'This product is already selected. Please choose a different product.',
+                confirmButtonText: 'OK'
+            });
+            $(this).val(''); // Reset the selection
+        }
     });
 });
 </script> 

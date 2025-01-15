@@ -13,12 +13,11 @@ try {
 
     // Insert products
     if (!empty($_POST['products'])) {
-        $stmt = $db->prepare("INSERT INTO supplier_products (sp_id, product_name, product_description, unit_price) VALUES (?, ?, ?, ?)");
+        $stmt = $db->prepare("INSERT INTO supplier_products (sp_id, inv_id, unit_price) VALUES (?, ?, ?)");
         
-        foreach ($_POST['products'] as $index => $product) {
-            $description = $_POST['descriptions'][$index] ?? '';
+        foreach ($_POST['products'] as $index => $inv_id) {
             $price = $_POST['prices'][$index] ?? 0;
-            $stmt->bind_param("issd", $supplier_id, $product, $description, $price);
+            $stmt->bind_param("iid", $supplier_id, $inv_id, $price);
             $stmt->execute();
         }
     }
