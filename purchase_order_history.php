@@ -27,12 +27,11 @@ $positionStmt->bind_param("i", $employeeId);
 $positionStmt->execute();
 $positionResult = $positionStmt->get_result();
 if ($row = $positionResult->fetch_assoc()) {
-    $isAdmin = ($row['EMP_POSITION'] === 'Admin');
     $isManager = ($row['EMP_POSITION'] === 'Manager');
 }
 $positionStmt->close();
 
-echo"<H3>Purchase Order History</H3>";
+echo"<H3>Purchase Order Historyyy</H3>";
 
 // Get all suppliers for the dropdown
 $supplierQuery = "SELECT DISTINCT SP_NAME FROM supplier ORDER BY SP_NAME";
