@@ -27,6 +27,11 @@ if ($content === 'purchase_order') {
 
         if(isset($_GET['po_id'])){
             if($response['po_details']) {
+                // Define hasPaymentDetails before using it
+                $hasPaymentDetails = !empty($response['po_details']['PD_PAYMENT_TYPE']) && 
+                                    !empty($response['po_details']['PD_CHANGE']) && 
+                                    !empty($response['po_details']['PD_AMMOUNT']);
+
                 echo "
                     <div class='card rounded-4 p-4'>
                     <div class='text-start'>
@@ -67,7 +72,28 @@ if ($content === 'purchase_order') {
                            <p class='mb-0'><strong>Address:</strong> Logarta St 6014 Mandaue City, Philippines</p>
                            <p class='mb-0'><strong>Contact No:</strong> {$response['po_details']['EMP_NUMBER']}</p>
                         </div>
-                    </div>";
+                    </div>
+
+                    <div class='order-details'>
+                            <div class='row'>
+                                <div class='col-md-6'>";
+                                    if($response['po_details']['PD_PAYMENT_TYPE']){
+                                        echo "<p class='mb-0'><strong>Payment Type:</strong> {$response['po_details']['PD_PAYMENT_TYPE']}</p>";
+                                    }
+                                    if($response['po_details']['PD_AMMOUNT']){
+                                        echo "<p class='mb-0'><strong>Amount:</strong> ₱" . number_format($response['po_details']['PD_AMMOUNT'], 2) . "</p>";
+                                    }
+                                    if($response['po_details']['PD_CHANGE']){
+                                        echo "<p class='mb-0'><strong>Change:</strong> ₱" . number_format($response['po_details']['PD_CHANGE'], 2) . "</p>";
+                                    }
+                                echo "</div>";                              
+                        echo "
+                            </div>
+                        </div>
+                    
+
+                    
+                    ";
     
                     if($response['po_details']['PO_STATUS'] === 'rejected') {
                         echo "<div class='alert alert-danger'>
@@ -118,7 +144,7 @@ if ($content === 'purchase_order') {
                                     required " . (($response['po_details']['PO_STATUS'] === 'completed' || $response['po_details']['PO_STATUS'] === 'canceled') ? 'disabled' : '') . ">
                             </div>
                             <div class='col-md-6'>
-                                <label for='arrival_datetime' class='form-label'><strong>Expected Arrival Date & Time:</strong></label>
+                                <label for='arrival_datetime' class='form-label'><strong>Arrival Date & Time:</strong></label>
                                 <input type='datetime-local' class='form-control' id='arrival_datetime' 
                                     value='" . (!empty($response['po_details']['PO_ARRIVAL_DATE']) ? date('Y-m-d\TH:i', strtotime($response['po_details']['PO_ARRIVAL_DATE'])) : '') . "' 
                                     " . (!$response['po_details']['PO_ORDER_DATE'] || !$hasPaymentDetails ? 'disabled' : '') . "
@@ -136,6 +162,10 @@ if ($content === 'purchase_order') {
                                 $hasPaymentDetails = $response['po_details']['PD_PAYMENT_TYPE'] && 
                                                     $response['po_details']['PD_CHANGE'] && 
                                                     $response['po_details']['PD_AMMOUNT'];
+
+                                
+                                echo "<div class='text-end'>";
+        
                                 
                                 if(!$response['po_details']['PO_ORDER_DATE']) {
                                     // If order date is empty, show submit button
@@ -343,6 +373,20 @@ if ($content === 'purchase_order') {
                                     }
                                 });
                             });
+
+                            // Add event listener for order_datetime changes
+                            $('#order_datetime').on('change', function() {
+                                const orderDateTime = $(this).val();
+                                const hasPaymentDetails = " . json_encode($hasPaymentDetails) . ";
+                                
+                                // Only enable arrival_datetime if order_datetime has a value AND payment details exist
+                                $('#arrival_datetime').prop('disabled', !orderDateTime || !hasPaymentDetails);
+                                
+                                // Set minimum date for arrival_datetime to be the order date
+                                if (orderDateTime) {
+                                    $('#arrival_datetime').attr('min', orderDateTime);
+                                }
+                            });
                         });
                         </script>";
     
@@ -392,6 +436,7 @@ if ($content === 'purchase_order') {
                 ";
             }
         }
+
 
     }elseif($conca === 'Finance Manager'){
         include('inventory/purchase_orders.php');
@@ -2483,225 +2528,275 @@ elseif ($content === 'manager_purchase_order_history') {
                     </div>
                   <div class='card rounded-4 p-4'>
                       <div class='text-start'>
-                            <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='manager_purchase_order_history'>
+                            <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_order_history'>
                                 <i class='fas fa-arrow-left'></i> Back
                             </a>
-                      </div>
-                      
-                      <div class='row mb-3'>
-                          <div class='col-md-4'>
-                              <p><strong>PO Status:</strong> {$poDetails['PO_STATUS']}</p>
-                              <p><strong>Supplier:</strong> {$poDetails['SP_NAME']}</p>
-                              <p><strong>Contact Person:</strong> {$poDetails['SP_CONTACT_PERSON']}</p>
-                          </div>
-                          <div class='col-md-4'>
-                              <p><strong>Contact No:</strong> {$poDetails['SP_CONTACT']}</p>
-                              <p><strong>Email:</strong> {$poDetails['SP_EMAIL']}</p>
-                              <p><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
-                          </div>
-                          <div class='col-md-4'>
-                              <p><strong>Date Created:</strong> " . date('F d, Y', strtotime($poDetails['PO_PR_DATE_CREATED'])) . "</p>
-                              <p><strong>Deliver To:</strong> {$poDetails['deliverTo']}</p>
-                              <p><strong>Employee Number:</strong> {$poDetails['EMP_NUMBER']}</p>
-                          </div>
-                      </div>
-
-                      <div class='table-responsive'>
-                          <table class='table'>
-                              <thead>
-                                  <tr>
-                                      <th>Item Name</th>
-                                      <th>Brand</th>
-                                      <th>Quantity</th>
-                                      <th>Unit Price</th>
-                                      <th>Total Price</th>
-                                  </tr>
-                              </thead>
-                              <tbody>";
-                              
-                              $grand_total = 0;
-                              foreach ($poDetails['items'] as $item) {
-                                  $total = $item['PO_QUANTITY'] * $item['PO_UNIT_PRICE'];
-                                  $grand_total += $total;
-                                  echo "<tr>
-                                          <td>{$item['INV_MODEL_NAME']}</td>
-                                          <td>{$item['INV_BRAND']}</td>
-                                          <td>{$item['PO_QUANTITY']}</td>
-                                          <td>" . number_format($item['PO_UNIT_PRICE'], 2) . "</td>
-                                          <td>" . number_format($total, 2) . "</td>
-                                      </tr>";
-                              }
-                              
-                              echo "</tbody>
-                              <tfoot>
-                                  <tr>
-                                      <td colspan='4' class='text-end'><strong>Grand Total:</strong></td>
-                                      <td><strong>" . number_format($grand_total, 2) . "</strong></td>
-                                  </tr>
-                              </tfoot>
-                          </table>
-                      </div>";
-
-            if ($poDetails['PO_STATUS'] === 'completed' && isset($poDetails['PD_PAYMENT_TYPE'])) {
-                echo "<div class='mt-4'>
-                        <h4>Payment Details</h4>
+                    </div>
+                      <div class='row'>
+                        <div class='col-md-6'>
+                            <h3>MOONLIGHT</h3>
+                            <p class='mb-0'>Address: Logarta St 6014 Mandaue City, Philippines</p>
+                            <p class='mb-0'>Contact No: 09123456789</p>
+                        </div>
+                        <div class='col-md-6'>
+                            <h3>PURCHASE ORDER</h3>
+                            <p class='mb-0'>Date: "; echo date('F j, Y', strtotime($poDetails['ap_date'])); echo "</p>
+                            <p class='mb-0'>PO-{$poDetails['PO_ID']}</p>
+                        </div>
+                    </div>
+                    <div class='row mb-3 mt-3'>
+                        <div class='col-md-6'>
+                            <h4>Supplier Details</h4>
+                            <p class='mb-0'><strong>Supplier Name:</strong> {$poDetails['SP_NAME']}</p>
+                            <p class='mb-0'><strong>Contact no:</strong> {$poDetails['SP_NUMBER']}</p>
+                            <p class='mb-0'><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
+                        </div>
+                        <div class='col-md-6'>
+                        <h4>SHIP TO</h4>
+                        <p class='mb-0'><strong>Name:</strong> {$poDetails['deliverTo']}</p>
+                        <p class='mb-0'><strong>Company:</strong> Moonlight</p>
+                        <p class='mb-0'><strong>Address:</strong> Logarta St 6014 Mandaue City, Philippines</p>
+                        <p class='mb-0'><strong>Contact No:</strong> {$poDetails['EMP_NUMBER']}</p>
+                        </div>
+                    </div>
+                    
+                    <div class='order-details'>
                         <div class='row'>
-                            <div class='col-md-4'>
-                                <p><strong>Payment Type:</strong> {$poDetails['PD_PAYMENT_TYPE']}</p>
+                            <div class='col-md-6'>";
+                                if($poDetails['PO_ORDER_DATE']){
+                                    echo "<p class='mb-0'><strong>Order Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ORDER_DATE'])) . "</p>";
+                                }
+                                if($poDetails['PO_ARRIVAL_DATE']){
+                                    echo "<p class='mb-0'><strong>Expected Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
+                                }
+                            echo "
                             </div>
-                            <div class='col-md-4'>
-                                <p><strong>Amount Paid:</strong> " . number_format($poDetails['PD_AMMOUNT'], 2) . "</p>
-                            </div>
-                            <div class='col-md-4'>
-                                <p><strong>Change:</strong> " . number_format($poDetails['PD_CHANGE'], 2) . "</p>
-                            </div>
+                            <div class='col-md-6'>";
+                                if($poDetails['PD_PAYMENT_TYPE']){
+                                    echo "<p class='mb-0'><strong>Payment Check:</strong> {$poDetails['PD_PAYMENT_TYPE']}</p>";
+                                }
+                                if($poDetails['PD_AMMOUNT']){
+                                    echo "<p class='mb-0'><strong>Amount:</strong> ₱" . number_format($poDetails['PD_AMMOUNT'], 2) . "</p>";
+                                }
+                                if($poDetails['PD_CHANGE']){
+                                    echo "<p class='mb-0'><strong>Amount:</strong> ₱" . number_format($poDetails['PD_CHANGE'], 2) . "</p>";
+                                }
+                            echo "</div>";                              
+                    echo "
                         </div>
                     </div>";
-            }
-
-            echo "</div>";
-
+                      
+                    echo "<h4 class='mt-3'>Items</h4>
+                      <table class='table'>
+                          <thead>
+                              <tr>
+                                  <th>Item</th>
+                                  <th>Quantity</th>
+                                  <th>Price</th>
+                                  <th>Total</th>
+                              </tr>
+                          </thead>
+                          <tbody>";
+              
+        $grandTotal = 0;
+        foreach ($poDetails['items'] as $item) {
+            $total = $item['POL_QUANTITY'] * $item['POL_PRICE'];
+            $grandTotal += $total;
+            echo "<tr>
+                    <td>{$item['INV_MODEL_NAME']} ({$item['INV_BRAND']})</td>
+                    <td>{$item['POL_QUANTITY']}</td>
+                    <td>₱" . number_format($item['POL_PRICE'], 2) . "</td>
+                    <td>₱" . number_format($total, 2) . "</td>
+                  </tr>";
+        }
+        
+        echo "<tr>
+                <td colspan='3' class='text-end'><strong>Grand Total:</strong></td>
+                <td><strong>₱" . number_format($grandTotal, 2) . "</strong></td>
+              </tr>
+              </tbody>
+              </table>
+              </div>";
         } else {
             echo "<h3>Purchase order not found.</h3>";
         }
     } else {
-        include('get_manager_po_history.php');
+        // Show list view
+        include('admin/get_po_history.php');
         
         echo "<h3>Purchase Order History</h3>
               <div class='card rounded-4 p-4'>
-                <form id='filterForm' class='mb-4'>
-                    <div class='row g-3'>
-                        <div class='col-md'>
-                            <input type='text' class='form-control' id='filterID' placeholder='PO ID' name='filter_id'>
-                        </div>
-                        <div class='col-md'>
-                            <select class='form-select' id='filterSupplier' name='filter_supplier'>
-                                <option value=''>All Suppliers</option>";
-                                // Fetch and display suppliers
-                                $supplierQuery = "SELECT SP_ID, SP_NAME FROM supplier WHERE SP_STATUS = '1' ORDER BY SP_NAME";
-                                $supplierResult = mysqli_query($db, $supplierQuery);
-                                while ($supplier = mysqli_fetch_assoc($supplierResult)) {
-                                    $selected = (isset($_GET['filter_supplier']) && $_GET['filter_supplier'] == $supplier['SP_NAME']) ? 'selected' : '';
-                                    echo "<option value='" . htmlspecialchars($supplier['SP_NAME']) . "' {$selected}>" . 
-                                         htmlspecialchars($supplier['SP_NAME']) . "</option>";
-                                }
-        echo "                </select>
-                        </div>
-                        <div class='col-md'>
-                            <input type='date' class='form-control' id='filterDate' name='filter_date'>
-                        </div>
-                        <div class='col-md'>
-                            <select class='form-select' id='filterStatus' name='filter_status'>
-                                <option value=''>All Status</option>
-                                <option value='rejected'>Rejected</option>
-                                <option value='canceled'>Canceled</option>
-                            </select>
-                        </div>
-                        <div class='col-md-auto'>
-                            <button type='button' class='btn btn-primary' id='applyFilter'>Apply Filter</button>
-                            <button type='button' class='btn btn-secondary' id='resetFilter'>Reset</button>
-                        </div>
-                    </div>
-                </form>
+              <form id='filterForm' class='mb-4'>
+              <div class='row g-3'>
+                  <div class='col-md'>
+                      <input type='text' class='form-control' id='filterID' placeholder='PO ID' name='filter_id'>
+                  </div>
+                  <div class='col-md'>
+                      <select class='form-select' id='filterSupplier' name='filter_supplier'>
+                          <option value=''>All Suppliers</option>";
+                          // Fetch and display suppliers
+                          $supplierQuery = "SELECT SP_ID, SP_NAME FROM supplier WHERE SP_STATUS = '1' ORDER BY SP_NAME";
+                          $supplierResult = mysqli_query($db, $supplierQuery);
+                          while ($supplier = mysqli_fetch_assoc($supplierResult)) {
+                              $selected = (isset($_GET['filter_supplier']) && $_GET['filter_supplier'] == $supplier['SP_NAME']) ? 'selected' : '';
+                              echo "<option value='" . htmlspecialchars($supplier['SP_NAME']) . "' {$selected}>" . 
+                                   htmlspecialchars($supplier['SP_NAME']) . "</option>";
+                          }
+echo "                </select>
+                  </div>
+                  <div class='col-md'>
+                      <input type='date' class='form-control' id='filterDate' name='filter_date'>
+                  </div>
+                  <div class='col-md'>
+                      <select class='form-select' id='filterStatus' name='filter_status'>
+                          <option value=''>All Status</option>
+                          <option value='approved'>Approved</option>
+                          <option value='completed'>Completed</option>
+                      </select>
+                  </div>
+                  <div class='col-md-auto'>
+                      <button type='button' class='btn btn-primary' id='applyFilter'>Apply Filter</button>
+                      <button type='button' class='btn btn-secondary' id='resetFilter'>Reset</button>
+                  </div>
+              </div>
+          </form>
+                  <table class='table table-striped'>
+                      <thead>
+                          <tr>
+                              <th>ID</th>
+                              <th>Supplier</th>
+                              <th>Date of Issue</th>
+                              <th>Status</th>
+                              <th>Action</th>
+                          </tr>
+                      </thead>
+                      <tbody>";
 
-                <div class='table-responsive'>
-                    <table class='table'>
-                        <thead>
-                            <tr>
-                                <th>PO ID</th>
-                                <th>Supplier</th>
-                                <th>Date Created</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>";
-                        
-                        foreach ($purchase_orders as $po) {
-                            echo "<tr>
-                                    <td>PO-{$po['PO_ID']}</td>
-                                    <td>{$po['SP_NAME']}</td>
-                                    <td>" . date('F d, Y', strtotime($po['PO_PR_DATE_CREATED'])) . "</td>
-                                    <td>{$po['PO_STATUS']}</td>
-                                    <td>
-                                        <a href='#' class='btn btn-primary btn-sm view-purchase-order' 
-                                           data-id='{$po['PO_ID']}' 
-                                           data-content='manager_purchase_order_history'>
-                                            <i class='fas fa-eye'></i>
-                                        </a>
-                                    </td>
-                                </tr>";
-                        }
-                        
-                        echo "</tbody>
-                    </table>
-                </div>";
+        if (!empty($purchase_orders)) {
+            foreach ($purchase_orders as $po) {
+                echo "<tr>
+                        <td>PO-{$po['PO_ID']}</td>
+                        <td>{$po['SP_NAME']}</td>
+                        <td>" . date('F d, Y', strtotime($po['ap_date'])) . "</td>
+                         <td>{$po['PO_STATUS']}</td>
+                        <td>
+                            <a href='#' 
+                            class='btn btn-sm btn-primary view-purchase-order'
+                            data-content='purchase_order_history'
+                            data-id='" . $po['PO_ID'] . "'>
+                                <i class='fas fa-eye'></i>
+                            </a>
+                        </td>
+                      </tr>";
+            }
+        } else {
+            echo "<tr><td colspan='5' class='text-center'>No approved purchase orders found</td></tr>";
+        }
+        
+        echo "</tbody>
+              </table>";
 
-                // Pagination
-                if ($total_pages > 1) {
-                    echo "<nav aria-label='Page navigation' class='mt-4'>
-                            <ul class='pagination justify-content-center'>";
-                    
-                    // Previous button
-                    $prevPage = $page - 1;
-                    echo "<li class='page-item " . ($page <= 1 ? 'disabled' : '') . "'>
-                            <a class='page-link' href='?content=manager_purchase_order_history&page=$prevPage" . 
-                            (isset($_GET['filter_id']) ? "&filter_id=" . $_GET['filter_id'] : "") . 
-                            (isset($_GET['filter_supplier']) ? "&filter_supplier=" . $_GET['filter_supplier'] : "") . 
-                            (isset($_GET['filter_date']) ? "&filter_date=" . $_GET['filter_date'] : "") . 
-                            (isset($_GET['filter_status']) ? "&filter_status=" . $_GET['filter_status'] : "") . 
-                            "' tabindex='-1'>Previous</a>
-                          </li>";
+        // Pagination
+if (isset($pagination) && $pagination['total_pages'] > 1) {
+echo "<nav aria-label='Page navigation' class='mt-4'>
+        <ul class='pagination justify-content-center'>";
 
-                    // Page numbers
-                    for ($i = 1; $i <= $total_pages; $i++) {
-                        echo "<li class='page-item " . ($page == $i ? 'active' : '') . "'>
-                                <a class='page-link' href='?content=manager_purchase_order_history&page=$i" . 
-                                (isset($_GET['filter_id']) ? "&filter_id=" . $_GET['filter_id'] : "") . 
-                                (isset($_GET['filter_supplier']) ? "&filter_supplier=" . $_GET['filter_supplier'] : "") . 
-                                (isset($_GET['filter_date']) ? "&filter_date=" . $_GET['filter_date'] : "") . 
-                                (isset($_GET['filter_status']) ? "&filter_status=" . $_GET['filter_status'] : "") . 
-                                "'>$i</a>
-                              </li>";
-                    }
+// Get all current filter values
+$filterParams = array_filter([
+    'filter_id' => $_GET['filter_id'] ?? '',
+    'filter_supplier' => $_GET['filter_supplier'] ?? '',
+    'filter_date' => $_GET['filter_date'] ?? '',
+    'filter_status' => $_GET['filter_status'] ?? ''
+]);
 
-                    // Next button
-                    $nextPage = $page + 1;
-                    echo "<li class='page-item " . ($page >= $total_pages ? 'disabled' : '') . "'>
-                            <a class='page-link' href='?content=manager_purchase_order_history&page=$nextPage" . 
-                            (isset($_GET['filter_id']) ? "&filter_id=" . $_GET['filter_id'] : "") . 
-                            (isset($_GET['filter_supplier']) ? "&filter_supplier=" . $_GET['filter_supplier'] : "") . 
-                            (isset($_GET['filter_date']) ? "&filter_date=" . $_GET['filter_date'] : "") . 
-                            (isset($_GET['filter_status']) ? "&filter_status=" . $_GET['filter_status'] : "") . 
-                            "'>Next</a>
-                          </li>";
-                    
-                    echo "</ul>
-                        </nav>";
-                }
+// Build the query string for filters
+$filterQueryString = '';
+if (!empty($filterParams)) {
+    $filterQueryString = '&' . http_build_query($filterParams);
+}
 
-        echo "</div>
-              
-              <script>
-                $(document).ready(function() {
-                    // Apply filter
-                    $('#applyFilter').click(function() {
-                        const formData = $('#filterForm').serialize();
-                        window.location.href = '?content=manager_purchase_order_history&' + formData;
-                    });
+// Previous button
+$prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+echo "<li class='page-item{$prevDisabled}'>
+        <a class='page-link' href='?content=purchase_order_history&page=" . 
+        ($pagination['current_page'] - 1) . $filterQueryString . "'" . 
+        ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
+        ">Previous</a>
+      </li>";
 
-                    // Reset filter
-                    $('#resetFilter').click(function() {
-                        window.location.href = '?content=manager_purchase_order_history';
-                    });
+// Page numbers
+for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+    $active = $pagination['current_page'] == $i ? ' active' : '';
+    echo "<li class='page-item{$active}'>
+            <a class='page-link' href='?content=purchase_order_history&page={$i}{$filterQueryString}'>
+                {$i}
+            </a>
+          </li>";
+}
 
-                    // Set filter values from URL parameters
-                    const urlParams = new URLSearchParams(window.location.search);
-                    $('#filterID').val(urlParams.get('filter_id'));
-                    $('#filterDate').val(urlParams.get('filter_date'));
-                    $('#filterStatus').val(urlParams.get('filter_status'));
-                });
-              </script>";
+// Next button
+$nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+echo "<li class='page-item{$nextDisabled}'>
+        <a class='page-link' href='?content=purchase_order_history&page=" . 
+        ($pagination['current_page'] + 1) . $filterQueryString . "'" .
+        ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
+        ">Next</a>
+      </li>";
+
+echo "</ul>
+    </nav>";
+}
+
+echo "</div>
+  
+  <script>
+  $(document).ready(function() {
+      // Apply filter button click handler
+      $('#applyFilter').click(function() {
+          applyFilters(1); // Reset to page 1 when applying new filters
+      });
+
+      // Reset filter button click handler
+      $('#resetFilter').click(function() {
+          $('#filterForm')[0].reset();
+          applyFilters(1); // Reset to page 1 when clearing filters
+      });
+
+      function applyFilters(page) {
+          const filters = {
+              filter_id: $('#filterID').val(),
+              filter_supplier: $('#filterSupplier').val(),
+              filter_date: $('#filterDate').val(),
+              filter_status: $('#filterStatus').val(),
+              content: 'purchase_order_history',
+              page: page || 1
+          };
+
+          // Update URL with filter parameters
+          const url = new URL(window.location.href);
+          Object.keys(filters).forEach(key => {
+              if (filters[key]) {
+                  url.searchParams.set(key, filters[key]);
+              } else {
+                  url.searchParams.delete(key);
+              }
+          });
+          history.pushState({}, '', url);
+
+          // Load filtered content
+          $.get('load_content.php', filters, function(response) {
+              $('#content').html(response);
+          });
+      }
+
+      // Set initial filter values from URL if they exist
+      const urlParams = new URLSearchParams(window.location.search);
+      $('#filterID').val(urlParams.get('filter_id') || '');
+      $('#filterSupplier').val(urlParams.get('filter_supplier') || '');
+      $('#filterDate').val(urlParams.get('filter_date') || '');
+      $('#filterStatus').val(urlParams.get('filter_status') || '');
+  });
+  </script>";
     }
 } elseif ($content === 'requisition_withdrawal') {
     echo "<h2>Requisition Withdrawal</h2>";

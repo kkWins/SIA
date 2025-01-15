@@ -371,7 +371,7 @@ $department = $_SESSION['department'];
                     } else if (content === 'pending_pr') {
                         params.pending_pr = id;
                         url += `&pending_pr=${id}`;
-                    } else if (content === 'purchase_order' || content === 'purchase_order_history') {
+                    } else if (content === 'purchase_order' || content === 'purchase_order_history' || content === 'manager_purchase_order_history') {
                         params.po_id = id;
                         url += `&po_id=${id}`;
                     } else if (content === 'requisition_approval' || content === 'approved_requisitions') {
