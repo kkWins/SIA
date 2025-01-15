@@ -3539,23 +3539,23 @@ elseif ($content === 'account_settings') {
                         </div>
                           <div class='row'>
                               <div class='col-md-4'>
-                                  <p><strong>Requester:</strong> {$requisitionDetails['FULL_NAME']}</p>
-                                  <p><strong>Department:</strong> {$requisitionDetails['DEPT_NAME']}</p>
+                                  <p class='mb-0'><strong>Requester:</strong> {$requisitionDetails['FULL_NAME']}</p>
+                                  <p class='mb-0'><strong>Department:</strong> {$requisitionDetails['DEPT_NAME']}</p>
                               </div>
                               <div class='col-md-4'>
-                                  <p><strong>Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['PRF_DATE'])); echo "</p>
-                                  <p><strong>Status:</strong> {$requisitionDetails['PRF_STATUS']}</p>
+                                  <p class='mb-0'><strong>Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['PRF_DATE'])); echo "</p>
+                                  <p class='mb-0'><strong>Status:</strong> {$requisitionDetails['PRF_STATUS']}</p>
                               </div>";
 
                               if($requisitionDetails['PRF_STATUS'] === 'rejected'){
-                                echo "<div class='col-md-4'>
-                                        <p><strong>Rejected Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['ap_date'])); echo "</p>
-                                        <p><strong>Rejected By:</strong> {$requisitionDetails['APPROVER_NAME']}</p>
+                                echo "<div class='col-md-4 mb-3'>
+                                        <p class='mb-0'><strong>Rejected Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['ap_date'])); echo "</p>
+                                        <p class='mb-0'><strong>Rejected By:</strong> {$requisitionDetails['APPROVER_NAME']}</p>
                                       </div>";
                               }elseif($requisitionDetails['PRF_STATUS'] === 'approved'){
                                 echo "<div class='col-md-4'>
-                                        <p><strong>Approved Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['ap_date'])); echo "</p>
-                                        <p><strong>Approved By:</strong> {$requisitionDetails['APPROVER_NAME']}</p>
+                                        <p class='mb-0'><strong>Approved Date:</strong> "; echo date('F j, Y h:i A', strtotime($requisitionDetails['ap_date'])); echo "</p>
+                                        <p class='mb-0'><strong>Approved By:</strong> {$requisitionDetails['APPROVER_NAME']}</p>
                                       </div>";
                               }
                               
@@ -3567,7 +3567,7 @@ elseif ($content === 'account_settings') {
                                   </div>";
                           }
                           
-                          echo "<h4>Requested Items</h4>
+                          echo "<h4 class='mt-4'>Requested Items</h4>
                           <table class='table'>
                               <thead>
                                   <tr>
@@ -3800,27 +3800,27 @@ elseif ($content === 'account_settings') {
                         </div>
                           <div class='row'>
                               <div class='col-md-4'>
-                                  <p><strong>Requestor:</strong> {$poDetails['fullname']}</p>
-                                  <p><strong>Date of Request:</strong> {$poDetails['PO_PR_DATE_CREATED']}</p>
-                                  <p><strong>Contact No. :</strong> {$poDetails['EMP_NUMBER']}</p>
+                                  <p class='mb-0'><strong>Requestor:</strong> {$poDetails['fullname']}</p>
+                                  <p class='mb-0'><strong>Date of Request:</strong> {$poDetails['PO_PR_DATE_CREATED']}</p>
+                                  <p class='mb-0'><strong>Contact No. :</strong> {$poDetails['EMP_NUMBER']}</p>
                         </div>
                               <div class='col-md-4'>
-                                  <p><strong>Supplier:</strong> {$poDetails['SP_NAME']}</p>
-                                  <p><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
-                                  <p><strong>Contact:</strong> {$poDetails['SP_NUMBER']}</p>
+                                  <p class='mb-0'><strong>Supplier:</strong> {$poDetails['SP_NAME']}</p>
+                                  <p class='mb-0'><strong>Address:</strong> {$poDetails['SP_ADDRESS']}</p>
+                                  <p class='mb-0'><strong>Contact:</strong> {$poDetails['SP_NUMBER']}</p>
                               </div>";
                               
                               if($poDetails['PO_STATUS'] === 'rejected'){
                                 echo "<div class='col-md-4'>
-                                        <p><strong>Rejected Date:</strong> "; echo date('F j, Y h:i A', strtotime($poDetails['ap_date'])); echo "</p>
-                                        <p><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
-                                        <p><strong>Rejected By:</strong> {$poDetails['approvedby']}</p>
+                                        <p class='mb-0'><strong>Rejected Date:</strong> "; echo date('F j, Y h:i A', strtotime($poDetails['ap_date'])); echo "</p>
+                                        <p class='mb-0'><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
+                                        <p class='mb-0'><strong>Rejected By:</strong> {$poDetails['approvedby']}</p>
                                       </div>";
                               }elseif($poDetails['PO_STATUS'] === 'approved'){
                                 echo "<div class='col-md-4'>
-                                        <p><strong>Approved Date:</strong> "; echo date('F j, Y h:i A', strtotime($poDetails['ap_date'])); echo "</p>
-                                        <p><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
-                                        <p><strong>Approved By:</strong> {$poDetails['approvedby']}</p>
+                                        <p class='mb-0'><strong>Approved Date:</strong> "; echo date('F j, Y h:i A', strtotime($poDetails['ap_date'])); echo "</p>
+                                        <p class='mb-0'><strong>Status:</strong> {$poDetails['PO_STATUS']}</p>
+                                        <p class='mb-0'><strong>Approved By:</strong> {$poDetails['approvedby']}</p>
                                       </div>";
                               }else{
                                 echo "<div class='col-md-4'>
@@ -3839,7 +3839,7 @@ elseif ($content === 'account_settings') {
                                   </div>";
                           }
                           
-                          echo "<h4>Items</h4>
+                          echo "<h4 class='mt-4'>Items</h4>
                           <table class='table'>
                               <thead>
                                   <tr>

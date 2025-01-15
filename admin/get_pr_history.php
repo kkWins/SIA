@@ -44,7 +44,8 @@ $count_query = "SELECT COUNT(*) as total
                 FROM purchase_order po
                 JOIN supplier ON po.SP_ID = supplier.SP_ID
                 JOIN employee emp ON emp.EMP_ID = po.emp_id
-                $where_clause";
+                WHERE po.PO_STATUS != 'completed' " .  // Add this condition
+                (!empty($where_conditions) ? "AND " . implode(" AND ", $where_conditions) : "");
 
 $stmt = mysqli_prepare($db, $count_query);
 if (!empty($params)) {
@@ -79,7 +80,8 @@ $query = "SELECT
 FROM purchase_order po
 JOIN supplier ON po.SP_ID = supplier.SP_ID
 JOIN employee emp ON emp.EMP_ID = po.emp_id
-$where_clause
+WHERE po.PO_STATUS != 'completed' " .  // Add this condition
+    (!empty($where_conditions) ? "AND " . implode(" AND ", $where_conditions) : "") . "
 ORDER BY po.PO_ID DESC
 LIMIT ? OFFSET ?";
 
