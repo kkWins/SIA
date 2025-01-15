@@ -60,16 +60,23 @@ if (isset($_SESSION['ID'])) {
         FROM RF_WITHDRAWAL
         WHERE EMP_ID = ? 
         AND (WD_DATE_WITHDRAWN IS NULL OR WD_DATE_DELIVERED IS NULL)
+        GROUP BY PRF_ID
+        ORDER BY PRF_ID DESC
     ";
+    
+    $pendingCounts = []; // To store pending counts
 
     $countStmt = $connection->prepare($countQuery);
     $countStmt->bind_param("i", $employeeId); // Bind the employee ID to the count query
     $countStmt->execute();
     $countResult = $countStmt->get_result();
-
+    
     if ($countResult->num_rows > 0) {
-        $pendingCount = $countResult->fetch_assoc()['pending_count']; // Get the count of pending withdrawals
+        while ($row = $countResult->fetch_assoc()) {
+            $pendingCounts[] = $row['pending_count']; // Store pending counts as simple array entries
+        }
     }
+    
 
     $stmt->close();
     $countStmt->close();

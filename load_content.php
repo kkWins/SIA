@@ -3514,23 +3514,25 @@ echo "</div>
                     <tbody>";
             
             // Loop through each withdrawal record and display it
-            foreach ($withdrawals as $row) {
-                // Add a row for each withdrawal
+            foreach ($withdrawals as $index => $row) {
+                $pendingCount = isset($pendingCounts[$index]) ? $pendingCounts[$index] : 'N/A'; // Get the count based on index
+            
                 echo "<tr>
                         <td>{$row['requisition_id']}</td>
                         <td>{$row['DEPT_NAME']}</td>
                         <td>{$row['employee_name']}</td>
-                        <td>" . ($pendingCount > 0 ? $pendingCount : 'N/A') . "</td> <!-- Show Pending Count -->
+                        <td>{$pendingCount}</td> <!-- Show Pending Count -->
                         <td>
                             <a href='#' class='btn btn-sm btn-primary view-wd' 
                                data-content='inventory-task' 
-                               data-id='" . $row['requisition_id'] . "'>
+                               data-id='{$row['requisition_id']}'>
                                <i class='fas fa-eye'></i> View
                             </a>
                         </td>
                     </tr>";
             }
-    
+            
+        
             echo "</tbody></table>";
         } else {
             // If no withdrawal records are found, display a message
