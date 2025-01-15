@@ -3268,9 +3268,49 @@ elseif ($content === 'account_settings') {
             }
         } else {
             include('admin/get_pr_history.php');
+            $supplierQuery = "SELECT SP_ID, SP_NAME FROM supplier WHERE SP_STATUS = '1' ORDER BY SP_NAME";
+            $supplierResult = mysqli_query($db, $supplierQuery);
             
             echo "<h3>Purchase Request History</h3>
                   <div class='card rounded-4 p-4'>
+                      <form id='filterForm' class='mb-4'>
+                          <div class='row g-3'>
+                              <div class='col-md'>
+                                  <input type='text' class='form-control' id='filterID' placeholder='PR ID' name='filter_id'>
+                              </div>
+                              <div class='col-md'>
+                                  <input type='text' class='form-control' id='filterName' placeholder='Requester Name' name='filter_name'>
+                              </div>
+                              <div class='col-md'>
+                                  <select class='form-select' id='filterSupplier' name='filter_supplier'>
+                                      <option value=''>All Suppliers</option>";
+                                      // Loop through suppliers and create options
+                                      while ($supplier = mysqli_fetch_assoc($supplierResult)) {
+                                          $selected = (isset($_GET['filter_supplier']) && $_GET['filter_supplier'] == $supplier['SP_NAME']) ? 'selected' : '';
+                                          echo "<option value='" . htmlspecialchars($supplier['SP_NAME']) . "' {$selected}>" . 
+                                               htmlspecialchars($supplier['SP_NAME']) . "</option>";
+                                      }
+                                      
+                                      echo "</select>
+                                                        </div>
+                              <div class='col-md'>
+                                  <input type='date' class='form-control' id='filterDate' name='filter_date'>
+                              </div>
+                              <div class='col-md'>
+                                  <select class='form-select' id='filterStatus' name='filter_status'>
+                                      <option value=''>All Status</option>
+                                      <option value='pending'>Pending</option>
+                                      <option value='approved'>Approved</option>
+                                      <option value='rejected'>Rejected</option>
+                                  </select>
+                              </div>
+                              <div class='col-md-auto'>
+                                  <button type='button' class='btn btn-primary' id='applyFilter'>Apply Filter</button>
+                                  <button type='button' class='btn btn-secondary' id='resetFilter'>Reset</button>
+                              </div>
+                          </div>
+                      </form>
+
                       <table class='table table-striped'>
                           <thead>
                               <tr>
@@ -3283,70 +3323,136 @@ elseif ($content === 'account_settings') {
                               </tr>
                           </thead>
                           <tbody>";
-        
-            if (!empty($purchase_requests)) {
-                foreach ($purchase_requests as $pr) {
-                    echo "<tr>
-                            <td>PR-{$pr['PO_ID']}</td>
-                            <td>{$pr['fullname']}</td>
-                            <td>{$pr['SP_NAME']}</td>
-                            <td>" . date('F d, Y', strtotime($pr['PO_PR_DATE_CREATED'])) . "</td>
-                            <td>{$pr['PO_STATUS']}</td>
-                            <td>
-                                <a href='#' 
-                                class='btn btn-sm btn-primary view-purchase-request'
-                                data-content='purchase_request_history'
-                                data-id='" . $pr['PO_ID'] . "'>
-                                    <i class='fas fa-eye'></i>
-                                </a>
-                            </td>
-                          </tr>";
-                }
-            } else {
-                echo "<tr><td colspan='5' class='text-center'>No purchase requests found</td></tr>";
-            }
-            
-            echo "</tbody>
-                  </table>";
 
-            // Pagination
-            if (isset($pagination) && $pagination['total_pages'] > 1) {
-                echo "<nav aria-label='Page navigation' class='mt-4'>
-                        <ul class='pagination justify-content-center'>";
-                
-                // Previous button
-                $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
-                echo "<li class='page-item{$prevDisabled}'>
-                        <a class='page-link' href='?content=purchase_request_history&page=" . 
-                        ($pagination['current_page'] - 1) . "'" . 
-                        ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
-                        ">Previous</a>
-                      </li>";
-                
-                // Page numbers
-                for ($i = 1; $i <= $pagination['total_pages']; $i++) {
-                    $active = $pagination['current_page'] == $i ? ' active' : '';
-                    echo "<li class='page-item{$active}'>
-                            <a class='page-link' href='?content=purchase_request_history&page={$i}'>
-                                {$i}
-                            </a>
-                          </li>";
-                }
-                
-                // Next button
-                $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
-                echo "<li class='page-item{$nextDisabled}'>
-                        <a class='page-link' href='?content=purchase_request_history&page=" . 
-                        ($pagination['current_page'] + 1) . "'" .
-                        ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
-                        ">Next</a>
-                      </li>";
-                
-                echo "</ul>
-                    </nav>";
-            }
-            
-            echo "</div>";
+    if (!empty($purchase_requests)) {
+        foreach ($purchase_requests as $pr) {
+            echo "<tr>
+                    <td>PR-{$pr['PO_ID']}</td>
+                    <td>{$pr['fullname']}</td>
+                    <td>{$pr['SP_NAME']}</td>
+                    <td>" . date('F d, Y', strtotime($pr['PO_PR_DATE_CREATED'])) . "</td>
+                    <td>{$pr['PO_STATUS']}</td>
+                    <td>
+                        <a href='#' 
+                        class='btn btn-sm btn-primary view-purchase-request'
+                        data-content='purchase_request_history'
+                        data-id='" . $pr['PO_ID'] . "'>
+                            <i class='fas fa-eye'></i>
+                        </a>
+                    </td>
+                  </tr>";
+        }
+    } else {
+        echo "<tr><td colspan='6' class='text-center'>No purchase requests found</td></tr>";
+    }
+    
+    echo "</tbody>
+          </table>";
+
+// Pagination
+if (isset($pagination) && $pagination['total_pages'] > 1) {
+    echo "<nav aria-label='Page navigation' class='mt-4'>
+            <ul class='pagination justify-content-center'>";
+    
+    // Get all current filter values
+    $filterParams = array_filter([
+        'filter_id' => $_GET['filter_id'] ?? '',
+        'filter_name' => $_GET['filter_name'] ?? '',
+        'filter_supplier' => $_GET['filter_supplier'] ?? '',
+        'filter_date' => $_GET['filter_date'] ?? '',
+        'filter_status' => $_GET['filter_status'] ?? ''
+    ]);
+    
+    // Build the query string for filters
+    $filterQueryString = '';
+    if (!empty($filterParams)) {
+        $filterQueryString = '&' . http_build_query($filterParams);
+    }
+    
+    // Previous button
+    $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+    echo "<li class='page-item{$prevDisabled}'>
+            <a class='page-link' href='?content=purchase_request_history&page=" . 
+            ($pagination['current_page'] - 1) . $filterQueryString . "'" . 
+            ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
+            ">Previous</a>
+          </li>";
+    
+    // Page numbers
+    for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+        $active = $pagination['current_page'] == $i ? ' active' : '';
+        echo "<li class='page-item{$active}'>
+                <a class='page-link' href='?content=purchase_request_history&page={$i}{$filterQueryString}'>
+                    {$i}
+                </a>
+              </li>";
+    }
+    
+    // Next button
+    $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+    echo "<li class='page-item{$nextDisabled}'>
+            <a class='page-link' href='?content=purchase_request_history&page=" . 
+            ($pagination['current_page'] + 1) . $filterQueryString . "'" .
+            ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
+            ">Next</a>
+          </li>";
+    
+    echo "</ul>
+        </nav>";
+}
+
+echo "</div>
+      
+      <script>
+      $(document).ready(function() {
+          // Apply filter button click handler
+          $('#applyFilter').click(function() {
+              applyFilters(1); // Reset to page 1 when applying new filters
+          });
+
+          // Reset filter button click handler
+          $('#resetFilter').click(function() {
+              $('#filterForm')[0].reset();
+              applyFilters(1); // Reset to page 1 when clearing filters
+          });
+
+          function applyFilters(page) {
+              const filters = {
+                  filter_id: $('#filterID').val(),
+                  filter_name: $('#filterName').val(),
+                  filter_supplier: $('#filterSupplier').val(),
+                  filter_date: $('#filterDate').val(),
+                  filter_status: $('#filterStatus').val(),
+                  content: 'purchase_request_history',
+                  page: page || 1
+              };
+
+              // Update URL with filter parameters
+              const url = new URL(window.location.href);
+              Object.keys(filters).forEach(key => {
+                  if (filters[key]) {
+                      url.searchParams.set(key, filters[key]);
+                  } else {
+                      url.searchParams.delete(key);
+                  }
+              });
+              history.pushState({}, '', url);
+
+              // Load filtered content
+              $.get('load_content.php', filters, function(response) {
+                  $('#content').html(response);
+              });
+          }
+
+          // Set initial filter values from URL if they exist
+          const urlParams = new URLSearchParams(window.location.search);
+          $('#filterID').val(urlParams.get('filter_id') || '');
+          $('#filterName').val(urlParams.get('filter_name') || '');
+          $('#filterSupplier').val(urlParams.get('filter_supplier') || '');
+          $('#filterDate').val(urlParams.get('filter_date') || '');
+          $('#filterStatus').val(urlParams.get('filter_status') || '');
+      });
+      </script>";
         }
     } elseif($content === 'purchase_order_history'){
         if(isset($_GET['po_id'])) {
@@ -3457,6 +3563,40 @@ elseif ($content === 'account_settings') {
             
             echo "<h3>Purchase Order History</h3>
                   <div class='card rounded-4 p-4'>
+                  <form id='filterForm' class='mb-4'>
+                  <div class='row g-3'>
+                      <div class='col-md'>
+                          <input type='text' class='form-control' id='filterID' placeholder='PO ID' name='filter_id'>
+                      </div>
+                      <div class='col-md'>
+                          <select class='form-select' id='filterSupplier' name='filter_supplier'>
+                              <option value=''>All Suppliers</option>";
+                              // Fetch and display suppliers
+                              $supplierQuery = "SELECT SP_ID, SP_NAME FROM supplier WHERE SP_STATUS = '1' ORDER BY SP_NAME";
+                              $supplierResult = mysqli_query($db, $supplierQuery);
+                              while ($supplier = mysqli_fetch_assoc($supplierResult)) {
+                                  $selected = (isset($_GET['filter_supplier']) && $_GET['filter_supplier'] == $supplier['SP_NAME']) ? 'selected' : '';
+                                  echo "<option value='" . htmlspecialchars($supplier['SP_NAME']) . "' {$selected}>" . 
+                                       htmlspecialchars($supplier['SP_NAME']) . "</option>";
+                              }
+    echo "                </select>
+                      </div>
+                      <div class='col-md'>
+                          <input type='date' class='form-control' id='filterDate' name='filter_date'>
+                      </div>
+                      <div class='col-md'>
+                          <select class='form-select' id='filterStatus' name='filter_status'>
+                              <option value=''>All Status</option>
+                              <option value='approved'>Approved</option>
+                              <option value='completed'>Completed</option>
+                          </select>
+                      </div>
+                      <div class='col-md-auto'>
+                          <button type='button' class='btn btn-primary' id='applyFilter'>Apply Filter</button>
+                          <button type='button' class='btn btn-secondary' id='resetFilter'>Reset</button>
+                      </div>
+                  </div>
+              </form>
                       <table class='table table-striped'>
                           <thead>
                               <tr>
@@ -3473,7 +3613,7 @@ elseif ($content === 'account_settings') {
                     echo "<tr>
                             <td>PO-{$po['PO_ID']}</td>
                             <td>{$po['SP_NAME']}</td>
-                            <td>{$po['ap_date']}</td>
+                            <td>" . date('F d, Y', strtotime($po['ap_date'])) . "</td>
                             <td>
                                 <a href='#' 
                                 class='btn btn-sm btn-primary view-purchase-order'
@@ -3492,43 +3632,106 @@ elseif ($content === 'account_settings') {
                   </table>";
 
             // Pagination
-            if (isset($pagination) && $pagination['total_pages'] > 1) {
-                echo "<nav aria-label='Page navigation' class='mt-4'>
-                        <ul class='pagination justify-content-center'>";
-                
-                // Previous button
-                $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
-                echo "<li class='page-item{$prevDisabled}'>
-                        <a class='page-link' href='?content=purchase_order_history&page=" . 
-                        ($pagination['current_page'] - 1) . "'" . 
-                        ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
-                        ">Previous</a>
-                      </li>";
-                
-                // Page numbers
-                for ($i = 1; $i <= $pagination['total_pages']; $i++) {
-                    $active = $pagination['current_page'] == $i ? ' active' : '';
-                    echo "<li class='page-item{$active}'>
-                            <a class='page-link' href='?content=purchase_order_history&page={$i}'>
-                                {$i}
-                            </a>
-                          </li>";
-                }
-                
-                // Next button
-                $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
-                echo "<li class='page-item{$nextDisabled}'>
-                        <a class='page-link' href='?content=purchase_order_history&page=" . 
-                        ($pagination['current_page'] + 1) . "'" .
-                        ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
-                        ">Next</a>
-                      </li>";
-                
-                echo "</ul>
-                    </nav>";
-            }
-            
-            echo "</div>";
+if (isset($pagination) && $pagination['total_pages'] > 1) {
+    echo "<nav aria-label='Page navigation' class='mt-4'>
+            <ul class='pagination justify-content-center'>";
+    
+    // Get all current filter values
+    $filterParams = array_filter([
+        'filter_id' => $_GET['filter_id'] ?? '',
+        'filter_supplier' => $_GET['filter_supplier'] ?? '',
+        'filter_date' => $_GET['filter_date'] ?? '',
+        'filter_status' => $_GET['filter_status'] ?? ''
+    ]);
+    
+    // Build the query string for filters
+    $filterQueryString = '';
+    if (!empty($filterParams)) {
+        $filterQueryString = '&' . http_build_query($filterParams);
+    }
+    
+    // Previous button
+    $prevDisabled = $pagination['current_page'] <= 1 ? ' disabled' : '';
+    echo "<li class='page-item{$prevDisabled}'>
+            <a class='page-link' href='?content=purchase_order_history&page=" . 
+            ($pagination['current_page'] - 1) . $filterQueryString . "'" . 
+            ($pagination['current_page'] <= 1 ? ' tabindex="-1" aria-disabled="true"' : '') . 
+            ">Previous</a>
+          </li>";
+    
+    // Page numbers
+    for ($i = 1; $i <= $pagination['total_pages']; $i++) {
+        $active = $pagination['current_page'] == $i ? ' active' : '';
+        echo "<li class='page-item{$active}'>
+                <a class='page-link' href='?content=purchase_order_history&page={$i}{$filterQueryString}'>
+                    {$i}
+                </a>
+              </li>";
+    }
+    
+    // Next button
+    $nextDisabled = $pagination['current_page'] >= $pagination['total_pages'] ? ' disabled' : '';
+    echo "<li class='page-item{$nextDisabled}'>
+            <a class='page-link' href='?content=purchase_order_history&page=" . 
+            ($pagination['current_page'] + 1) . $filterQueryString . "'" .
+            ($pagination['current_page'] >= $pagination['total_pages'] ? ' tabindex="-1" aria-disabled="true"' : '') . 
+            ">Next</a>
+          </li>";
+    
+    echo "</ul>
+        </nav>";
+}
+
+echo "</div>
+      
+      <script>
+      $(document).ready(function() {
+          // Apply filter button click handler
+          $('#applyFilter').click(function() {
+              applyFilters(1); // Reset to page 1 when applying new filters
+          });
+
+          // Reset filter button click handler
+          $('#resetFilter').click(function() {
+              $('#filterForm')[0].reset();
+              applyFilters(1); // Reset to page 1 when clearing filters
+          });
+
+          function applyFilters(page) {
+              const filters = {
+                  filter_id: $('#filterID').val(),
+                  filter_supplier: $('#filterSupplier').val(),
+                  filter_date: $('#filterDate').val(),
+                  filter_status: $('#filterStatus').val(),
+                  content: 'purchase_order_history',
+                  page: page || 1
+              };
+
+              // Update URL with filter parameters
+              const url = new URL(window.location.href);
+              Object.keys(filters).forEach(key => {
+                  if (filters[key]) {
+                      url.searchParams.set(key, filters[key]);
+                  } else {
+                      url.searchParams.delete(key);
+                  }
+              });
+              history.pushState({}, '', url);
+
+              // Load filtered content
+              $.get('load_content.php', filters, function(response) {
+                  $('#content').html(response);
+              });
+          }
+
+          // Set initial filter values from URL if they exist
+          const urlParams = new URLSearchParams(window.location.search);
+          $('#filterID').val(urlParams.get('filter_id') || '');
+          $('#filterSupplier').val(urlParams.get('filter_supplier') || '');
+          $('#filterDate').val(urlParams.get('filter_date') || '');
+          $('#filterStatus').val(urlParams.get('filter_status') || '');
+      });
+      </script>";
         }
     } else {
         echo "<h3>You do not have access to this content.</h3>";
