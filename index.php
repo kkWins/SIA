@@ -269,6 +269,7 @@ $department = $_SESSION['department'];
             <?php elseif ($department == 'Inventory'): ?>
                 <?php if ($role == 'Manager'): ?>
                     <a href="#" class="sidebar-link" id="withdrawal-deposit-link">Withdrawal & Deposit</a>
+                    <a href="#" class="sidebar-link" id="withdrawal-deposit-history-link">Withdrawal & Deposit History</a>
                     <a href="#" class="sidebar-link" id="requisition-approval-link">Requisition Approval</a>
                     <a href="#" class="sidebar-link" id="approved-requisitions-link">Approved Requisitions</a>
                     <a href="#" class="sidebar-link" id="purchase-order-link">Purchase Order</a>
@@ -415,6 +416,11 @@ $department = $_SESSION['department'];
             $('#purchase-order-link').click(function (e) {
                 e.preventDefault();
                 loadContent('purchase_order');
+            });
+
+            $('#withdrawal-deposit-history-link').click(function (e) {
+                e.preventDefault();
+                loadContent('withdrawal_deposit_history');
             });
 
             $('#pending-pr-link').click(function (e) {

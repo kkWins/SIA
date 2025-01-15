@@ -10,8 +10,11 @@ if (isset($_GET['id'])) {
     $stmt->execute();
     $supplier = $stmt->get_result()->fetch_assoc();
     
-    // Get supplier products
-    $stmt = $db->prepare("SELECT * FROM supplier_products WHERE sp_id = ?");
+    // Get all supplier products (both active and inactive)
+    $query = "SELECT sp_prod_id, product_name, product_description, unit_price, status 
+              FROM supplier_products 
+              WHERE sp_id = ?";
+    $stmt = $db->prepare($query);
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $products = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

@@ -5,7 +5,10 @@ if (isset($_GET['po_id'])) {
     $po_id = $_GET['po_id'];
     
     // Get purchase order details
-    $query = "SELECT po.*, sp.*, pd.*,
+    $query = "SELECT po.*, sp.*, 
+		pd.PD_PAYMENT_TYPE,
+        pd.PD_CHANGE,
+        pd.PD_AMMOUNT,
 		approval.ap_date,
         CONCAT(emp.EMP_FNAME, ' ', emp.EMP_LNAME) AS deliverTo,
         emp.EMP_NUMBER
@@ -16,7 +19,7 @@ LEFT JOIN
     	employee emp ON emp.EMP_ID = po.EMP_ID
 LEFT JOIN 
 		payment_details pd ON pd.PO_ID = po.PO_ID
-WHERE po.PO_ID = ? AND po.PO_STATUS IN ('approved', 'completed')";
+WHERE po.PO_ID = ? AND po.PO_STATUS IN ('approved', 'completed', 'canceled')";
     
     $stmt = $db->prepare($query);
     $stmt->bind_param("i", $po_id);

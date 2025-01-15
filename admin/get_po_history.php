@@ -9,7 +9,7 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $offset = ($page - 1) * $items_per_page;
 
 // Initialize the WHERE clause and parameters array
-$where_conditions = ["po.PO_STATUS IN ('approved', 'completed')"]; 
+$where_conditions = ["po.PO_STATUS IN ('approved', 'completed', 'canceled')"]; 
 $params = [];
 $param_types = "";
 
