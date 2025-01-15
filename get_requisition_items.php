@@ -63,7 +63,6 @@ echo "</table>";
 $items_stmt->close();
 
 
-
 // Display rejection reason if status is rejected
 if ($status === 'rejected' && !empty($rejection_reason)) {
     echo "<div class='alert alert-danger'>";

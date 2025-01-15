@@ -18,7 +18,8 @@ $emp_id = $_SESSION['ID'];
 echo <<<HTML
 <div class="mb-3">
     <div class="input-group">
-        <input type="text" class="form-control" id="staffSearch" placeholder="Search by PRF ID or Date (YYYY-MM-DD)">
+        <input type="number" class="form-control" id="staffSearch" placeholder="Search by PRF ID" min="1">
+        <input type="date" class="form-control" id="dateSearch">
         <button class="btn btn-outline-secondary" type="button" id="clearSearch">Clear</button>
     </div>
 </div>
@@ -29,9 +30,12 @@ $query = "SELECT
             prf.PRF_ID, 
             prf.PRF_DATE, 
             prf.PRF_STATUS,
-            a.ap_desc as rejection_reason
+            CONCAT(r.EMP_FNAME, ' ', r.EMP_MNAME, ' ', r.EMP_LNAME) as rejected_by,
+            a.ap_desc as rejection_reason,
+            a.ap_date as rejection_date
           FROM purchase_or_requisition_form prf
           LEFT JOIN approval a ON prf.AP_ID = a.ap_id
+          LEFT JOIN employee r ON a.EMP_ID = r.EMP_ID
           WHERE prf.EMP_ID = ?
           AND prf.PRF_STATUS IN ('rejected', 'closed')
           ORDER BY prf.PRF_DATE DESC";
@@ -55,6 +59,8 @@ if ($result->num_rows > 0) {
     echo "<th>PRF ID</th>";
     echo "<th>Date & Time</th>";
     echo "<th>Status</th>";
+    echo "<th>Rejected By</th>";
+    echo "<th>Rejection Date</th>";
     echo "<th>Action</th>";
     echo "</tr>";
     echo "</thead>";
@@ -62,24 +68,27 @@ if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         echo "<tr>";
         echo "<td>" . htmlspecialchars($row['PRF_ID']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['PRF_DATE']) . "</td>";
+        echo "<td>" . date('F j, Y h:i A', strtotime($row['PRF_DATE'])) . "</td>";
         echo "<td>";
-        switch(strtolower($row['PRF_STATUS'])) {
-            case 'pending':
-                echo "<span class='badge bg-warning text-dark'>Pending</span>";
-                break;
+        switch($row['PRF_STATUS']) {
             case 'approved':
                 echo "<span class='badge bg-success'>Approved</span>";
                 break;
             case 'rejected':
                 echo "<span class='badge bg-danger'>Rejected</span>";
                 break;
-            default:
-                echo "<span class='badge bg-secondary'>" . htmlspecialchars($row['PRF_STATUS']) . "</span>";
+            case 'pending':
+                echo "<span class='badge bg-warning'>Pending</span>";
+                break;
         }
         echo "</td>";
+        echo "<td>" . ($row['PRF_STATUS'] === 'rejected' ? htmlspecialchars($row['rejected_by']) : '-') . "</td>";
+        echo "<td>" . ($row['PRF_STATUS'] === 'rejected' ? date('F j, Y h:i A', strtotime($row['rejection_date'])) : '-') . "</td>";
         echo "<td>";
-        echo "<button class='btn btn-sm btn-info view-details' data-bs-toggle='modal' data-bs-target='#itemsModal' data-prf-id='" . htmlspecialchars($row['PRF_ID']) . "'>View Details</button>";
+        echo "<button class='btn btn-sm btn-info view-details' data-bs-toggle='modal' 
+              data-bs-target='#itemsModal' 
+              data-prf-id='" . htmlspecialchars($row['PRF_ID']) . "'
+              data-rejection-reason='" . htmlspecialchars($row['rejection_reason']) . "'>View Details</button>";
         echo "</td>";
         echo "</tr>";
     }
@@ -91,7 +100,7 @@ if ($result->num_rows > 0) {
 
 $stmt->close();
 
-// Modal HTML
+// Modal HTML - Update to match manager version
 echo <<<HTML
 <div class="modal fade" id="itemsModal" tabindex="-1" aria-labelledby="itemsModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -115,6 +124,7 @@ $(document).ready(function() {
     $('.view-details').click(function() {
         const prfId = $(this).data('prf-id');
         const status = $(this).closest('tr').find('td:eq(2) .badge').text().toLowerCase();
+        const rejectionReason = $(this).data('rejection-reason');
         
         // Fetch items for this PRF
         $.ajax({
@@ -133,13 +143,19 @@ $(document).ready(function() {
         });
     });
 
-    $('#staffSearch').on('keyup', function() {
-        const searchText = $(this).val().toLowerCase();
+    // Update search functionality to handle both PRF ID and date
+    $('#staffSearch, #dateSearch').on('input', function() {
+        const searchText = $('#staffSearch').val().toLowerCase();
+        const searchDate = $('#dateSearch').val();
+        
         $('tbody tr').each(function() {
             const prfId = $(this).find('td:eq(0)').text().toLowerCase();
-            const date = $(this).find('td:eq(1)').text().toLowerCase();
+            const date = $(this).find('td:eq(1)').text().split(' ')[0]; // Get just the date part
             
-            if (prfId.includes(searchText) || date.includes(searchText)) {
+            const matchesText = prfId.includes(searchText);
+            const matchesDate = !searchDate || date === searchDate;
+            
+            if (matchesText && matchesDate) {
                 $(this).show();
             } else {
                 $(this).hide();
@@ -149,6 +165,7 @@ $(document).ready(function() {
 
     $('#clearSearch').click(function() {
         $('#staffSearch').val('');
+        $('#dateSearch').val('');
         $('tbody tr').show();
     });
 });
