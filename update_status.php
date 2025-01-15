@@ -14,30 +14,30 @@ if ($connection->connect_error) {
 $prf_id = $_POST['PRF_ID'] ?? null; // Assuming the ID is passed via POST
 
 if ($prf_id) {
-    // Check if there are any rows in rf_withdrawal for this PRF_ID
+    // Modified query to check if ALL dates are NOT NULL
     $checkQuery = "
-        SELECT COUNT(*) AS matching_rows
+        SELECT COUNT(*) AS incomplete_rows
         FROM rf_withdrawal
         WHERE PRF_ID = ? AND (
-            WD_DATE IS NOT NULL OR
-            WD_DATE_RECEIVED IS NOT NULL OR
-            WD_DATE_DELIVERED IS NOT NULL OR
-            WD_DATE_WITHDRAWN IS NOT NULL
+            WD_DATE IS NULL OR
+            WD_DATE_RECEIVED IS NULL OR
+            WD_DATE_DELIVERED IS NULL OR
+            WD_DATE_WITHDRAWN IS NULL
         )
     ";
 
     $stmt = $connection->prepare($checkQuery);
     $stmt->bind_param("i", $prf_id);
     $stmt->execute();
-    $stmt->bind_result($matchingRows);
+    $stmt->bind_result($incompleteRows);
     $stmt->fetch();
     $stmt->close();
 
-    if ($matchingRows > 0) {
-        // If any rows exist with not all dates NULL, prevent closing the status
-        echo "Cannot close the requisition since there are still pending task/delivery";
+    if ($incompleteRows > 0) {
+        // If any rows exist with NULL dates, prevent closing the status
+        echo "Cannot close the requisition since there are incomplete dates";
     } else {
-        // Proceed to update the PRF_STATUS to 'closed'
+        // All dates are filled, proceed to update the PRF_STATUS to 'closed'
         $updateQuery = "UPDATE purchase_or_requisition_form SET PRF_STATUS = 'closed' WHERE PRF_ID = ?";
 
         $stmt = $connection->prepare($updateQuery);
