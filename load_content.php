@@ -2713,6 +2713,8 @@ elseif ($content === 'requisition_withdrawal') {
                     success: function(response) {
                         if (response === 'Staff') {
                             location.reload(); // Reload the page if the role is 'staff'
+                        }else if(response === 'Manager'){
+                            location.reload(); // Reload the page if the role is 'admin'
                         }
                     }
                 });
