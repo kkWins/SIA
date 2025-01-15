@@ -4713,7 +4713,7 @@ echo "</div>
                                         echo "<p class='mb-0'><strong>Order Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ORDER_DATE'])) . "</p>";
                                     }
                                     if($poDetails['PO_ARRIVAL_DATE']){
-                                        echo "<p class='mb-0'><strong>Expected Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
+                                        echo "<p class='mb-0'><strong>Arrival Date:</strong> " . date('F d, Y', strtotime($poDetails['PO_ARRIVAL_DATE'])) . "</p>";
                                     }
                                 echo "
                                 </div>
@@ -4798,6 +4798,7 @@ echo "</div>
                               <option value=''>All Status</option>
                               <option value='approved'>Approved</option>
                               <option value='completed'>Completed</option>
+                              <option value='canceled'>Canceled</option>
                           </select>
                       </div>
                       <div class='col-md-auto'>
@@ -4824,7 +4825,7 @@ echo "</div>
                             <td>PO-{$po['PO_ID']}</td>
                             <td>{$po['SP_NAME']}</td>
                             <td>" . date('F d, Y', strtotime($po['ap_date'])) . "</td>
-                             <td>{$po['PO_STATUS']}</td>
+                            <td>{$po['PO_STATUS']}</td>
                             <td>
                                 <a href='#' 
                                 class='btn btn-sm btn-primary view-purchase-order'
