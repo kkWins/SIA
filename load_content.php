@@ -38,8 +38,15 @@ if ($content === 'purchase_order') {
                         <a href='#' class='btn btn-link back-to-list p-0 mb-3' data-content='purchase_order'>
                             <i class='fas fa-arrow-left'></i> Back
                         </a>
-                    </div>
-                    <div class='row'>
+                    </div>";
+                    if($response['po_details']['PO_STATUS'] !== 'canceled'){
+                        echo "<button class='btn btn-link text-danger position-absolute top-0 end-0 mt-3 me-3 cancel-btn' 
+                                data-id='" . htmlspecialchars($_GET['po_id']) . "' 
+                                title='Cancel PO'>
+                                <i class='fas fa-times'></i>
+                              </button>";
+                    }
+                    echo "<div class='row'>
                         <div class='col-md-6'>
                             <h3>MOONLIGHT</h3>
                             <p class='mb-0'>Address: Logarta St 6014 Mandaue City, Philippines</p>
@@ -148,11 +155,17 @@ if ($content === 'purchase_order') {
                         <div class='mt-3'>";
                             if($response['po_details']['PO_STATUS'] === 'completed') {
                                 echo "<p class='text-success'>Purchase order is already completed.</p>";
+                            }else if($response['po_details']['PO_STATUS'] === 'canceled') {
+                                echo "<p class='text-danger'>Purchase order has been canceled.</p>";
                             } else {
                                 // Check if payment details exist
                                 $hasPaymentDetails = $response['po_details']['PD_PAYMENT_TYPE'] && 
                                                     $response['po_details']['PD_CHANGE'] && 
                                                     $response['po_details']['PD_AMMOUNT'];
+
+                                
+                                echo "<div class='text-end'>";
+        
                                 
                                 if(!$response['po_details']['PO_ORDER_DATE']) {
                                     // If order date is empty, show submit button
@@ -179,6 +192,40 @@ if ($content === 'purchase_order') {
                     </div>
                     <script>
                         $(document).ready(function() {
+
+
+                            $('.cancel-btn').on('click', function() {
+                                const poId = $(this).data('id');
+                                
+                                if (confirm('Are you sure you want to cancel this purchase order? This action cannot be undone.')) {
+                                    $.ajax({
+                                        url: 'inventory/cancel_purchase_order.php',
+                                        type: 'POST',
+                                        data: {
+                                            po_id: poId
+                                        },
+                                        success: function(response) {
+                                            try {
+                                                // Check if response is already a JSON object
+                                                const result = typeof response === 'object' ? response : JSON.parse(response);
+                                                if (result.success) {
+                                                    alert('Purchase order canceled successfully');
+                                                    window.location.href = '?content=purchase_order';
+                                                } else {
+                                                    alert('Error: ' + (result.message || 'Unknown error'));
+                                                }
+                                            } catch (e) {
+                                                console.error('Error parsing response:', e);
+                                                alert('Error processing response');
+                                            }
+                                        },
+                                        error: function(xhr, status, error) {
+                                            console.error('AJAX Error:', status, error);
+                                            alert('Error canceling purchase order');
+                                        }
+                                    });
+                                }
+                            });
 
                             // Add complete button click handler
                             $('.complete-btn').on('click', function() {
@@ -433,12 +480,19 @@ if ($content === 'purchase_order') {
                             echo "
                             <p class='text-success'>Purchase order is already completed.</p>
                             ";
-                        }else{
+                        }elseif($response['po_details']['PO_STATUS'] === 'canceled'){
                             echo "
-                            <div class='text-end'>
-                                <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
-                            </div>
+                            <p class='text-danger'>Purchase order is already canceled.</p>
                             ";
+                        }else{
+
+                            if($response['po_details']['PO_STATUS'] !== 'canceled'){
+                                echo "
+                                <div class='text-end'>
+                                    <button class='btn btn-success submit1-btn' data-id='" . htmlspecialchars($_GET['po_id']) . "'>Submit</button>
+                                </div>
+                                ";
+                            }
                         }
                     echo "</div>
                 </div>
@@ -4140,6 +4194,7 @@ echo "</div>
                               <option value=''>All Status</option>
                               <option value='approved'>Approved</option>
                               <option value='completed'>Completed</option>
+                              <option value='canceled'>Canceled</option>
                           </select>
                       </div>
                       <div class='col-md-auto'>
@@ -4154,6 +4209,7 @@ echo "</div>
                                   <th>ID</th>
                                   <th>Supplier</th>
                                   <th>Date of Issue</th>
+                                  <th>Status</th>
                                   <th>Action</th>
                               </tr>
                           </thead>
@@ -4165,6 +4221,7 @@ echo "</div>
                             <td>PO-{$po['PO_ID']}</td>
                             <td>{$po['SP_NAME']}</td>
                             <td>" . date('F d, Y', strtotime($po['ap_date'])) . "</td>
+                            <td>{$po['PO_STATUS']}</td>
                             <td>
                                 <a href='#' 
                                 class='btn btn-sm btn-primary view-purchase-order'
