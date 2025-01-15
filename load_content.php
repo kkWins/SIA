@@ -2877,21 +2877,16 @@ elseif ($content === 'requisition_history') {
                 type: 'GET',
                 dataType: 'json',
                 success: function(items) {
-                    const $dropdown = $('#item');
-                    $dropdown.empty(); // Clear existing options
-                    $dropdown.append($('<option>', {
-                        value: '',
-                        text: 'Select Item',
-                        disabled: true,
-                        selected: true
-                    })); // Placeholder option
+                    const \$dropdown = $('#item');
+                    \$dropdown.empty(); // Clear existing options
+                    \$dropdown.append('<option value=\"\">Select Item</option>'); // Default option
 
                     if (items.length > 0) {
                         items.forEach(function(item) {
-                            $dropdown.append('<option value=\"' + item.id + '\" data-name=\"' + item.name + '\">' + item.name + '</option>');
+                            \$dropdown.append('<option value=\"' + item.id + '\" data-name=\"' + item.name + '\">' + item.name + '</option>');
                         });
                     } else {
-                        alert('All items are already added.');
+                          alert('No items found in inventory.');
                     }
                 },
                 error: function() {
