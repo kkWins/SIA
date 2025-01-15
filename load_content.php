@@ -2297,8 +2297,23 @@ elseif ($content === 'requisition_history') {
                     data: { wd_id: withdrawalId },
                     success: function(response) {
                         if (response === 'success') {
-                            alert('Item marked as delivered');
-                            location.reload();  // Reload the page to update the table
+                            // Check if the requisition is closed (you can adjust this based on your backend logic)
+                            $.ajax({
+                                url: 'check_status.php',  // PHP file to check requisition status
+                                type: 'POST',
+                                data: { wd_id: withdrawalId },
+                                success: function(statusResponse) {
+                                    if (statusResponse === 'closed') {
+                                        alert('The requisition has been fulfilled and closed.');
+                                    } else {
+                                        alert('Item marked as delivered.');
+                                    }
+                                    location.reload();  // Reload the page to update the table
+                                },
+                                error: function() {
+                                    alert('Error checking requisition status');
+                                }
+                            });
                         } else {
                             alert('Error updating delivered date');
                         }
@@ -2795,15 +2810,18 @@ elseif ($content === 'requisition_history') {
                     });
                 });
         
-                // Function to validate a date (not older than now and not more than 1 hour ahead)
-                function validateDate(inputDate) {
-                    var now = new Date();
-                    var oneHourLater = new Date();
-                    oneHourLater.setHours(now.getHours() + 1);  // Set to one hour after the current time
-        
-                    // Ensure the date is not in the past and is not more than 1 hour in the future
-                    return inputDate <= oneHourLater && inputDate >= now;
-                }
+                // Function to validate a date (not older than 1 day ago and not more than 1 hour ahead)
+                    function validateDate(inputDate) {
+                        var now = new Date();
+                        var oneHourLater = new Date();
+                        oneHourLater.setHours(now.getHours() + 1);  // Set to one hour after the current time
+
+                        var oneDayAgo = new Date();
+                        oneDayAgo.setDate(now.getDate() - 1);  // Set to one day before the current time
+
+                        // Ensure the date is not older than 1 day ago and is not more than 1 hour in the future
+                        return inputDate <= oneHourLater && inputDate >= oneDayAgo;
+                    }
             });
         </script>";
         
