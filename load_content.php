@@ -29,8 +29,8 @@ if ($content === 'purchase_order') {
             if($response['po_details']) {
                 // Define hasPaymentDetails before using it
                 $hasPaymentDetails = !empty($response['po_details']['PD_PAYMENT_TYPE']) && 
-                                    !empty($response['po_details']['PD_CHANGE']) && 
-                                    !empty($response['po_details']['PD_AMMOUNT']);
+                    isset($response['po_details']['PD_CHANGE']) && 
+                    !empty($response['po_details']['PD_AMMOUNT']);
 
                 echo "
                     <div class='card rounded-4 p-4'>
@@ -75,21 +75,22 @@ if ($content === 'purchase_order') {
                     </div>
 
                     <div class='order-details'>
-                            <div class='row'>
-                                <div class='col-md-6'>";
-                                    if($response['po_details']['PD_PAYMENT_TYPE']){
-                                        echo "<p class='mb-0'><strong>Payment Type:</strong> {$response['po_details']['PD_PAYMENT_TYPE']}</p>";
-                                    }
-                                    if($response['po_details']['PD_AMMOUNT']){
-                                        echo "<p class='mb-0'><strong>Amount:</strong> ₱" . number_format($response['po_details']['PD_AMMOUNT'], 2) . "</p>";
-                                    }
-                                    if($response['po_details']['PD_CHANGE']){
-                                        echo "<p class='mb-0'><strong>Change:</strong> ₱" . number_format($response['po_details']['PD_CHANGE'], 2) . "</p>";
-                                    }
-                                echo "</div>";                              
+                        <div class='row'>
+                            <div class='col-md-6'>";
+                                if($response['po_details']['PD_PAYMENT_TYPE']){
+                                    echo "<p class='mb-0'><strong>Payment Type:</strong> {$response['po_details']['PD_PAYMENT_TYPE']}</p>";
+                                }
+                                if($response['po_details']['PD_AMMOUNT']){
+                                    echo "<p class='mb-0'><strong>Amount:</strong> ₱" . number_format($response['po_details']['PD_AMMOUNT'], 2) . "</p>";
+                                }
+                                // Changed condition to check if the field exists, not its value
+                                if(isset($response['po_details']['PD_CHANGE'])){
+                                    echo "<p class='mb-0'><strong>Change:</strong> ₱" . number_format($response['po_details']['PD_CHANGE'], 2) . "</p>";
+                                }
+                            echo "</div>";                              
                         echo "
-                            </div>
                         </div>
+                    </div>
                     
 
                     
@@ -159,9 +160,9 @@ if ($content === 'purchase_order') {
                                 echo "<p class='text-danger text-center'>Purchase order has been canceled.</p>";
                             } else {
                                 // Check if payment details exist
-                                $hasPaymentDetails = $response['po_details']['PD_PAYMENT_TYPE'] && 
-                                                    $response['po_details']['PD_CHANGE'] && 
-                                                    $response['po_details']['PD_AMMOUNT'];
+                                $hasPaymentDetails = !empty($response['po_details']['PD_PAYMENT_TYPE']) && 
+                        isset($response['po_details']['PD_CHANGE']) && 
+                        !empty($response['po_details']['PD_AMMOUNT']);
 
                                 
                                 echo "<div class='text-end'>";
@@ -388,7 +389,7 @@ if ($content === 'purchase_order') {
                                 }
                             });
                         });
-                        </script>";
+                        </script>"; 
     
             } else {
                 echo 'Purchase Order not found';
